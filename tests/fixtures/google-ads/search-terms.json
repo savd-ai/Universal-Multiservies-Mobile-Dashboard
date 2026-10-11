@@ -1,0 +1,13 @@
+[
+  {
+    "results": [
+      { "searchTermView": { "searchTerm": "acme boots", "status": "ADDED" }, "segments": { "searchTermMatchType": "EXACT" }, "campaign": { "id": "111" }, "adGroup": { "id": "5001" }, "metrics": { "impressions": "380", "clicks": "29", "costMicros": "14500000", "conversions": 1.5, "conversionsValue": 150 } },
+      { "searchTermView": { "searchTerm": "acme boots sale", "status": "NONE" }, "segments": { "searchTermMatchType": "NEAR_PHRASE" }, "campaign": { "id": "111" }, "adGroup": { "id": "5001" }, "metrics": { "impressions": "90", "clicks": "6", "costMicros": "3300000", "conversions": 0.5, "conversionsValue": 40 } },
+      { "searchTermView": { "searchTerm": "free boots", "status": "EXCLUDED" }, "segments": { "searchTermMatchType": "BROAD" }, "campaign": { "id": "111" }, "adGroup": { "id": "5002" }, "metrics": { "impressions": "60", "clicks": "4", "costMicros": "2600000" } },
+      { "searchTermView": { "searchTerm": "boots near me", "status": "NONE" }, "segments": { "searchTermMatchType": "AI_MAX" }, "campaign": { "id": "111" }, "adGroup": { "id": "5001" }, "metrics": { "impressions": "40", "clicks": "2", "costMicros": "1100000" } },
+      { "searchTermView": { "searchTerm": "acme boot", "status": "ADDED_EXCLUDED" }, "segments": { "searchTermMatchType": "NEAR_EXACT" }, "campaign": { "id": "111" }, "adGroup": { "id": "5001" }, "metrics": { "impressions": "25", "clicks": "1", "costMicros": "500000" } }
+    ],
+    "fieldMask": "searchTermView.searchTerm,searchTermView.status,segments.searchTermMatchType,campaign.id,adGroup.id,metrics.impressions,metrics.clicks,metrics.costMicros,metrics.conversions,metrics.conversionsValue",
+    "requestId": "fixture-req-search-terms"
+  }
+]

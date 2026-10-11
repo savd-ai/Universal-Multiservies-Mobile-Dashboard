@@ -1,0 +1,10 @@
+[
+  {
+    "results": [
+      { "adGroup": { "id": "5001", "name": "Brand - Core", "status": "ENABLED" }, "campaign": { "id": "111" } },
+      { "adGroup": { "id": "5002", "name": "Brand - Misspellings", "status": "PAUSED" }, "campaign": { "id": "111" } }
+    ],
+    "fieldMask": "adGroup.id,adGroup.name,adGroup.status,campaign.id",
+    "requestId": "fixture-req-ad-groups"
+  }
+]

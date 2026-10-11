@@ -1,0 +1,14 @@
+[
+  {
+    "results": [
+      { "customerClient": { "id": "9876543210", "descriptiveName": "Acme Agency MCC", "currencyCode": "USD", "timeZone": "America/New_York", "manager": true, "status": "ENABLED" } },
+      { "customerClient": { "id": "2345678901", "descriptiveName": "Acme Europe", "currencyCode": "EUR", "timeZone": "Europe/Berlin", "level": "1", "status": "ENABLED" } },
+      { "customerClient": { "id": "1234567890", "descriptiveName": "Acme Outdoor", "currencyCode": "USD", "timeZone": "America/New_York", "level": "1", "status": "ENABLED" } },
+      { "customerClient": { "id": "3456789012", "descriptiveName": "Old brand", "currencyCode": "USD", "timeZone": "America/New_York", "level": "1", "status": "CANCELED" } },
+      { "customerClient": { "id": "4567890123", "descriptiveName": "Regional sub-manager", "currencyCode": "USD", "timeZone": "America/Chicago", "level": "1", "manager": true, "status": "ENABLED" } },
+      { "customerClient": { "id": "5678901234", "descriptiveName": "Hidden sandbox", "currencyCode": "USD", "timeZone": "America/New_York", "level": "1", "status": "ENABLED", "hidden": true } }
+    ],
+    "fieldMask": "customerClient.id,customerClient.descriptiveName,customerClient.currencyCode,customerClient.timeZone,customerClient.manager,customerClient.level,customerClient.status,customerClient.hidden,customerClient.testAccount",
+    "requestId": "fixture-req-customer-client"
+  }
+]

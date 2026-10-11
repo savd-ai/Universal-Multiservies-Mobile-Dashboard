@@ -1,0 +1,3256 @@
+{
+ "status": {
+  "mode": "live",
+  "reasonText": "Google Ads API connected · read-only.",
+  "account": {
+   "id": "4821193307",
+   "name": "Acme Running Co.",
+   "currency": "USD",
+   "timezone": "America/New_York",
+   "isManager": false,
+   "parentId": "1112223333",
+   "mode": "live"
+  },
+  "accounts": [
+   {
+    "id": "4821193307",
+    "name": "Acme Running Co.",
+    "currency": "USD",
+    "timezone": "America/New_York",
+    "isManager": false,
+    "parentId": "1112223333",
+    "mode": "live"
+   },
+   {
+    "id": "9876543210",
+    "name": "Trail Gear Outlet",
+    "currency": "USD",
+    "timezone": "America/New_York",
+    "isManager": false,
+    "parentId": "1112223333",
+    "mode": "live"
+   }
+  ],
+  "today": "2026-09-29",
+  "dataThrough": "2026-09-28",
+  "display": {
+   "currency": "USD",
+   "fxRates": {
+    "VND": 25400
+   }
+  }
+ },
+ "pacing_2026_09": {
+  "month": "2026-09",
+  "monthLabel": "September 2026",
+  "daysInMonth": 30,
+  "elapsedDays": 28,
+  "remainingDays": 2,
+  "anchor": "2026-09-28",
+  "rows": [
+   {
+    "unitId": "c1",
+    "campaignIds": [
+     "c1"
+    ],
+    "name": "Brand — Core Terms",
+    "type": "Search",
+    "dailyBudget": 420,
+    "monthlyTarget": 12600,
+    "mtdSpend": 11428.86,
+    "avg7": 415.99,
+    "expectedDaily": 415.5,
+    "projected": 12259.86,
+    "paceRatio": 0.973,
+    "status": "on_track",
+    "idealToDate": 11760,
+    "utilization": 0.9718,
+    "budgetLimited": true,
+    "recommendedDaily": 585.57,
+    "recommendationNote": "On track — $586/day lands on $12,600.",
+    "roasMtd": 20.0224,
+    "cpaMtd": 4.33,
+    "sliderMin": 3800,
+    "sliderMax": 25200
+   },
+   {
+    "unitId": "c2",
+    "campaignIds": [
+     "c2"
+    ],
+    "name": "Generic — Running Shoes",
+    "type": "Search",
+    "dailyBudget": 780,
+    "monthlyTarget": 23400,
+    "mtdSpend": 20765.9,
+    "avg7": 735.83,
+    "expectedDaily": 782.63,
+    "projected": 22331.16,
+    "paceRatio": 0.9543,
+    "status": "on_track",
+    "idealToDate": 21840,
+    "utilization": 0.9508,
+    "budgetLimited": false,
+    "recommendedDaily": 1317.05,
+    "recommendationNote": "On track — $1,317/day lands on $23,400.",
+    "roasMtd": 2.4825,
+    "cpaMtd": 45.05,
+    "sliderMin": 7000,
+    "sliderMax": 46800
+   },
+   {
+    "unitId": "c3",
+    "campaignIds": [
+     "c3"
+    ],
+    "name": "PMax — Full Catalog",
+    "type": "PMax",
+    "dailyBudget": 1250,
+    "monthlyTarget": 37500,
+    "mtdSpend": 32587.6,
+    "avg7": 1142.38,
+    "expectedDaily": 1211.32,
+    "projected": 35010.24,
+    "paceRatio": 0.9336,
+    "status": "on_track",
+    "idealToDate": 35000,
+    "utilization": 0.9311,
+    "budgetLimited": false,
+    "recommendedDaily": 2456.2,
+    "recommendationNote": "On track — $2,456/day lands on $37,500.",
+    "roasMtd": 3.8545,
+    "cpaMtd": 27.21,
+    "sliderMin": 11250,
+    "sliderMax": 75000
+   },
+   {
+    "unitId": "c4",
+    "campaignIds": [
+     "c4"
+    ],
+    "name": "Shopping — Best Sellers",
+    "type": "Shopping",
+    "dailyBudget": 640,
+    "monthlyTarget": 19200,
+    "mtdSpend": 16097.71,
+    "avg7": 582.8,
+    "expectedDaily": 592.78,
+    "projected": 17283.28,
+    "paceRatio": 0.9002,
+    "status": "on_track",
+    "idealToDate": 17920,
+    "utilization": 0.8983,
+    "budgetLimited": false,
+    "recommendedDaily": 1551.15,
+    "recommendationNote": "On track — $1,551/day lands on $19,200.",
+    "roasMtd": 4.2643,
+    "cpaMtd": 22.46,
+    "sliderMin": 5750,
+    "sliderMax": 38400
+   },
+   {
+    "unitId": "c5",
+    "campaignIds": [
+     "c5"
+    ],
+    "name": "YouTube — Q4 Awareness",
+    "type": "Video",
+    "dailyBudget": 520,
+    "monthlyTarget": 15600,
+    "mtdSpend": 12615.8,
+    "avg7": 437.24,
+    "expectedDaily": 459.91,
+    "projected": 13535.61,
+    "paceRatio": 0.8677,
+    "status": "underpacing",
+    "idealToDate": 14560,
+    "utilization": 0.8665,
+    "budgetLimited": false,
+    "recommendedDaily": 1492.1,
+    "recommendationNote": "Spending below target: $1,492/day would use the full budget, but a higher budget alone won't add volume unless the campaign is budget-limited.",
+    "roasMtd": 2.6605,
+    "cpaMtd": 44.35,
+    "sliderMin": 4700,
+    "sliderMax": 31200
+   },
+   {
+    "unitId": "c6",
+    "campaignIds": [
+     "c6"
+    ],
+    "name": "Display — Cart Remarketing",
+    "type": "Display",
+    "dailyBudget": 260,
+    "monthlyTarget": 7800,
+    "mtdSpend": 7041.65,
+    "avg7": 308.26,
+    "expectedDaily": 295.27,
+    "projected": 7632.18,
+    "paceRatio": 0.9785,
+    "status": "on_track",
+    "idealToDate": 7280,
+    "utilization": 0.9673,
+    "budgetLimited": false,
+    "recommendedDaily": 379.18,
+    "recommendationNote": "On track — $379/day lands on $7,800.",
+    "roasMtd": 4.5338,
+    "cpaMtd": 20.2,
+    "sliderMin": 2350,
+    "sliderMax": 15600
+   },
+   {
+    "unitId": "c7",
+    "campaignIds": [
+     "c7"
+    ],
+    "name": "Demand Gen — Lookalikes",
+    "type": "Demand Gen",
+    "dailyBudget": 380,
+    "monthlyTarget": 11400,
+    "mtdSpend": 9399.09,
+    "avg7": 328.91,
+    "expectedDaily": 343.21,
+    "projected": 10085.51,
+    "paceRatio": 0.8847,
+    "status": "underpacing",
+    "idealToDate": 10640,
+    "utilization": 0.8834,
+    "budgetLimited": false,
+    "recommendedDaily": 1000.46,
+    "recommendationNote": "Spending below target: $1,000/day would use the full budget, but a higher budget alone won't add volume unless the campaign is budget-limited.",
+    "roasMtd": 2.3402,
+    "cpaMtd": 46.11,
+    "sliderMin": 3400,
+    "sliderMax": 22800
+   },
+   {
+    "unitId": "c8",
+    "campaignIds": [
+     "c8"
+    ],
+    "name": "Search — Competitor Terms",
+    "type": "Search",
+    "dailyBudget": 300,
+    "monthlyTarget": 9000,
+    "mtdSpend": 7966.35,
+    "avg7": 273.82,
+    "expectedDaily": 284.57,
+    "projected": 8535.5,
+    "paceRatio": 0.9484,
+    "status": "on_track",
+    "idealToDate": 8400,
+    "utilization": 0.9484,
+    "budgetLimited": false,
+    "recommendedDaily": 516.82,
+    "recommendationNote": "On track — $517/day lands on $9,000.",
+    "roasMtd": 1.1683,
+    "cpaMtd": 101.9,
+    "sliderMin": 2700,
+    "sliderMax": 18000
+   }
+  ],
+  "totals": {
+   "monthlyTarget": 136500,
+   "mtdSpend": 117902.96,
+   "projected": 126673.34,
+   "paceRatio": 0.928,
+   "idealToDate": 127400,
+   "overpacingCount": 0,
+   "underpacingCount": 2
+  },
+  "cumulative": [
+   {
+    "date": "2026-09-01",
+    "actual": 4216.7,
+    "ideal": 4550,
+    "projected": null
+   },
+   {
+    "date": "2026-09-02",
+    "actual": 8542.79,
+    "ideal": 9100,
+    "projected": null
+   },
+   {
+    "date": "2026-09-03",
+    "actual": 12836.33,
+    "ideal": 13650,
+    "projected": null
+   },
+   {
+    "date": "2026-09-04",
+    "actual": 17229.98,
+    "ideal": 18200,
+    "projected": null
+   },
+   {
+    "date": "2026-09-05",
+    "actual": 21039.8,
+    "ideal": 22750,
+    "projected": null
+   },
+   {
+    "date": "2026-09-06",
+    "actual": 24813.32,
+    "ideal": 27300,
+    "projected": null
+   },
+   {
+    "date": "2026-09-07",
+    "actual": 29087.51,
+    "ideal": 31850,
+    "projected": null
+   },
+   {
+    "date": "2026-09-08",
+    "actual": 33485.73,
+    "ideal": 36400,
+    "projected": null
+   },
+   {
+    "date": "2026-09-09",
+    "actual": 38059.73,
+    "ideal": 40950,
+    "projected": null
+   },
+   {
+    "date": "2026-09-10",
+    "actual": 42494.01,
+    "ideal": 45500,
+    "projected": null
+   },
+   {
+    "date": "2026-09-11",
+    "actual": 46802.31,
+    "ideal": 50050,
+    "projected": null
+   },
+   {
+    "date": "2026-09-12",
+    "actual": 50650.17,
+    "ideal": 54600,
+    "projected": null
+   },
+   {
+    "date": "2026-09-13",
+    "actual": 54357.95,
+    "ideal": 59150,
+    "projected": null
+   },
+   {
+    "date": "2026-09-14",
+    "actual": 58736.55,
+    "ideal": 63700,
+    "projected": null
+   },
+   {
+    "date": "2026-09-15",
+    "actual": 63007.81,
+    "ideal": 68250,
+    "projected": null
+   },
+   {
+    "date": "2026-09-16",
+    "actual": 67466.89,
+    "ideal": 72800,
+    "projected": null
+   },
+   {
+    "date": "2026-09-17",
+    "actual": 71919.45,
+    "ideal": 77350,
+    "projected": null
+   },
+   {
+    "date": "2026-09-18",
+    "actual": 76272.43,
+    "ideal": 81900,
+    "projected": null
+   },
+   {
+    "date": "2026-09-19",
+    "actual": 80065.37,
+    "ideal": 86450,
+    "projected": null
+   },
+   {
+    "date": "2026-09-20",
+    "actual": 83913.32,
+    "ideal": 91000,
+    "projected": null
+   },
+   {
+    "date": "2026-09-21",
+    "actual": 88326.37,
+    "ideal": 95550,
+    "projected": null
+   },
+   {
+    "date": "2026-09-22",
+    "actual": 92702.86,
+    "ideal": 100100,
+    "projected": null
+   },
+   {
+    "date": "2026-09-23",
+    "actual": 97090.01,
+    "ideal": 104650,
+    "projected": null
+   },
+   {
+    "date": "2026-09-24",
+    "actual": 101329.76,
+    "ideal": 109200,
+    "projected": null
+   },
+   {
+    "date": "2026-09-25",
+    "actual": 105734.65,
+    "ideal": 113750,
+    "projected": null
+   },
+   {
+    "date": "2026-09-26",
+    "actual": 109651.74,
+    "ideal": 118300,
+    "projected": null
+   },
+   {
+    "date": "2026-09-27",
+    "actual": 113587.58,
+    "ideal": 122850,
+    "projected": null
+   },
+   {
+    "date": "2026-09-28",
+    "actual": 117902.96,
+    "ideal": 127400,
+    "projected": 117902.96
+   },
+   {
+    "date": "2026-09-29",
+    "actual": null,
+    "ideal": 131950,
+    "projected": 122226.57
+   },
+   {
+    "date": "2026-09-30",
+    "actual": null,
+    "ideal": 136500,
+    "projected": 126673.35
+   }
+  ]
+ },
+ "pacing_2026_10": {
+  "month": "2026-10",
+  "monthLabel": "October 2026",
+  "daysInMonth": 31,
+  "elapsedDays": 0,
+  "remainingDays": 31,
+  "anchor": "2026-09-28",
+  "rows": [
+   {
+    "unitId": "c1",
+    "campaignIds": [
+     "c1"
+    ],
+    "name": "Brand — Core Terms",
+    "type": "Search",
+    "dailyBudget": 420,
+    "monthlyTarget": 13020,
+    "mtdSpend": 0,
+    "avg7": 415.99,
+    "expectedDaily": 415.89,
+    "projected": 12892.48,
+    "paceRatio": 0.9902,
+    "status": "on_track",
+    "idealToDate": 0,
+    "utilization": 0,
+    "budgetLimited": true,
+    "recommendedDaily": 420,
+    "recommendationNote": "On track — $420/day lands on $13,020.",
+    "roasMtd": null,
+    "cpaMtd": null,
+    "sliderMin": 3900,
+    "sliderMax": 26050
+   },
+   {
+    "unitId": "c2",
+    "campaignIds": [
+     "c2"
+    ],
+    "name": "Generic — Running Shoes",
+    "type": "Search",
+    "dailyBudget": 780,
+    "monthlyTarget": 24180,
+    "mtdSpend": 0,
+    "avg7": 735.83,
+    "expectedDaily": 734.94,
+    "projected": 22783.2,
+    "paceRatio": 0.9422,
+    "status": "on_track",
+    "idealToDate": 0,
+    "utilization": 0,
+    "budgetLimited": false,
+    "recommendedDaily": 780,
+    "recommendationNote": "On track — $780/day lands on $24,180.",
+    "roasMtd": null,
+    "cpaMtd": null,
+    "sliderMin": 7250,
+    "sliderMax": 48350
+   },
+   {
+    "unitId": "c3",
+    "campaignIds": [
+     "c3"
+    ],
+    "name": "PMax — Full Catalog",
+    "type": "PMax",
+    "dailyBudget": 1250,
+    "monthlyTarget": 38750,
+    "mtdSpend": 0,
+    "avg7": 1142.38,
+    "expectedDaily": 1141.67,
+    "projected": 35391.88,
+    "paceRatio": 0.9133,
+    "status": "on_track",
+    "idealToDate": 0,
+    "utilization": 0,
+    "budgetLimited": false,
+    "recommendedDaily": 1250,
+    "recommendationNote": "On track — $1,250/day lands on $38,750.",
+    "roasMtd": null,
+    "cpaMtd": null,
+    "sliderMin": 11650,
+    "sliderMax": 77500
+   },
+   {
+    "unitId": "c4",
+    "campaignIds": [
+     "c4"
+    ],
+    "name": "Shopping — Best Sellers",
+    "type": "Shopping",
+    "dailyBudget": 640,
+    "monthlyTarget": 19840,
+    "mtdSpend": 0,
+    "avg7": 582.8,
+    "expectedDaily": 582.42,
+    "projected": 18055.08,
+    "paceRatio": 0.91,
+    "status": "on_track",
+    "idealToDate": 0,
+    "utilization": 0,
+    "budgetLimited": false,
+    "recommendedDaily": 640,
+    "recommendationNote": "On track — $640/day lands on $19,840.",
+    "roasMtd": null,
+    "cpaMtd": null,
+    "sliderMin": 5950,
+    "sliderMax": 39700
+   },
+   {
+    "unitId": "c5",
+    "campaignIds": [
+     "c5"
+    ],
+    "name": "YouTube — Q4 Awareness",
+    "type": "Video",
+    "dailyBudget": 520,
+    "monthlyTarget": 16120,
+    "mtdSpend": 0,
+    "avg7": 437.24,
+    "expectedDaily": 437.22,
+    "projected": 13553.84,
+    "paceRatio": 0.8408,
+    "status": "underpacing",
+    "idealToDate": 0,
+    "utilization": 0,
+    "budgetLimited": false,
+    "recommendedDaily": 520,
+    "recommendationNote": "Spending below target: $520/day would use the full budget, but a higher budget alone won't add volume unless the campaign is budget-limited.",
+    "roasMtd": null,
+    "cpaMtd": null,
+    "sliderMin": 4850,
+    "sliderMax": 32250
+   },
+   {
+    "unitId": "c6",
+    "campaignIds": [
+     "c6"
+    ],
+    "name": "Display — Cart Remarketing",
+    "type": "Display",
+    "dailyBudget": 260,
+    "monthlyTarget": 8060,
+    "mtdSpend": 0,
+    "avg7": 308.26,
+    "expectedDaily": 308.7,
+    "projected": 9569.55,
+    "paceRatio": 1.1873,
+    "status": "overpacing",
+    "idealToDate": 0,
+    "utilization": 0,
+    "budgetLimited": false,
+    "recommendedDaily": 260,
+    "recommendationNote": "Lower the daily budget to $260 to land on $8,060. At this rate spend reaches Google's monthly charging limit ($7,904 = 30.4 × daily) around Oct 26, after which ads stop for the month.",
+    "roasMtd": null,
+    "cpaMtd": null,
+    "sliderMin": 2400,
+    "sliderMax": 16100,
+    "capped": true
+   },
+   {
+    "unitId": "c7",
+    "campaignIds": [
+     "c7"
+    ],
+    "name": "Demand Gen — Lookalikes",
+    "type": "Demand Gen",
+    "dailyBudget": 380,
+    "monthlyTarget": 11780,
+    "mtdSpend": 0,
+    "avg7": 328.91,
+    "expectedDaily": 328.55,
+    "projected": 10185.2,
+    "paceRatio": 0.8646,
+    "status": "underpacing",
+    "idealToDate": 0,
+    "utilization": 0,
+    "budgetLimited": false,
+    "recommendedDaily": 380,
+    "recommendationNote": "Spending below target: $380/day would use the full budget, but a higher budget alone won't add volume unless the campaign is budget-limited.",
+    "roasMtd": null,
+    "cpaMtd": null,
+    "sliderMin": 3550,
+    "sliderMax": 23550
+   },
+   {
+    "unitId": "c8",
+    "campaignIds": [
+     "c8"
+    ],
+    "name": "Search — Competitor Terms",
+    "type": "Search",
+    "dailyBudget": 300,
+    "monthlyTarget": 9300,
+    "mtdSpend": 0,
+    "avg7": 273.82,
+    "expectedDaily": 273.66,
+    "projected": 8483.57,
+    "paceRatio": 0.9122,
+    "status": "on_track",
+    "idealToDate": 0,
+    "utilization": 0,
+    "budgetLimited": false,
+    "recommendedDaily": 300,
+    "recommendationNote": "On track — $300/day lands on $9,300.",
+    "roasMtd": null,
+    "cpaMtd": null,
+    "sliderMin": 2800,
+    "sliderMax": 18600
+   }
+  ],
+  "totals": {
+   "monthlyTarget": 141050,
+   "mtdSpend": 0,
+   "projected": 130914.8,
+   "paceRatio": 0.9281,
+   "idealToDate": 0,
+   "overpacingCount": 1,
+   "underpacingCount": 2
+  },
+  "cumulative": [
+   {
+    "date": "2026-10-01",
+    "actual": null,
+    "ideal": 4550,
+    "projected": 4365.39
+   },
+   {
+    "date": "2026-10-02",
+    "actual": null,
+    "ideal": 9100,
+    "projected": 8748.99
+   },
+   {
+    "date": "2026-10-03",
+    "actual": null,
+    "ideal": 13650,
+    "projected": 12608.44
+   },
+   {
+    "date": "2026-10-04",
+    "actual": null,
+    "ideal": 18200,
+    "projected": 16442.83
+   },
+   {
+    "date": "2026-10-05",
+    "actual": null,
+    "ideal": 22750,
+    "projected": 20806.2
+   },
+   {
+    "date": "2026-10-06",
+    "actual": null,
+    "ideal": 27300,
+    "projected": 25129.82
+   },
+   {
+    "date": "2026-10-07",
+    "actual": null,
+    "ideal": 31850,
+    "projected": 29576.59
+   },
+   {
+    "date": "2026-10-08",
+    "actual": null,
+    "ideal": 36400,
+    "projected": 33941.98
+   },
+   {
+    "date": "2026-10-09",
+    "actual": null,
+    "ideal": 40950,
+    "projected": 38325.58
+   },
+   {
+    "date": "2026-10-10",
+    "actual": null,
+    "ideal": 45500,
+    "projected": 42185.03
+   },
+   {
+    "date": "2026-10-11",
+    "actual": null,
+    "ideal": 50050,
+    "projected": 46019.42
+   },
+   {
+    "date": "2026-10-12",
+    "actual": null,
+    "ideal": 54600,
+    "projected": 50382.79
+   },
+   {
+    "date": "2026-10-13",
+    "actual": null,
+    "ideal": 59150,
+    "projected": 54706.41
+   },
+   {
+    "date": "2026-10-14",
+    "actual": null,
+    "ideal": 63700,
+    "projected": 59153.18
+   },
+   {
+    "date": "2026-10-15",
+    "actual": null,
+    "ideal": 68250,
+    "projected": 63518.57
+   },
+   {
+    "date": "2026-10-16",
+    "actual": null,
+    "ideal": 72800,
+    "projected": 67902.17
+   },
+   {
+    "date": "2026-10-17",
+    "actual": null,
+    "ideal": 77350,
+    "projected": 71761.62
+   },
+   {
+    "date": "2026-10-18",
+    "actual": null,
+    "ideal": 81900,
+    "projected": 75596.01
+   },
+   {
+    "date": "2026-10-19",
+    "actual": null,
+    "ideal": 86450,
+    "projected": 79959.38
+   },
+   {
+    "date": "2026-10-20",
+    "actual": null,
+    "ideal": 91000,
+    "projected": 84283
+   },
+   {
+    "date": "2026-10-21",
+    "actual": null,
+    "ideal": 95550,
+    "projected": 88729.77
+   },
+   {
+    "date": "2026-10-22",
+    "actual": null,
+    "ideal": 100100,
+    "projected": 93095.16
+   },
+   {
+    "date": "2026-10-23",
+    "actual": null,
+    "ideal": 104650,
+    "projected": 97478.76
+   },
+   {
+    "date": "2026-10-24",
+    "actual": null,
+    "ideal": 109200,
+    "projected": 101338.21
+   },
+   {
+    "date": "2026-10-25",
+    "actual": null,
+    "ideal": 113750,
+    "projected": 105172.6
+   },
+   {
+    "date": "2026-10-26",
+    "actual": null,
+    "ideal": 118300,
+    "projected": 109535.97
+   },
+   {
+    "date": "2026-10-27",
+    "actual": null,
+    "ideal": 122850,
+    "projected": 113859.59
+   },
+   {
+    "date": "2026-10-28",
+    "actual": null,
+    "ideal": 127400,
+    "projected": 118306.36
+   },
+   {
+    "date": "2026-10-29",
+    "actual": null,
+    "ideal": 131950,
+    "projected": 122671.75
+   },
+   {
+    "date": "2026-10-30",
+    "actual": null,
+    "ideal": 136500,
+    "projected": 127055.35
+   },
+   {
+    "date": "2026-10-31",
+    "actual": null,
+    "ideal": 141050,
+    "projected": 130914.8
+   }
+  ]
+ },
+ "targets_2026_09": {
+  "id": "demo:4821193307:2026-09",
+  "month": "2026-09",
+  "targets": {
+   "c1": 12600,
+   "c2": 23400,
+   "c3": 37500,
+   "c4": 19200,
+   "c5": 15600,
+   "c6": 7800,
+   "c7": 11400,
+   "c8": 9000
+  },
+  "locks": {},
+  "version": 0,
+  "createdAt": "1970-01-01T00:00:00.000Z",
+  "updatedAt": "1970-01-01T00:00:00.000Z",
+  "defaults": {
+   "c1": 12600,
+   "c2": 23400,
+   "c3": 37500,
+   "c4": 19200,
+   "c5": 15600,
+   "c6": 7800,
+   "c7": 11400,
+   "c8": 9000
+  },
+  "isDefault": true
+ },
+ "targets_2026_10": {
+  "id": "demo:4821193307:2026-10",
+  "month": "2026-10",
+  "targets": {
+   "c1": 13020,
+   "c2": 24180,
+   "c3": 38750,
+   "c4": 19840,
+   "c5": 16120,
+   "c6": 8060,
+   "c7": 11780,
+   "c8": 9300
+  },
+  "locks": {},
+  "version": 0,
+  "createdAt": "1970-01-01T00:00:00.000Z",
+  "updatedAt": "1970-01-01T00:00:00.000Z",
+  "defaults": {
+   "c1": 13020,
+   "c2": 24180,
+   "c3": 38750,
+   "c4": 19840,
+   "c5": 16120,
+   "c6": 8060,
+   "c7": 11780,
+   "c8": 9300
+  },
+  "isDefault": true
+ },
+ "anomaly_settings": {
+  "pacing": {
+   "enabled": true,
+   "over": 1.05,
+   "overCritical": 1.2,
+   "under": 0.9
+  }
+ },
+ "curves_conv_value": {
+  "objective": "conv_value",
+  "window": {
+   "start": "2026-07-31",
+   "end": "2026-09-28"
+  },
+  "curves": [
+   {
+    "campaignId": "c1",
+    "objective": "conv_value",
+    "a": 43.618279580501024,
+    "b": 0.8659996381604976,
+    "bRaw": 1.2294,
+    "r2": 0.4181,
+    "n": 60,
+    "spendRange": [
+     328.3,
+     433.28
+    ],
+    "confidence": "medium",
+    "name": "Brand — Core Terms"
+   },
+   {
+    "campaignId": "c2",
+    "objective": "conv_value",
+    "a": 9.175658736003717,
+    "b": 0.8001298754238203,
+    "bRaw": 0.9874,
+    "r2": 0.4645,
+    "n": 60,
+    "spendRange": [
+     626.4,
+     841.14
+    ],
+    "confidence": "medium",
+    "name": "Generic — Running Shoes"
+   },
+   {
+    "campaignId": "c3",
+    "objective": "conv_value",
+    "a": 8.872052608117963,
+    "b": 0.8812418129857331,
+    "bRaw": 1.4428,
+    "r2": 0.3253,
+    "n": 60,
+    "spendRange": [
+     983.64,
+     1332.55
+    ],
+    "confidence": "medium",
+    "name": "PMax — Full Catalog"
+   },
+   {
+    "campaignId": "c4",
+    "objective": "conv_value",
+    "a": 10.221726333448254,
+    "b": 0.8594024572226927,
+    "bRaw": 1.0571,
+    "r2": 0.5952,
+    "n": 60,
+    "spendRange": [
+     484.66,
+     659.86
+    ],
+    "confidence": "high",
+    "name": "Shopping — Best Sellers"
+   },
+   {
+    "campaignId": "c5",
+    "objective": "conv_value",
+    "a": 11.659015886843978,
+    "b": 0.7603353550031547,
+    "bRaw": 0.8841,
+    "r2": 0.4369,
+    "n": 60,
+    "spendRange": [
+     377,
+     512.27
+    ],
+    "confidence": "medium",
+    "name": "YouTube — Q4 Awareness"
+   },
+   {
+    "campaignId": "c6",
+    "objective": "conv_value",
+    "a": 13.24341421375926,
+    "b": 0.807201061188526,
+    "bRaw": 0.9079,
+    "r2": 0.6874,
+    "n": 60,
+    "spendRange": [
+     195.52,
+     399.8
+    ],
+    "confidence": "high",
+    "name": "Display — Cart Remarketing"
+   },
+   {
+    "campaignId": "c7",
+    "objective": "conv_value",
+    "a": 4.127772558870791,
+    "b": 0.9144708268408255,
+    "bRaw": 1.1988,
+    "r2": 0.5783,
+    "n": 58,
+    "spendRange": [
+     285.01,
+     383.52
+    ],
+    "confidence": "high",
+    "name": "Demand Gen — Lookalikes"
+   },
+   {
+    "campaignId": "c8",
+    "objective": "conv_value",
+    "a": 1.6661722761764501,
+    "b": 0.9370273637095877,
+    "bRaw": 1.5307,
+    "r2": 0.3805,
+    "n": 60,
+    "spendRange": [
+     241.42,
+     323.23
+    ],
+    "confidence": "medium",
+    "name": "Search — Competitor Terms"
+   }
+  ]
+ },
+ "optimize": {
+  "objective": "conv_value",
+  "strategy": "marginal",
+  "period": "monthly",
+  "rows": [
+   {
+    "unitId": "c1",
+    "name": "Brand — Core Terms",
+    "current": 12600,
+    "recommended": 20150,
+    "delta": 7550,
+    "deltaPct": 0.5992,
+    "expected": {
+     "current": 244637.33,
+     "recommended": 367370.22
+    },
+    "marginalCost": 0.0633,
+    "bound": "max",
+    "curveConfidence": "medium"
+   },
+   {
+    "unitId": "c2",
+    "name": "Generic — Running Shoes",
+    "current": 23400,
+    "recommended": 11700,
+    "delta": -11700,
+    "deltaPct": -0.5,
+    "expected": {
+     "current": 56729.61,
+     "recommended": 32579.67
+    },
+    "marginalCost": 0.4488,
+    "bound": "min",
+    "curveConfidence": "medium"
+   },
+   {
+    "unitId": "c3",
+    "name": "PMax — Full Catalog",
+    "current": 37500,
+    "recommended": 43500,
+    "delta": 6000,
+    "deltaPct": 0.16,
+    "expected": {
+     "current": 142650.06,
+     "recommended": 162582.96
+    },
+    "marginalCost": 0.3036,
+    "bound": null,
+    "curveConfidence": "medium"
+   },
+   {
+    "unitId": "c4",
+    "name": "Shopping — Best Sellers",
+    "current": 19200,
+    "recommended": 30700,
+    "delta": 11500,
+    "deltaPct": 0.599,
+    "expected": {
+     "current": 79119.49,
+     "recommended": 118429.97
+    },
+    "marginalCost": 0.3016,
+    "bound": "max",
+    "curveConfidence": "high"
+   },
+   {
+    "unitId": "c5",
+    "name": "YouTube — Q4 Awareness",
+    "current": 15600,
+    "recommended": 7800,
+    "delta": -7800,
+    "deltaPct": -0.5,
+    "expected": {
+     "current": 40630.91,
+     "recommended": 23986.82
+    },
+    "marginalCost": 0.4277,
+    "bound": "min",
+    "curveConfidence": "medium"
+   },
+   {
+    "unitId": "c6",
+    "name": "Display — Cart Remarketing",
+    "current": 7800,
+    "recommended": 12450,
+    "delta": 4650,
+    "deltaPct": 0.5962,
+    "expected": {
+     "current": 35358.21,
+     "recommended": 51571.82
+    },
+    "marginalCost": 0.2991,
+    "bound": null,
+    "curveConfidence": "high"
+   },
+   {
+    "unitId": "c7",
+    "name": "Demand Gen — Lookalikes",
+    "current": 11400,
+    "recommended": 5700,
+    "delta": -5700,
+    "deltaPct": -0.5,
+    "expected": {
+     "current": 28312.22,
+     "recommended": 15020.72
+    },
+    "marginalCost": 0.415,
+    "bound": "min",
+    "curveConfidence": "high"
+   },
+   {
+    "unitId": "c8",
+    "name": "Search — Competitor Terms",
+    "current": 9000,
+    "recommended": 4500,
+    "delta": -4500,
+    "deltaPct": -0.5,
+    "expected": {
+     "current": 10470.6,
+     "recommended": 5468.88
+    },
+    "marginalCost": 0.8781,
+    "bound": "min",
+    "curveConfidence": "medium"
+   }
+  ],
+  "totals": {
+   "current": 136500,
+   "recommended": 136500,
+   "expectedCurrent": 637908.43,
+   "expectedRecommended": 777011.06,
+   "liftPct": 0.2181
+  },
+  "warnings": [
+   "Brand — Core Terms: $672/day is above the highest daily spend observed ($433); the expected outcome is an extrapolation.",
+   "Shopping — Best Sellers: $1,023/day is above the highest daily spend observed ($660); the expected outcome is an extrapolation."
+  ]
+ },
+ "scenarios": {
+  "objective": "conversions",
+  "strategy": "marginal",
+  "period": "monthly",
+  "baseTotal": 136500,
+  "points": [
+   {
+    "pct": -0.3,
+    "total": 95550,
+    "expected": 6088.41,
+    "marginalCost": null
+   },
+   {
+    "pct": -0.2,
+    "total": 109200,
+    "expected": 6815.96,
+    "marginalCost": 18.7616
+   },
+   {
+    "pct": -0.1,
+    "total": 122850,
+    "expected": 7530.41,
+    "marginalCost": 19.1056
+   },
+   {
+    "pct": 0,
+    "total": 136500,
+    "expected": 8240.82,
+    "marginalCost": 19.2143
+   },
+   {
+    "pct": 0.1,
+    "total": 150150,
+    "expected": 8931.64,
+    "marginalCost": 19.7591
+   },
+   {
+    "pct": 0.2,
+    "total": 163800,
+    "expected": 9614.32,
+    "marginalCost": 19.9947
+   },
+   {
+    "pct": 0.3,
+    "total": 177450,
+    "expected": 10294.6,
+    "marginalCost": 20.0653
+   },
+   {
+    "pct": 0.5,
+    "total": 204750,
+    "expected": 11620.57,
+    "marginalCost": 20.5887
+   }
+  ],
+  "warnings": [
+   "Some totals push Brand — Core Terms, Shopping — Best Sellers, PMax — Full Catalog, Display — Cart Remarketing beyond the highest daily spend observed; those expected outcomes are extrapolations."
+  ]
+ },
+ "forecast_cost": {
+  "metric": "cost",
+  "history": [
+   {
+    "date": "2026-07-07",
+    "value": 4386.53
+   },
+   {
+    "date": "2026-07-08",
+    "value": 4236.83
+   },
+   {
+    "date": "2026-07-09",
+    "value": 4386.89
+   },
+   {
+    "date": "2026-07-10",
+    "value": 4430.54
+   },
+   {
+    "date": "2026-07-11",
+    "value": 3858.77
+   },
+   {
+    "date": "2026-07-12",
+    "value": 3865.85
+   },
+   {
+    "date": "2026-07-13",
+    "value": 4608.76
+   },
+   {
+    "date": "2026-07-14",
+    "value": 4508.74
+   },
+   {
+    "date": "2026-07-15",
+    "value": 4361.24
+   },
+   {
+    "date": "2026-07-16",
+    "value": 4387.24
+   },
+   {
+    "date": "2026-07-17",
+    "value": 4351.81
+   },
+   {
+    "date": "2026-07-18",
+    "value": 3776.92
+   },
+   {
+    "date": "2026-07-19",
+    "value": 4010.48
+   },
+   {
+    "date": "2026-07-20",
+    "value": 4404.29
+   },
+   {
+    "date": "2026-07-21",
+    "value": 4483.4
+   },
+   {
+    "date": "2026-07-22",
+    "value": 4512.53
+   },
+   {
+    "date": "2026-07-23",
+    "value": 4335.71
+   },
+   {
+    "date": "2026-07-24",
+    "value": 4421.49
+   },
+   {
+    "date": "2026-07-25",
+    "value": 3857.69
+   },
+   {
+    "date": "2026-07-26",
+    "value": 3934.43
+   },
+   {
+    "date": "2026-07-27",
+    "value": 4425.25
+   },
+   {
+    "date": "2026-07-28",
+    "value": 4323.14
+   },
+   {
+    "date": "2026-07-29",
+    "value": 4408.18
+   },
+   {
+    "date": "2026-07-30",
+    "value": 4468.5
+   },
+   {
+    "date": "2026-07-31",
+    "value": 4297.68
+   },
+   {
+    "date": "2026-08-01",
+    "value": 3963.92
+   },
+   {
+    "date": "2026-08-02",
+    "value": 3814.86
+   },
+   {
+    "date": "2026-08-03",
+    "value": 4488.73
+   },
+   {
+    "date": "2026-08-04",
+    "value": 4512.17
+   },
+   {
+    "date": "2026-08-05",
+    "value": 4495.57
+   },
+   {
+    "date": "2026-08-06",
+    "value": 4296.5
+   },
+   {
+    "date": "2026-08-07",
+    "value": 4576.89
+   },
+   {
+    "date": "2026-08-08",
+    "value": 3726.71
+   },
+   {
+    "date": "2026-08-09",
+    "value": 3917.32
+   },
+   {
+    "date": "2026-08-10",
+    "value": 4337.84
+   },
+   {
+    "date": "2026-08-11",
+    "value": 4439.11
+   },
+   {
+    "date": "2026-08-12",
+    "value": 4383.59
+   },
+   {
+    "date": "2026-08-13",
+    "value": 4429.07
+   },
+   {
+    "date": "2026-08-14",
+    "value": 4324
+   },
+   {
+    "date": "2026-08-15",
+    "value": 3832.36
+   },
+   {
+    "date": "2026-08-16",
+    "value": 3727.46
+   },
+   {
+    "date": "2026-08-17",
+    "value": 4309.29
+   },
+   {
+    "date": "2026-08-18",
+    "value": 4456.21
+   },
+   {
+    "date": "2026-08-19",
+    "value": 4401.55
+   },
+   {
+    "date": "2026-08-20",
+    "value": 4526.96
+   },
+   {
+    "date": "2026-08-21",
+    "value": 4421.87
+   },
+   {
+    "date": "2026-08-22",
+    "value": 3824.75
+   },
+   {
+    "date": "2026-08-23",
+    "value": 3691.79
+   },
+   {
+    "date": "2026-08-24",
+    "value": 4419.07
+   },
+   {
+    "date": "2026-08-25",
+    "value": 4368.39
+   },
+   {
+    "date": "2026-08-26",
+    "value": 4480.32
+   },
+   {
+    "date": "2026-08-27",
+    "value": 4288.08
+   },
+   {
+    "date": "2026-08-28",
+    "value": 4325.54
+   },
+   {
+    "date": "2026-08-29",
+    "value": 3810.44
+   },
+   {
+    "date": "2026-08-30",
+    "value": 3840.65
+   },
+   {
+    "date": "2026-08-31",
+    "value": 4387.42
+   },
+   {
+    "date": "2026-09-01",
+    "value": 4216.7
+   },
+   {
+    "date": "2026-09-02",
+    "value": 4326.09
+   },
+   {
+    "date": "2026-09-03",
+    "value": 4293.54
+   },
+   {
+    "date": "2026-09-04",
+    "value": 4393.65
+   },
+   {
+    "date": "2026-09-05",
+    "value": 3809.82
+   },
+   {
+    "date": "2026-09-06",
+    "value": 3773.52
+   },
+   {
+    "date": "2026-09-07",
+    "value": 4274.19
+   },
+   {
+    "date": "2026-09-08",
+    "value": 4398.22
+   },
+   {
+    "date": "2026-09-09",
+    "value": 4574
+   },
+   {
+    "date": "2026-09-10",
+    "value": 4434.28
+   },
+   {
+    "date": "2026-09-11",
+    "value": 4308.3
+   },
+   {
+    "date": "2026-09-12",
+    "value": 3847.86
+   },
+   {
+    "date": "2026-09-13",
+    "value": 3707.78
+   },
+   {
+    "date": "2026-09-14",
+    "value": 4378.6
+   },
+   {
+    "date": "2026-09-15",
+    "value": 4271.26
+   },
+   {
+    "date": "2026-09-16",
+    "value": 4459.08
+   },
+   {
+    "date": "2026-09-17",
+    "value": 4452.56
+   },
+   {
+    "date": "2026-09-18",
+    "value": 4352.98
+   },
+   {
+    "date": "2026-09-19",
+    "value": 3792.94
+   },
+   {
+    "date": "2026-09-20",
+    "value": 3847.95
+   },
+   {
+    "date": "2026-09-21",
+    "value": 4413.05
+   },
+   {
+    "date": "2026-09-22",
+    "value": 4376.49
+   },
+   {
+    "date": "2026-09-23",
+    "value": 4387.15
+   },
+   {
+    "date": "2026-09-24",
+    "value": 4239.75
+   },
+   {
+    "date": "2026-09-25",
+    "value": 4404.89
+   },
+   {
+    "date": "2026-09-26",
+    "value": 3917.09
+   },
+   {
+    "date": "2026-09-27",
+    "value": 3935.84
+   },
+   {
+    "date": "2026-09-28",
+    "value": 4315.38
+   }
+  ],
+  "points": [
+   {
+    "date": "2026-09-29",
+    "yhat": 4413.58,
+    "lo": 4294.49,
+    "hi": 4532.67
+   },
+   {
+    "date": "2026-09-30",
+    "yhat": 4474.72,
+    "lo": 4348.72,
+    "hi": 4600.72
+   },
+   {
+    "date": "2026-10-01",
+    "yhat": 4407.68,
+    "lo": 4278.6,
+    "hi": 4536.76
+   },
+   {
+    "date": "2026-10-02",
+    "yhat": 4427.93,
+    "lo": 4293.46,
+    "hi": 4562.41
+   },
+   {
+    "date": "2026-10-03",
+    "yhat": 3855.87,
+    "lo": 3734.73,
+    "hi": 3977.01
+   },
+   {
+    "date": "2026-10-04",
+    "yhat": 3841.95,
+    "lo": 3717.35,
+    "hi": 3966.54
+   },
+   {
+    "date": "2026-10-05",
+    "yhat": 4397.51,
+    "lo": 4250.58,
+    "hi": 4544.44
+   },
+   {
+    "date": "2026-10-06",
+    "yhat": 4424.32,
+    "lo": 4272.28,
+    "hi": 4576.37
+   },
+   {
+    "date": "2026-10-07",
+    "yhat": 4484.51,
+    "lo": 4326.24,
+    "hi": 4642.79
+   },
+   {
+    "date": "2026-10-08",
+    "yhat": 4416.36,
+    "lo": 4256.5,
+    "hi": 4576.23
+   },
+   {
+    "date": "2026-10-09",
+    "yhat": 4435.78,
+    "lo": 4271.3,
+    "hi": 4600.26
+   },
+   {
+    "date": "2026-10-10",
+    "yhat": 3862.02,
+    "lo": 3715.48,
+    "hi": 4008.55
+   },
+   {
+    "date": "2026-10-11",
+    "yhat": 3847.46,
+    "lo": 3698.23,
+    "hi": 3996.68
+   },
+   {
+    "date": "2026-10-12",
+    "yhat": 4403.19,
+    "lo": 4228.77,
+    "hi": 4577.6
+   },
+   {
+    "date": "2026-10-13",
+    "yhat": 4429.46,
+    "lo": 4250.43,
+    "hi": 4608.49
+   },
+   {
+    "date": "2026-10-14",
+    "yhat": 4489.2,
+    "lo": 4304.2,
+    "hi": 4674.21
+   },
+   {
+    "date": "2026-10-15",
+    "yhat": 4420.52,
+    "lo": 4234.9,
+    "hi": 4606.13
+   },
+   {
+    "date": "2026-10-16",
+    "yhat": 4439.53,
+    "lo": 4249.73,
+    "hi": 4629.33
+   },
+   {
+    "date": "2026-10-17",
+    "yhat": 3864.96,
+    "lo": 3696.82,
+    "hi": 4033.09
+   },
+   {
+    "date": "2026-10-18",
+    "yhat": 3850.09,
+    "lo": 3679.76,
+    "hi": 4020.42
+   },
+   {
+    "date": "2026-10-19",
+    "yhat": 4405.9,
+    "lo": 4207.78,
+    "hi": 4604.02
+   },
+   {
+    "date": "2026-10-20",
+    "yhat": 4431.92,
+    "lo": 4229.46,
+    "hi": 4634.37
+   },
+   {
+    "date": "2026-10-21",
+    "yhat": 4491.44,
+    "lo": 4283.11,
+    "hi": 4699.77
+   },
+   {
+    "date": "2026-10-22",
+    "yhat": 4422.5,
+    "lo": 4214.3,
+    "hi": 4630.7
+   },
+   {
+    "date": "2026-10-23",
+    "yhat": 4441.33,
+    "lo": 4229.21,
+    "hi": 4653.45
+   },
+   {
+    "date": "2026-10-24",
+    "yhat": 3866.36,
+    "lo": 3679.1,
+    "hi": 4053.63
+   },
+   {
+    "date": "2026-10-25",
+    "yhat": 3851.35,
+    "lo": 3662.26,
+    "hi": 4040.45
+   },
+   {
+    "date": "2026-10-26",
+    "yhat": 4407.2,
+    "lo": 4187.92,
+    "hi": 4626.48
+   },
+   {
+    "date": "2026-10-27",
+    "yhat": 4433.09,
+    "lo": 4209.66,
+    "hi": 4656.53
+   },
+   {
+    "date": "2026-10-28",
+    "yhat": 4492.51,
+    "lo": 4263.21,
+    "hi": 4721.81
+   }
+  ],
+  "totals": {
+   "restOfMonth": {
+    "yhat": 8888.3,
+    "lo": 8643.21,
+    "hi": 9133.39
+   },
+   "next30": {
+    "yhat": 128430.24,
+    "lo": 123268.58,
+    "hi": 133591.91
+   }
+  },
+  "method": "holt_damped_dow",
+  "backtestMape": 0.0152
+ },
+ "plan": {
+  "name": "Probe plan",
+  "months": [
+   "2026-10",
+   "2026-11",
+   "2026-12"
+  ],
+  "objective": "conv_value",
+  "status": "draft",
+  "lines": [
+   {
+    "id": "line-c1",
+    "kind": "campaign",
+    "refId": "c1",
+    "name": "Brand — Core Terms",
+    "campaignType": "Search",
+    "monthly": {
+     "2026-10": 20650,
+     "2026-11": 22050,
+     "2026-12": 21650
+    },
+    "flighting": {
+     "pattern": "even"
+    },
+    "origin": "optimizer"
+   },
+   {
+    "id": "line-c2",
+    "kind": "campaign",
+    "refId": "c2",
+    "name": "Generic — Running Shoes",
+    "campaignType": "Search",
+    "monthly": {
+     "2026-10": 12050,
+     "2026-11": 12850,
+     "2026-12": 12600
+    },
+    "flighting": {
+     "pattern": "even"
+    },
+    "origin": "optimizer"
+   },
+   {
+    "id": "line-c3",
+    "kind": "campaign",
+    "refId": "c3",
+    "name": "PMax — Full Catalog",
+    "campaignType": "PMax",
+    "monthly": {
+     "2026-10": 44500,
+     "2026-11": 47600,
+     "2026-12": 46600
+    },
+    "flighting": {
+     "pattern": "even"
+    },
+    "origin": "optimizer"
+   },
+   {
+    "id": "line-c4",
+    "kind": "campaign",
+    "refId": "c4",
+    "name": "Shopping — Best Sellers",
+    "campaignType": "Shopping",
+    "monthly": {
+     "2026-10": 31500,
+     "2026-11": 33600,
+     "2026-12": 33000
+    },
+    "flighting": {
+     "pattern": "even"
+    },
+    "origin": "optimizer"
+   },
+   {
+    "id": "line-c5",
+    "kind": "campaign",
+    "refId": "c5",
+    "name": "YouTube — Q4 Awareness",
+    "campaignType": "Video",
+    "monthly": {
+     "2026-10": 8050,
+     "2026-11": 8550,
+     "2026-12": 8400
+    },
+    "flighting": {
+     "pattern": "even"
+    },
+    "origin": "optimizer"
+   },
+   {
+    "id": "line-c6",
+    "kind": "campaign",
+    "refId": "c6",
+    "name": "Display — Cart Remarketing",
+    "campaignType": "Display",
+    "monthly": {
+     "2026-10": 12800,
+     "2026-11": 13650,
+     "2026-12": 13400
+    },
+    "flighting": {
+     "pattern": "even"
+    },
+    "origin": "optimizer"
+   },
+   {
+    "id": "line-c7",
+    "kind": "campaign",
+    "refId": "c7",
+    "name": "Demand Gen — Lookalikes",
+    "campaignType": "Demand Gen",
+    "monthly": {
+     "2026-10": 5900,
+     "2026-11": 6250,
+     "2026-12": 6150
+    },
+    "flighting": {
+     "pattern": "even"
+    },
+    "origin": "optimizer"
+   },
+   {
+    "id": "line-c8",
+    "kind": "campaign",
+    "refId": "c8",
+    "name": "Search — Competitor Terms",
+    "campaignType": "Search",
+    "monthly": {
+     "2026-10": 4650,
+     "2026-11": 4950,
+     "2026-12": 4850
+    },
+    "flighting": {
+     "pattern": "even"
+    },
+    "origin": "optimizer"
+   },
+   {
+    "id": "idea-2abfc399",
+    "kind": "draft_idea",
+    "refId": "eae08823",
+    "name": "Long-tail generic Search",
+    "campaignType": "Search",
+    "monthly": {
+     "2026-10": 465,
+     "2026-11": 450,
+     "2026-12": 465
+    },
+    "flighting": {
+     "pattern": "even"
+    },
+    "origin": "ai_idea"
+   }
+  ],
+  "accountId": "4821193307",
+  "id": "f635f31f-fdac-4f8f-9ffe-41cd3df504a8",
+  "createdAt": "2026-09-29T12:38:27.228Z",
+  "updatedAt": "2026-09-29T12:38:35.535Z",
+  "version": 3
+ },
+ "google_estimates": {
+  "mode": "live",
+  "currency": "USD",
+  "dataThrough": "2026-09-28",
+  "objective": "conv_value",
+  "campaigns": [
+   {
+    "campaignId": "c1",
+    "name": "Brand — Core Terms",
+    "type": "Search",
+    "status": "Enabled",
+    "biddingStrategy": "TARGET_IMPRESSION_SHARE",
+    "dailyBudget": 420,
+    "sharedBudget": false,
+    "targetCpa": null,
+    "targetRoas": null,
+    "simulations": [
+     {
+      "campaignId": "c1",
+      "type": "BUDGET",
+      "start": "2026-09-21",
+      "end": "2026-09-27",
+      "modification": "UNIFORM",
+      "points": [
+       {
+        "value": 210,
+        "cost": 1455.97,
+        "clicks": 2645,
+        "impressions": 21256,
+        "conversions": 488.93,
+        "convValue": 41843.91,
+        "requiredBudget": null
+       },
+       {
+        "value": 315,
+        "cost": 2183.96,
+        "clicks": 3734,
+        "impressions": 30618,
+        "conversions": 616.53,
+        "convValue": 52765.1,
+        "requiredBudget": null
+       },
+       {
+        "value": 420,
+        "cost": 2911.94,
+        "clicks": 4768,
+        "impressions": 39666,
+        "conversions": 726.8,
+        "convValue": 62202.07,
+        "requiredBudget": null
+       },
+       {
+        "value": 525,
+        "cost": 3375.46,
+        "clicks": 5406,
+        "impressions": 45306,
+        "conversions": 790.87,
+        "convValue": 67685.51,
+        "requiredBudget": null
+       },
+       {
+        "value": 630,
+        "cost": 3838.99,
+        "clicks": 6031,
+        "impressions": 50869,
+        "conversions": 851.27,
+        "convValue": 72854.74,
+        "requiredBudget": null
+       },
+       {
+        "value": 840,
+        "cost": 4766.03,
+        "clicks": 7248,
+        "impressions": 61801,
+        "conversions": 963.38,
+        "convValue": 82449.24,
+        "requiredBudget": null
+       }
+      ],
+      "days": 7,
+      "perDay": [
+       {
+        "value": 210,
+        "cost": 208,
+        "clicks": 377.9,
+        "impressions": 3037,
+        "conversions": 69.847,
+        "convValue": 5977.7,
+        "requiredBudget": null
+       },
+       {
+        "value": 315,
+        "cost": 311.99,
+        "clicks": 533.4,
+        "impressions": 4374,
+        "conversions": 88.076,
+        "convValue": 7537.87,
+        "requiredBudget": null
+       },
+       {
+        "value": 420,
+        "cost": 415.99,
+        "clicks": 681.1,
+        "impressions": 5667,
+        "conversions": 103.829,
+        "convValue": 8886.01,
+        "requiredBudget": null
+       },
+       {
+        "value": 525,
+        "cost": 482.21,
+        "clicks": 772.3,
+        "impressions": 6472,
+        "conversions": 112.981,
+        "convValue": 9669.36,
+        "requiredBudget": null
+       },
+       {
+        "value": 630,
+        "cost": 548.43,
+        "clicks": 861.6,
+        "impressions": 7267,
+        "conversions": 121.61,
+        "convValue": 10407.82,
+        "requiredBudget": null
+       },
+       {
+        "value": 840,
+        "cost": 680.86,
+        "clicks": 1035.4,
+        "impressions": 8829,
+        "conversions": 137.626,
+        "convValue": 11778.46,
+        "requiredBudget": null
+       }
+      ],
+      "stale": false,
+      "current": 420
+     }
+    ],
+    "note": null,
+    "modelCurve": {
+     "campaignId": "c1",
+     "objective": "conv_value",
+     "a": 43.618279580501024,
+     "b": 0.8659996381604976,
+     "bRaw": 1.2294,
+     "r2": 0.4181,
+     "n": 60,
+     "spendRange": [
+      328.3,
+      433.28
+     ],
+     "confidence": "medium"
+    },
+    "simulatorCurve": {
+     "campaignId": "c1",
+     "objective": "conv_value",
+     "a": 282.3142639084463,
+     "b": 0.5719456615492524,
+     "bRaw": 0.5719,
+     "r2": 1,
+     "n": 6,
+     "spendRange": [
+      208,
+      680.86
+     ],
+     "confidence": "high",
+     "source": "google_simulator"
+    },
+    "decision": {
+     "lead": "google_simulator",
+     "reason": "Google's budget simulator covers $420/day (Sep 21 – Sep 27), so it leads; our model is a second opinion.",
+     "objective": "conv_value",
+     "proposedDaily": 420,
+     "google": {
+      "value": 420,
+      "requiredBudget": null,
+      "cost": 415.99142857142857,
+      "clicks": 681.1428571428571,
+      "impressions": 5666.571428571428,
+      "conversions": 103.82857142857142,
+      "convValue": 8886.01
+     },
+     "googleOutcome": 8886.01,
+     "model": 8154.577567535209,
+     "disagreementPct": -0.0823
+    },
+    "deepLink": "https://ads.google.com/aw/campaigns?campaignId=c1&ocid=4821193307"
+   },
+   {
+    "campaignId": "c2",
+    "name": "Generic — Running Shoes",
+    "type": "Search",
+    "status": "Enabled",
+    "biddingStrategy": "MAXIMIZE_CONVERSIONS",
+    "dailyBudget": 780,
+    "sharedBudget": false,
+    "targetCpa": null,
+    "targetRoas": null,
+    "simulations": [
+     {
+      "campaignId": "c2",
+      "type": "BUDGET",
+      "start": "2026-09-21",
+      "end": "2026-09-27",
+      "modification": "UNIFORM",
+      "points": [
+       {
+        "value": 390,
+        "cost": 2568.96,
+        "clicks": 1541,
+        "impressions": 28328,
+        "conversions": 67.14,
+        "convValue": 7696.09,
+        "requiredBudget": null
+       },
+       {
+        "value": 585,
+        "cost": 3853.43,
+        "clicks": 2175,
+        "impressions": 40804,
+        "conversions": 91.97,
+        "convValue": 10542.5,
+        "requiredBudget": null
+       },
+       {
+        "value": 780,
+        "cost": 5137.91,
+        "clicks": 2778,
+        "impressions": 52862,
+        "conversions": 114.98,
+        "convValue": 13179.99,
+        "requiredBudget": null
+       },
+       {
+        "value": 975,
+        "cost": 5550.67,
+        "clicks": 2967,
+        "impressions": 56669,
+        "conversions": 122.09,
+        "convValue": 13994.65,
+        "requiredBudget": null
+       },
+       {
+        "value": 1170,
+        "cost": 5963.43,
+        "clicks": 3153,
+        "impressions": 60448,
+        "conversions": 129.08,
+        "convValue": 14795.84,
+        "requiredBudget": null
+       },
+       {
+        "value": 1560,
+        "cost": 6788.95,
+        "clicks": 3520,
+        "impressions": 67929,
+        "conversions": 142.74,
+        "convValue": 16362.22,
+        "requiredBudget": null
+       }
+      ],
+      "days": 7,
+      "perDay": [
+       {
+        "value": 390,
+        "cost": 366.99,
+        "clicks": 220.1,
+        "impressions": 4047,
+        "conversions": 9.591,
+        "convValue": 1099.44,
+        "requiredBudget": null
+       },
+       {
+        "value": 585,
+        "cost": 550.49,
+        "clicks": 310.7,
+        "impressions": 5829,
+        "conversions": 13.139,
+        "convValue": 1506.07,
+        "requiredBudget": null
+       },
+       {
+        "value": 780,
+        "cost": 733.99,
+        "clicks": 396.9,
+        "impressions": 7552,
+        "conversions": 16.426,
+        "convValue": 1882.86,
+        "requiredBudget": null
+       },
+       {
+        "value": 975,
+        "cost": 792.95,
+        "clicks": 423.9,
+        "impressions": 8096,
+        "conversions": 17.441,
+        "convValue": 1999.24,
+        "requiredBudget": null
+       },
+       {
+        "value": 1170,
+        "cost": 851.92,
+        "clicks": 450.4,
+        "impressions": 8635,
+        "conversions": 18.44,
+        "convValue": 2113.69,
+        "requiredBudget": null
+       },
+       {
+        "value": 1560,
+        "cost": 969.85,
+        "clicks": 502.9,
+        "impressions": 9704,
+        "conversions": 20.391,
+        "convValue": 2337.46,
+        "requiredBudget": null
+       }
+      ],
+      "stale": false,
+      "current": 780
+     }
+    ],
+    "note": null,
+    "modelCurve": {
+     "campaignId": "c2",
+     "objective": "conv_value",
+     "a": 9.175658736003717,
+     "b": 0.8001298754238203,
+     "bRaw": 0.9874,
+     "r2": 0.4645,
+     "n": 60,
+     "spendRange": [
+      626.4,
+      841.14
+     ],
+     "confidence": "medium"
+    },
+    "simulatorCurve": {
+     "campaignId": "c2",
+     "objective": "conv_value",
+     "a": 11.235770233451003,
+     "b": 0.7761535456943279,
+     "bRaw": 0.7762,
+     "r2": 1,
+     "n": 6,
+     "spendRange": [
+      366.99,
+      969.85
+     ],
+     "confidence": "high",
+     "source": "google_simulator"
+    },
+    "decision": {
+     "lead": "google_simulator",
+     "reason": "Google's budget simulator covers $780/day (Sep 21 – Sep 27), so it leads; our model is a second opinion.",
+     "objective": "conv_value",
+     "proposedDaily": 780,
+     "google": {
+      "value": 780,
+      "requiredBudget": null,
+      "cost": 733.9871428571429,
+      "clicks": 396.85714285714283,
+      "impressions": 7551.714285714285,
+      "conversions": 16.425714285714285,
+      "convValue": 1882.8557142857142
+     },
+     "googleOutcome": 1882.8557142857142,
+     "model": 1890.9870162714503,
+     "disagreementPct": 0.0043
+    },
+    "deepLink": "https://ads.google.com/aw/campaigns?campaignId=c2&ocid=4821193307"
+   },
+   {
+    "campaignId": "c3",
+    "name": "PMax — Full Catalog",
+    "type": "PMax",
+    "status": "Enabled",
+    "biddingStrategy": "MAXIMIZE_CONVERSION_VALUE",
+    "dailyBudget": 1250,
+    "sharedBudget": false,
+    "targetCpa": null,
+    "targetRoas": 3.5,
+    "simulations": [],
+    "note": "Google returned no budget simulation for this campaign, so our model leads.",
+    "modelCurve": {
+     "campaignId": "c3",
+     "objective": "conv_value",
+     "a": 8.872052608117963,
+     "b": 0.8812418129857331,
+     "bRaw": 1.4428,
+     "r2": 0.3253,
+     "n": 60,
+     "spendRange": [
+      983.64,
+      1332.55
+     ],
+     "confidence": "medium"
+    },
+    "simulatorCurve": null,
+    "decision": {
+     "lead": "model",
+     "reason": "Google returned no budget simulation for this campaign, so our model leads.",
+     "objective": "conv_value",
+     "proposedDaily": 1250,
+     "google": null,
+     "googleOutcome": null,
+     "model": 4755.0019883457635,
+     "disagreementPct": null
+    },
+    "deepLink": "https://ads.google.com/aw/campaigns?campaignId=c3&ocid=4821193307"
+   },
+   {
+    "campaignId": "c4",
+    "name": "Shopping — Best Sellers",
+    "type": "Shopping",
+    "status": "Enabled",
+    "biddingStrategy": "TARGET_ROAS",
+    "dailyBudget": 640,
+    "sharedBudget": false,
+    "targetCpa": null,
+    "targetRoas": 4,
+    "simulations": [
+     {
+      "campaignId": "c4",
+      "type": "BUDGET",
+      "start": "2026-09-21",
+      "end": "2026-09-27",
+      "modification": "UNIFORM",
+      "points": [
+       {
+        "value": 320,
+        "cost": 2039.05,
+        "clicks": 3277,
+        "impressions": 245674,
+        "conversions": 111.74,
+        "convValue": 10488.8,
+        "requiredBudget": null
+       },
+       {
+        "value": 480,
+        "cost": 3058.58,
+        "clicks": 4625,
+        "impressions": 353867,
+        "conversions": 149.78,
+        "convValue": 14059.85,
+        "requiredBudget": null
+       },
+       {
+        "value": 640,
+        "cost": 4078.11,
+        "clicks": 5906,
+        "impressions": 458443,
+        "conversions": 184.39,
+        "convValue": 17308.89,
+        "requiredBudget": null
+       },
+       {
+        "value": 800,
+        "cost": 4379.53,
+        "clicks": 6275,
+        "impressions": 488829,
+        "conversions": 194.14,
+        "convValue": 18224.23,
+        "requiredBudget": null
+       },
+       {
+        "value": 960,
+        "cost": 4680.95,
+        "clicks": 6640,
+        "impressions": 519007,
+        "conversions": 203.71,
+        "convValue": 19122.25,
+        "requiredBudget": null
+       },
+       {
+        "value": 1280,
+        "cost": 5283.79,
+        "clicks": 7361,
+        "impressions": 578793,
+        "conversions": 222.35,
+        "convValue": 20871.78,
+        "requiredBudget": null
+       }
+      ],
+      "days": 7,
+      "perDay": [
+       {
+        "value": 320,
+        "cost": 291.29,
+        "clicks": 468.1,
+        "impressions": 35096,
+        "conversions": 15.963,
+        "convValue": 1498.4,
+        "requiredBudget": null
+       },
+       {
+        "value": 480,
+        "cost": 436.94,
+        "clicks": 660.7,
+        "impressions": 50552,
+        "conversions": 21.397,
+        "convValue": 2008.55,
+        "requiredBudget": null
+       },
+       {
+        "value": 640,
+        "cost": 582.59,
+        "clicks": 843.7,
+        "impressions": 65492,
+        "conversions": 26.341,
+        "convValue": 2472.7,
+        "requiredBudget": null
+       },
+       {
+        "value": 800,
+        "cost": 625.65,
+        "clicks": 896.4,
+        "impressions": 69833,
+        "conversions": 27.734,
+        "convValue": 2603.46,
+        "requiredBudget": null
+       },
+       {
+        "value": 960,
+        "cost": 668.71,
+        "clicks": 948.6,
+        "impressions": 74144,
+        "conversions": 29.101,
+        "convValue": 2731.75,
+        "requiredBudget": null
+       },
+       {
+        "value": 1280,
+        "cost": 754.83,
+        "clicks": 1051.6,
+        "impressions": 82685,
+        "conversions": 31.764,
+        "convValue": 2981.68,
+        "requiredBudget": null
+       }
+      ],
+      "stale": false,
+      "current": 640
+     },
+     {
+      "campaignId": "c4",
+      "type": "TARGET_ROAS",
+      "start": "2026-09-21",
+      "end": "2026-09-27",
+      "modification": "UNIFORM",
+      "points": [
+       {
+        "value": 2.8,
+        "cost": 6963.25,
+        "clicks": 9307,
+        "impressions": 741998,
+        "conversions": 271.43,
+        "convValue": 25478.99,
+        "requiredBudget": 1047.1
+       },
+       {
+        "value": 3.4,
+        "cost": 5203.92,
+        "clicks": 7266,
+        "impressions": 570913,
+        "conversions": 219.91,
+        "convValue": 20643.28,
+        "requiredBudget": 782.54
+       },
+       {
+        "value": 4,
+        "cost": 4078.11,
+        "clicks": 5906,
+        "impressions": 458443,
+        "conversions": 184.39,
+        "convValue": 17308.89,
+        "requiredBudget": 613.25
+       },
+       {
+        "value": 4.6,
+        "cost": 3306.83,
+        "clicks": 4942,
+        "impressions": 379615,
+        "conversions": 158.47,
+        "convValue": 14875.55,
+        "requiredBudget": 497.27
+       },
+       {
+        "value": 5.2,
+        "cost": 2751.34,
+        "clicks": 4227,
+        "impressions": 321708,
+        "conversions": 138.75,
+        "convValue": 13024.32,
+        "requiredBudget": 413.74
+       },
+       {
+        "value": 6,
+        "cost": 2219.84,
+        "clicks": 3522,
+        "impressions": 265193,
+        "conversions": 118.81,
+        "convValue": 11152.88,
+        "requiredBudget": 333.81
+       }
+      ],
+      "days": 7,
+      "perDay": [
+       {
+        "value": 2.8,
+        "cost": 994.75,
+        "clicks": 1329.6,
+        "impressions": 106000,
+        "conversions": 38.776,
+        "convValue": 3639.86,
+        "requiredBudget": 1047.1
+       },
+       {
+        "value": 3.4,
+        "cost": 743.42,
+        "clicks": 1038,
+        "impressions": 81559,
+        "conversions": 31.416,
+        "convValue": 2949.04,
+        "requiredBudget": 782.54
+       },
+       {
+        "value": 4,
+        "cost": 582.59,
+        "clicks": 843.7,
+        "impressions": 65492,
+        "conversions": 26.341,
+        "convValue": 2472.7,
+        "requiredBudget": 613.25
+       },
+       {
+        "value": 4.6,
+        "cost": 472.4,
+        "clicks": 706,
+        "impressions": 54231,
+        "conversions": 22.639,
+        "convValue": 2125.08,
+        "requiredBudget": 497.27
+       },
+       {
+        "value": 5.2,
+        "cost": 393.05,
+        "clicks": 603.9,
+        "impressions": 45958,
+        "conversions": 19.821,
+        "convValue": 1860.62,
+        "requiredBudget": 413.74
+       },
+       {
+        "value": 6,
+        "cost": 317.12,
+        "clicks": 503.1,
+        "impressions": 37885,
+        "conversions": 16.973,
+        "convValue": 1593.27,
+        "requiredBudget": 333.81
+       }
+      ],
+      "stale": false,
+      "current": 4
+     }
+    ],
+    "note": null,
+    "modelCurve": {
+     "campaignId": "c4",
+     "objective": "conv_value",
+     "a": 10.221726333448254,
+     "b": 0.8594024572226927,
+     "bRaw": 1.0571,
+     "r2": 0.5952,
+     "n": 60,
+     "spendRange": [
+      484.66,
+      659.86
+     ],
+     "confidence": "high"
+    },
+    "simulatorCurve": {
+     "campaignId": "c4",
+     "objective": "conv_value",
+     "a": 24.81702673901666,
+     "b": 0.7226621606139694,
+     "bRaw": 0.7227,
+     "r2": 1,
+     "n": 6,
+     "spendRange": [
+      291.29,
+      754.83
+     ],
+     "confidence": "high",
+     "source": "google_simulator"
+    },
+    "decision": {
+     "lead": "google_simulator",
+     "reason": "Google's budget simulator covers $640/day (Sep 21 – Sep 27), so it leads; our model is a second opinion.",
+     "objective": "conv_value",
+     "proposedDaily": 640,
+     "google": {
+      "value": 640,
+      "requiredBudget": null,
+      "cost": 582.5871428571429,
+      "clicks": 843.7142857142857,
+      "impressions": 65491.857142857145,
+      "conversions": 26.34142857142857,
+      "convValue": 2472.6985714285715
+     },
+     "googleOutcome": 2472.6985714285715,
+     "model": 2637.3162726584837,
+     "disagreementPct": 0.0666
+    },
+    "deepLink": "https://ads.google.com/aw/campaigns?campaignId=c4&ocid=4821193307"
+   },
+   {
+    "campaignId": "c5",
+    "name": "YouTube — Q4 Awareness",
+    "type": "Video",
+    "status": "Enabled",
+    "biddingStrategy": "TARGET_CPM",
+    "dailyBudget": 520,
+    "sharedBudget": false,
+    "targetCpa": null,
+    "targetRoas": null,
+    "simulations": [],
+    "note": "Google returned no budget simulation for this campaign, so our model leads.",
+    "modelCurve": {
+     "campaignId": "c5",
+     "objective": "conv_value",
+     "a": 11.659015886843978,
+     "b": 0.7603353550031547,
+     "bRaw": 0.8841,
+     "r2": 0.4369,
+     "n": 60,
+     "spendRange": [
+      377,
+      512.27
+     ],
+     "confidence": "medium"
+    },
+    "simulatorCurve": null,
+    "decision": {
+     "lead": "model",
+     "reason": "Google returned no budget simulation for this campaign, so our model leads.",
+     "objective": "conv_value",
+     "proposedDaily": 520,
+     "google": null,
+     "googleOutcome": null,
+     "model": 1354.3635608111301,
+     "disagreementPct": null
+    },
+    "deepLink": "https://ads.google.com/aw/campaigns?campaignId=c5&ocid=4821193307"
+   },
+   {
+    "campaignId": "c6",
+    "name": "Display — Cart Remarketing",
+    "type": "Display",
+    "status": "Enabled",
+    "biddingStrategy": "MAXIMIZE_CONVERSIONS",
+    "dailyBudget": 260,
+    "sharedBudget": false,
+    "targetCpa": null,
+    "targetRoas": null,
+    "simulations": [
+     {
+      "campaignId": "c6",
+      "type": "BUDGET",
+      "start": "2026-09-21",
+      "end": "2026-09-27",
+      "modification": "UNIFORM",
+      "points": [
+       {
+        "value": 130,
+        "cost": 1018.46,
+        "clicks": 2576,
+        "impressions": 415872,
+        "conversions": 62.25,
+        "convValue": 5643.61,
+        "requiredBudget": null
+       },
+       {
+        "value": 195,
+        "cost": 1527.69,
+        "clicks": 3637,
+        "impressions": 599021,
+        "conversions": 83.09,
+        "convValue": 7533.09,
+        "requiredBudget": null
+       },
+       {
+        "value": 260,
+        "cost": 2036.92,
+        "clicks": 4644,
+        "impressions": 776045,
+        "conversions": 101.99,
+        "convValue": 9246.08,
+        "requiredBudget": null
+       },
+       {
+        "value": 325,
+        "cost": 2469.77,
+        "clicks": 5470,
+        "impressions": 922997,
+        "conversions": 116.99,
+        "convValue": 10606.15,
+        "requiredBudget": null
+       },
+       {
+        "value": 390,
+        "cost": 2902.61,
+        "clicks": 6275,
+        "impressions": 1067383,
+        "conversions": 131.25,
+        "convValue": 11898.94,
+        "requiredBudget": null
+       },
+       {
+        "value": 520,
+        "cost": 3768.3,
+        "clicks": 7834,
+        "impressions": 1350024,
+        "conversions": 158.07,
+        "convValue": 14329.92,
+        "requiredBudget": null
+       }
+      ],
+      "days": 7,
+      "perDay": [
+       {
+        "value": 130,
+        "cost": 145.49,
+        "clicks": 368,
+        "impressions": 59410,
+        "conversions": 8.893,
+        "convValue": 806.23,
+        "requiredBudget": null
+       },
+       {
+        "value": 195,
+        "cost": 218.24,
+        "clicks": 519.6,
+        "impressions": 85574,
+        "conversions": 11.87,
+        "convValue": 1076.16,
+        "requiredBudget": null
+       },
+       {
+        "value": 260,
+        "cost": 290.99,
+        "clicks": 663.4,
+        "impressions": 110864,
+        "conversions": 14.57,
+        "convValue": 1320.87,
+        "requiredBudget": null
+       },
+       {
+        "value": 325,
+        "cost": 352.82,
+        "clicks": 781.4,
+        "impressions": 131857,
+        "conversions": 16.713,
+        "convValue": 1515.16,
+        "requiredBudget": null
+       },
+       {
+        "value": 390,
+        "cost": 414.66,
+        "clicks": 896.4,
+        "impressions": 152483,
+        "conversions": 18.75,
+        "convValue": 1699.85,
+        "requiredBudget": null
+       },
+       {
+        "value": 520,
+        "cost": 538.33,
+        "clicks": 1119.1,
+        "impressions": 192861,
+        "conversions": 22.581,
+        "convValue": 2047.13,
+        "requiredBudget": null
+       }
+      ],
+      "stale": false,
+      "current": 260
+     }
+    ],
+    "note": null,
+    "modelCurve": {
+     "campaignId": "c6",
+     "objective": "conv_value",
+     "a": 13.24341421375926,
+     "b": 0.807201061188526,
+     "bRaw": 0.9079,
+     "r2": 0.6874,
+     "n": 60,
+     "spendRange": [
+      195.52,
+      399.8
+     ],
+     "confidence": "high"
+    },
+    "simulatorCurve": {
+     "campaignId": "c6",
+     "objective": "conv_value",
+     "a": 23.22887188836105,
+     "b": 0.7122239444952794,
+     "bRaw": 0.7122,
+     "r2": 1,
+     "n": 6,
+     "spendRange": [
+      145.49,
+      538.33
+     ],
+     "confidence": "high",
+     "source": "google_simulator"
+    },
+    "decision": {
+     "lead": "google_simulator",
+     "reason": "Google's budget simulator covers $260/day (Sep 21 – Sep 27), so it leads; our model is a second opinion.",
+     "objective": "conv_value",
+     "proposedDaily": 260,
+     "google": {
+      "value": 260,
+      "requiredBudget": null,
+      "cost": 290.98857142857145,
+      "clicks": 663.4285714285714,
+      "impressions": 110863.57142857143,
+      "conversions": 14.569999999999999,
+      "convValue": 1320.8685714285714
+     },
+     "googleOutcome": 1320.8685714285714,
+     "model": 1178.6069885048278,
+     "disagreementPct": -0.1077
+    },
+    "deepLink": "https://ads.google.com/aw/campaigns?campaignId=c6&ocid=4821193307"
+   },
+   {
+    "campaignId": "c7",
+    "name": "Demand Gen — Lookalikes",
+    "type": "Demand Gen",
+    "status": "Enabled",
+    "biddingStrategy": "MAXIMIZE_CONVERSIONS",
+    "dailyBudget": 380,
+    "sharedBudget": false,
+    "targetCpa": null,
+    "targetRoas": null,
+    "simulations": [],
+    "note": "Google returned no budget simulation for this campaign, so our model leads.",
+    "modelCurve": {
+     "campaignId": "c7",
+     "objective": "conv_value",
+     "a": 4.127772558870791,
+     "b": 0.9144708268408255,
+     "bRaw": 1.1988,
+     "r2": 0.5783,
+     "n": 58,
+     "spendRange": [
+      285.01,
+      383.52
+     ],
+     "confidence": "high"
+    },
+    "simulatorCurve": null,
+    "decision": {
+     "lead": "model",
+     "reason": "Google returned no budget simulation for this campaign, so our model leads.",
+     "objective": "conv_value",
+     "proposedDaily": 380,
+     "google": null,
+     "googleOutcome": null,
+     "model": 943.7405115632126,
+     "disagreementPct": null
+    },
+    "deepLink": "https://ads.google.com/aw/campaigns?campaignId=c7&ocid=4821193307"
+   },
+   {
+    "campaignId": "c8",
+    "name": "Search — Competitor Terms",
+    "type": "Search",
+    "status": "Enabled",
+    "biddingStrategy": "MAXIMIZE_CLICKS",
+    "dailyBudget": 300,
+    "sharedBudget": false,
+    "targetCpa": null,
+    "targetRoas": null,
+    "simulations": [
+     {
+      "campaignId": "c8",
+      "type": "BUDGET",
+      "start": "2026-09-21",
+      "end": "2026-09-27",
+      "modification": "UNIFORM",
+      "points": [
+       {
+        "value": 150,
+        "cost": 969.94,
+        "clicks": 403,
+        "impressions": 10137,
+        "conversions": 10.52,
+        "convValue": 1251.88,
+        "requiredBudget": null
+       },
+       {
+        "value": 225,
+        "cost": 1454.9,
+        "clicks": 569,
+        "impressions": 14602,
+        "conversions": 14.2,
+        "convValue": 1689.89,
+        "requiredBudget": null
+       },
+       {
+        "value": 300,
+        "cost": 1939.87,
+        "clicks": 726,
+        "impressions": 18917,
+        "conversions": 17.57,
+        "convValue": 2090.77,
+        "requiredBudget": null
+       },
+       {
+        "value": 375,
+        "cost": 2039.31,
+        "clicks": 758,
+        "impressions": 19788,
+        "conversions": 18.23,
+        "convValue": 2169.56,
+        "requiredBudget": null
+       },
+       {
+        "value": 450,
+        "cost": 2138.75,
+        "clicks": 789,
+        "impressions": 20654,
+        "conversions": 18.89,
+        "convValue": 2247.35,
+        "requiredBudget": null
+       },
+       {
+        "value": 600,
+        "cost": 2337.63,
+        "clicks": 851,
+        "impressions": 22375,
+        "conversions": 20.17,
+        "convValue": 2400.18,
+        "requiredBudget": null
+       }
+      ],
+      "days": 7,
+      "perDay": [
+       {
+        "value": 150,
+        "cost": 138.56,
+        "clicks": 57.6,
+        "impressions": 1448,
+        "conversions": 1.503,
+        "convValue": 178.84,
+        "requiredBudget": null
+       },
+       {
+        "value": 225,
+        "cost": 207.84,
+        "clicks": 81.3,
+        "impressions": 2086,
+        "conversions": 2.029,
+        "convValue": 241.41,
+        "requiredBudget": null
+       },
+       {
+        "value": 300,
+        "cost": 277.12,
+        "clicks": 103.7,
+        "impressions": 2702,
+        "conversions": 2.51,
+        "convValue": 298.68,
+        "requiredBudget": null
+       },
+       {
+        "value": 375,
+        "cost": 291.33,
+        "clicks": 108.3,
+        "impressions": 2827,
+        "conversions": 2.604,
+        "convValue": 309.94,
+        "requiredBudget": null
+       },
+       {
+        "value": 450,
+        "cost": 305.54,
+        "clicks": 112.7,
+        "impressions": 2951,
+        "conversions": 2.699,
+        "convValue": 321.05,
+        "requiredBudget": null
+       },
+       {
+        "value": 600,
+        "cost": 333.95,
+        "clicks": 121.6,
+        "impressions": 3196,
+        "conversions": 2.881,
+        "convValue": 342.88,
+        "requiredBudget": null
+       }
+      ],
+      "stale": false,
+      "current": 300
+     }
+    ],
+    "note": null,
+    "modelCurve": {
+     "campaignId": "c8",
+     "objective": "conv_value",
+     "a": 1.6661722761764501,
+     "b": 0.9370273637095877,
+     "bRaw": 1.5307,
+     "r2": 0.3805,
+     "n": 60,
+     "spendRange": [
+      241.42,
+      323.23
+     ],
+     "confidence": "medium"
+    },
+    "simulatorCurve": {
+     "campaignId": "c8",
+     "objective": "conv_value",
+     "a": 4.653359982630452,
+     "b": 0.7399437347021028,
+     "bRaw": 0.7399,
+     "r2": 1,
+     "n": 6,
+     "spendRange": [
+      138.56,
+      333.95
+     ],
+     "confidence": "high",
+     "source": "google_simulator"
+    },
+    "decision": {
+     "lead": "google_simulator",
+     "reason": "Google's budget simulator covers $300/day (Sep 21 – Sep 27), so it leads; our model is a second opinion.",
+     "objective": "conv_value",
+     "proposedDaily": 300,
+     "google": {
+      "value": 300,
+      "requiredBudget": null,
+      "cost": 277.1242857142857,
+      "clicks": 103.71428571428571,
+      "impressions": 2702.4285714285716,
+      "conversions": 2.5100000000000002,
+      "convValue": 298.68142857142857
+     },
+     "googleOutcome": 298.68142857142857,
+     "model": 349.0199908265432,
+     "disagreementPct": 0.1685
+    },
+    "deepLink": "https://ads.google.com/aw/campaigns?campaignId=c8&ocid=4821193307"
+   }
+  ],
+  "recommendations": [
+   {
+    "id": "demo-c1-budget",
+    "type": "CAMPAIGN_BUDGET",
+    "campaignId": "c1",
+    "campaignIds": [
+     "c1"
+    ],
+    "budgetId": "b-c1",
+    "currentBudget": 420,
+    "recommendedBudget": 630,
+    "options": [
+     {
+      "budget": 525,
+      "impact": {
+       "base": {
+        "impressions": 39666,
+        "clicks": 4768,
+        "cost": 2911.94,
+        "conversions": 726.8,
+        "convValue": 62202.07,
+        "videoViews": null
+       },
+       "potential": {
+        "impressions": 45306,
+        "clicks": 5406,
+        "cost": 3375.46,
+        "conversions": 790.87,
+        "convValue": 67685.51,
+        "videoViews": null
+       }
+      }
+     },
+     {
+      "budget": 630,
+      "impact": {
+       "base": {
+        "impressions": 39666,
+        "clicks": 4768,
+        "cost": 2911.94,
+        "conversions": 726.8,
+        "convValue": 62202.07,
+        "videoViews": null
+       },
+       "potential": {
+        "impressions": 50869,
+        "clicks": 6031,
+        "cost": 3838.99,
+        "conversions": 851.27,
+        "convValue": 72854.74,
+        "videoViews": null
+       }
+      }
+     },
+     {
+      "budget": 840,
+      "impact": {
+       "base": {
+        "impressions": 39666,
+        "clicks": 4768,
+        "cost": 2911.94,
+        "conversions": 726.8,
+        "convValue": 62202.07,
+        "videoViews": null
+       },
+       "potential": {
+        "impressions": 61801,
+        "clicks": 7248,
+        "cost": 4766.03,
+        "conversions": 963.38,
+        "convValue": 82449.24,
+        "videoViews": null
+       }
+      }
+     }
+    ],
+    "impact": {
+     "base": {
+      "impressions": 39666,
+      "clicks": 4768,
+      "cost": 2911.94,
+      "conversions": 726.8,
+      "convValue": 62202.07,
+      "videoViews": null
+     },
+     "potential": {
+      "impressions": 50869,
+      "clicks": 6031,
+      "cost": 3838.99,
+      "conversions": 851.27,
+      "convValue": 72854.74,
+      "videoViews": null
+     }
+    },
+    "dismissed": false,
+    "campaignName": "Brand — Core Terms",
+    "campaignType": "Search",
+    "liveBudget": 420,
+    "applied": false,
+    "deepLink": "https://ads.google.com/aw/campaigns?campaignId=c1&ocid=4821193307"
+   }
+  ],
+  "policy": [
+   {
+    "id": "pacing",
+    "question": "Will we land on budget this month?",
+    "lead": "model",
+    "leadLabel": "Our pacing projection",
+    "why": "It needs this month's actual spend and Google's 2× daily and 30.4× monthly limits; Google's simulators replay a past week and don't project calendar months."
+   },
+   {
+    "id": "trend",
+    "question": "What will the next 30 days look like?",
+    "lead": "model",
+    "leadLabel": "Our damped-Holt forecast",
+    "why": "Performance Planner isn't available in the Google Ads API, so there is no Google forecast to read."
+   },
+   {
+    "id": "budget_whatif",
+    "question": "What if one campaign's daily budget changes?",
+    "lead": "google_simulator",
+    "leadLabel": "Google's budget simulator, when available, fresh and in range",
+    "why": "It replays the campaign's recent auctions at other budgets (Performance Max too, when Google returns a simulation); our model only sees the spend the campaign actually had."
+   },
+   {
+    "id": "target_whatif",
+    "question": "What if a target CPA or target ROAS changes?",
+    "lead": "google_simulator",
+    "leadLabel": "Google's target simulator",
+    "why": "We don't model bid targets."
+   },
+   {
+    "id": "reallocation",
+    "question": "How should budget move between campaigns?",
+    "lead": "model",
+    "leadLabel": "Our optimizer, fed with Google simulator curves where available",
+    "why": "Google's simulators work one campaign at a time; the optimizer compares marginal returns across campaigns."
+   },
+   {
+    "id": "shared_budget",
+    "question": "What if a shared budget changes?",
+    "lead": "model",
+    "leadLabel": "Our model, for the shared budget as a whole",
+    "why": "Google simulates each campaign on a shared budget as if the budget were its own; those campaigns compete for one budget, so their simulations don't add up to it."
+   }
+  ],
+  "warnings": []
+ }
+}

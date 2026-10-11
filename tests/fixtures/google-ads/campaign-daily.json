@@ -1,0 +1,49 @@
+[
+  {
+    "results": [
+      {
+        "segments": { "date": "2026-09-19" },
+        "campaign": { "id": "111" },
+        "metrics": { "impressions": "1000", "clicks": "50", "costMicros": "25000000", "conversions": 2.5, "conversionsValue": 250, "searchImpressionShare": 0.5, "searchBudgetLostImpressionShare": 0.1, "searchRankLostImpressionShare": 0.4 }
+      },
+      {
+        "segments": { "date": "2026-09-20" },
+        "campaign": { "id": "111" },
+        "metrics": { "impressions": "1200", "clicks": "60", "costMicros": "30500000", "conversions": 3, "conversionsValue": 310.5, "searchImpressionShare": 0.6, "searchBudgetLostImpressionShare": 0.15, "searchRankLostImpressionShare": 0.25 }
+      },
+      {
+        "segments": { "date": "2026-09-20" },
+        "campaign": { "id": "222" },
+        "metrics": { "impressions": "5000", "clicks": "80", "costMicros": "40000000", "conversions": 4.25, "conversionsValue": 612.75 }
+      },
+      {
+        "segments": { "date": "2026-09-21" },
+        "campaign": { "id": "111" },
+        "metrics": { "impressions": "900", "clicks": "45", "costMicros": "22250000", "conversions": 1.5, "conversionsValue": 150, "searchImpressionShare": 0.0999, "searchBudgetLostImpressionShare": 0, "searchRankLostImpressionShare": 0.9001 }
+      }
+    ],
+    "fieldMask": "segments.date,campaign.id,metrics.impressions,metrics.clicks,metrics.costMicros,metrics.conversions,metrics.conversionsValue,metrics.searchImpressionShare,metrics.searchBudgetLostImpressionShare,metrics.searchRankLostImpressionShare",
+    "requestId": "fixture-req-campaign-daily-1"
+  },
+  {
+    "results": [
+      {
+        "segments": { "date": "2026-09-21" },
+        "campaign": { "id": "333" },
+        "metrics": { "impressions": "700", "clicks": "35", "costMicros": "17500000" }
+      },
+      {
+        "segments": { "date": "2026-09-26" },
+        "campaign": { "id": "444" },
+        "metrics": { "impressions": "300", "clicks": "3", "costMicros": "1200000", "conversions": 0.333333, "conversionsValue": 9.99 }
+      },
+      {
+        "segments": { "date": "2026-09-27" },
+        "campaign": { "id": "111" },
+        "metrics": { "impressions": "1100", "clicks": "55", "costMicros": "27000000", "conversions": 2, "conversionsValue": 200, "searchImpressionShare": 0.55, "searchBudgetLostImpressionShare": 0.2, "searchRankLostImpressionShare": 0.25 }
+      }
+    ],
+    "fieldMask": "segments.date,campaign.id,metrics.impressions,metrics.clicks,metrics.costMicros,metrics.conversions,metrics.conversionsValue,metrics.searchImpressionShare,metrics.searchBudgetLostImpressionShare,metrics.searchRankLostImpressionShare",
+    "requestId": "fixture-req-campaign-daily-1"
+  }
+]

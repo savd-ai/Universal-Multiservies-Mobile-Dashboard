@@ -1,0 +1,36 @@
+[
+  {
+    "results": [
+      {
+        "campaign": { "id": "111" },
+        "adGroup": { "id": "5001" },
+        "adGroupCriterion": {
+          "criterionId": "7001",
+          "status": "ENABLED",
+          "keyword": { "text": "acme boots", "matchType": "EXACT" },
+          "qualityInfo": { "qualityScore": 8, "creativeQualityScore": "ABOVE_AVERAGE", "postClickQualityScore": "AVERAGE", "searchPredictedCtr": "BELOW_AVERAGE" },
+          "cpcBidMicros": "1500000",
+          "effectiveCpcBidMicros": "1500000"
+        }
+      },
+      {
+        "campaign": { "id": "111" },
+        "adGroup": { "id": "5002" },
+        "adGroupCriterion": {
+          "criterionId": "7001",
+          "status": "ENABLED",
+          "keyword": { "text": "acme boots", "matchType": "EXACT" },
+          "qualityInfo": { "qualityScore": 6, "creativeQualityScore": "AVERAGE", "postClickQualityScore": "ABOVE_AVERAGE", "searchPredictedCtr": "AVERAGE" },
+          "effectiveCpcBidMicros": "1200000"
+        }
+      },
+      {
+        "campaign": { "id": "111" },
+        "adGroup": { "id": "5001" },
+        "adGroupCriterion": { "criterionId": "7002", "status": "PAUSED", "keyword": { "text": "acme hiking gear", "matchType": "PHRASE" } }
+      }
+    ],
+    "fieldMask": "campaign.id,adGroup.id,adGroupCriterion.criterionId,adGroupCriterion.keyword.text,adGroupCriterion.keyword.matchType,adGroupCriterion.status,adGroupCriterion.qualityInfo.qualityScore,adGroupCriterion.qualityInfo.creativeQualityScore,adGroupCriterion.qualityInfo.postClickQualityScore,adGroupCriterion.qualityInfo.searchPredictedCtr,adGroupCriterion.cpcBidMicros,adGroupCriterion.effectiveCpcBidMicros",
+    "requestId": "fixture-req-keywords"
+  }
+]

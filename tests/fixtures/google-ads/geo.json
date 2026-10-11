@@ -1,0 +1,13 @@
+[
+  {
+    "results": [
+      { "segments": { "date": "2026-09-20" }, "campaign": { "id": "111" }, "userLocationView": { "countryCriterionId": "2840" }, "metrics": { "impressions": "800", "clicks": "40", "costMicros": "20000000", "conversions": 2, "conversionsValue": 210 } },
+      { "segments": { "date": "2026-09-20" }, "campaign": { "id": "111" }, "userLocationView": { "countryCriterionId": "2840" }, "metrics": { "impressions": "50", "clicks": "2", "costMicros": "1000000" } },
+      { "segments": { "date": "2026-09-20" }, "campaign": { "id": "111" }, "userLocationView": { "countryCriterionId": "2704" }, "metrics": { "impressions": "300", "clicks": "15", "costMicros": "7500000", "conversions": 1, "conversionsValue": 100.5 } },
+      { "segments": { "date": "2026-09-20" }, "campaign": { "id": "111" }, "userLocationView": { "countryCriterionId": "2999" }, "metrics": { "impressions": "50", "clicks": "3", "costMicros": "2000000" } },
+      { "segments": { "date": "2026-09-20" }, "campaign": { "id": "222" }, "userLocationView": { "countryCriterionId": "2124" }, "metrics": { "impressions": "900", "clicks": "12", "costMicros": "9000000", "conversions": 0.5, "conversionsValue": 45 } }
+    ],
+    "fieldMask": "segments.date,campaign.id,userLocationView.countryCriterionId,metrics.impressions,metrics.clicks,metrics.costMicros,metrics.conversions,metrics.conversionsValue",
+    "requestId": "fixture-req-geo"
+  }
+]

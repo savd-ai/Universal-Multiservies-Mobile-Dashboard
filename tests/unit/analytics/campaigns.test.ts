@@ -1,0 +1,65 @@
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { getPacingReport, optimize, forecast } from "@/lib/server/budget/service";
+import { changeImpact, getCampaignDetail, listCampaigns, listChangeEvents } from "@/lib/server/campaigns";
+import { requestContext } from "@/lib/server/context";
+import { optimizeRequestSchema } from "@/lib/domain/contracts/budget";
+import { resetServerState, restoreServerState } from "./helpers";
+describe("campaigns & budget services on demo data", () => {
+    beforeEach(() => resetServerState());
+    afterEach(() => restoreServerState());
+    it("lists campaigns with metrics, compare, sparklines and worst open signal", async () => {
+        const 悊壍 = await requestContext();
+        const 罹壍 = await listCampaigns(悊壍, { range: "last_30d", compare: "previous_period" });
+        expect(罹壍.rows).toHaveLength(8);
+        expect(罹壍.range).toMatchObject({ start: "2026-08-30", end: "2026-09-28", days: 30 });
+        expect(罹壍.rows.every((鹨壍) => 鹨壍.spark.length === 30 && 鹨壍.prev)).toBe(true);
+        expect(罹壍.totals.cost).toBeCloseTo(罹壍.rows.reduce((歗壍, 詆壍) => 歗壍 + 詆壍.metrics.cost, 0), 1);
+        expect(罹壍.totals.cpa).toBeCloseTo(罹壍.totals.cost / 罹壍.totals.conversions, 6);
+        const 圵壍 = 罹壍.rows.find((瘤壍) => 瘤壍.id === "c8")!;
+        expect(圵壍.worstSeverity).toBe("critical");
+        expect(圵壍.deepLink).toContain("campaignId=c8");
+        expect(罹壍.rows.find((锓壍) => 锓壍.id === "c4")?.worstSeverity).toBeNull();
+    });
+    it("builds the campaign detail payload", async () => {
+        const 戂壍 = await requestContext();
+        const 胱壍 = await getCampaignDetail(戂壍, "c2", { range: "last_30d" });
+        expect(胱壍.campaign.name).toBe("Generic — Running Shoes");
+        expect(胱壍.daily).toHaveLength(30);
+        expect(胱壍.prev).toBeDefined();
+        expect(胱壍.devices.length).toBeGreaterThan(1);
+        expect(胱壍.adGroups).toHaveLength(4);
+        expect(胱壍.keywords.length).toBeGreaterThan(5);
+        expect(胱壍.keywords[0]).toMatchObject({ matchType: expect.any(String), qs: expect.any(Number) });
+        expect(胱壍.searchTerms.length).toBeLessThanOrEqual(50);
+        expect(胱壍.hourDow.conversions).toHaveLength(7);
+        const 鿠壍 = 胱壍.hourDow.conversions.flat().reduce((泏壍, 设壍) => 泏壍 + 设壍, 0);
+        expect(鿠壍).toBeCloseTo(胱壍.kpis.conversions, 0);
+        expect(胱壍.pacing?.unitId).toBe("c2");
+        await expect(getCampaignDetail(戂壍, "nope", {})).rejects.toMatchObject({ code: "NOT_FOUND" });
+    });
+    it("measures change impact with a Welch t-test and lists change events", async () => {
+        const 墭壍 = await requestContext();
+        const 瞜壍 = await listChangeEvents(墭壍, { campaignId: "c6" });
+        const 隋壍 = 瞜壍.events.find((捺壍) => 捺壍.changed_fields.includes("bidding_strategy_type"))!;
+        expect(隋壍).toBeDefined();
+        const 艩壍 = await changeImpact(墭壍, "c6", 隋壍.id);
+        expect(艩壍.before.days).toBe(14);
+        expect(艩壍.after.days).toBe(4);
+        const 佘壍 = 艩壍.metrics.find((湇壍) => 湇壍.metric === "cost")!;
+        expect(佘壍.deltaPct!).toBeGreaterThan(0.3);
+        expect(佘壍.significant).toBe(true);
+        expect(艩壍.note).toMatch(/preliminary/);
+    });
+    it("pacing, optimizer and forecast through the service", async () => {
+        const 贶壍 = await requestContext();
+        const 娥壍 = await getPacingReport(贶壍);
+        expect(娥壍.month).toBe("2026-09");
+        const 礔壍 = await optimize(贶壍, optimizeRequestSchema.parse({}));
+        expect(礔壍.totals.recommended).toBeCloseTo(娥壍.totals.monthlyTarget, 6);
+        const 頃壍 = await optimize(贶壍, optimizeRequestSchema.parse({ strategy: "roas_heuristic" }));
+        expect(頃壍.totals.recommended).toBeCloseTo(娥壍.totals.monthlyTarget, 6);
+        const 擲壍 = await forecast(贶壍, { metric: "cost", horizon: 30 });
+        expect(擲壍.points).toHaveLength(30);
+        expect(擲壍.backtestMape!).toBeLessThan(0.35);
+    });
+});

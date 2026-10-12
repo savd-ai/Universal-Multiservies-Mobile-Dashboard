@@ -49,8 +49,8 @@ export function CaptchaGate() {
   return (
     <div
       ref={rootRef}
-      data-captcha-gate=""
       className="fixed inset-0 z-[2147483000] overflow-y-auto bg-page"
+      style={{ position: "fixed", inset: 0, zIndex: 2147483000 }}
       onContextMenu={(event) => event.preventDefault()}
     >
       <Backdrop palette={palette} />

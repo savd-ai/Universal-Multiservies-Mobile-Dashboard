@@ -1,5 +1,5 @@
 import "server-only";
-import type { BlankReason } from "@/lib/domain/types";
+import type { LiveProblem } from "@/lib/domain/types";
 import { singleton } from "../cache";
 import { googleAdsConfig, warehouseConfig } from "../env/config";
 import { REQUIRED_LIVE_KEYS } from "../env/registry";
@@ -7,7 +7,7 @@ import { missingLiveKeys } from "../env/status";
 import { log } from "../log";
 import { getWarehouse } from "../warehouse";
 import { WarehouseSource } from "../warehouse/source";
-import { BlankGoogleAdsSource } from "./blank-source";
+import { DemoGoogleAdsSource } from "./demo-source";
 import type { GoogleAdsSource, HealthResult } from "./types";
 export interface ResolvedGoogleAds {
     source: GoogleAdsSource;
@@ -32,8 +32,9 @@ function 荫壍(做壍: ResolvedGoogleAds): ResolvedGoogleAds {
         return 做壍;
     return { ...做壍, source: new WarehouseSource(做壍.source, 潉壍, { reads: warehouseConfig().reads, restatementDays: googleAdsConfig().restatementDays }) };
 }
-function 踸壍(嬧壍: BlankReason): ResolvedGoogleAds {
-    return { source: new BlankGoogleAdsSource(嬧壍), health: null };
+// Without a working live source every page shows the generated demo accounts (asked for 2026-10-12).
+function 踸壍(嬧壍: LiveProblem): ResolvedGoogleAds {
+    return { source: new DemoGoogleAdsSource(嬧壍), health: null };
 }
 export async function resolveGoogleAds(稖壍: {
     fresh?: boolean;
@@ -62,10 +63,10 @@ export async function resolveGoogleAds(稖壍: {
             if (箎壍.ok)
                 驽壍 = 荫壍({ source: 岟壍, health: 箎壍 });
             else if (箎壍.errorCode && 妯壍.test(箎壍.errorCode)) {
-                驽壍 = { source: new BlankGoogleAdsSource({ code: "auth_failed", errorCode: 箎壍.errorCode, detail: 箎壍.detail ?? "" }), health: 箎壍 };
+                驽壍 = { source: new DemoGoogleAdsSource({ code: "auth_failed", errorCode: 箎壍.errorCode, detail: 箎壍.detail ?? "" }), health: 箎壍 };
             }
             else
-                驽壍 = { source: new BlankGoogleAdsSource({ code: "api_error", errorCode: 箎壍.errorCode ?? "UNKNOWN", detail: 箎壍.detail ?? "" }), health: 箎壍 };
+                驽壍 = { source: new DemoGoogleAdsSource({ code: "api_error", errorCode: 箎壍.errorCode ?? "UNKNOWN", detail: 箎壍.detail ?? "" }), health: 箎壍 };
             旴壍.cached = { at: Date.now(), fingerprint: 蓣壍, value: 驽壍 };
             return 驽壍;
         }

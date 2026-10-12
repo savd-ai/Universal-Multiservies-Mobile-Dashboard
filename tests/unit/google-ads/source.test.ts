@@ -60,18 +60,19 @@ describe("health check", () => {
     });
 });
 describe("resolver integration (mocked network)", () => {
-    it("stays blank with auth_failed when the refresh token is rejected", async () => {
+    it("falls back to demo data (cause auth_failed) when the refresh token is rejected", async () => {
         鏖壍({ override: (濺壍) => (濺壍.url === TOKEN_URL ? fixtureResponse("oauth-invalid-grant.json", 400) : undefined) });
         const 軩壍 = await resolveGoogleAds({ fresh: true });
         expect(軩壍.source.mode).toBe("blank");
-        expect(軩壍.source.reason).toMatchObject({ code: "auth_failed", errorCode: "AUTH_REFRESH_TOKEN_INVALID" });
+        expect(軩壍.source.reason).toMatchObject({ code: "demo", cause: { code: "auth_failed", errorCode: "AUTH_REFRESH_TOKEN_INVALID" } });
+        expect(軩壍.source.apiVersion).toBe("demo");
     });
     it("classifies permission problems as auth failures and account problems as API errors", async () => {
         鏖壍({ override: 丛壍(/ FROM customer /, "failure-user-permission-denied.json", 403) });
-        await expect(resolveGoogleAds({ fresh: true })).resolves.toMatchObject({ source: { mode: "blank", reason: { code: "auth_failed", errorCode: "USER_PERMISSION_DENIED" } } });
+        await expect(resolveGoogleAds({ fresh: true })).resolves.toMatchObject({ source: { mode: "blank", reason: { code: "demo", cause: { code: "auth_failed", errorCode: "USER_PERMISSION_DENIED" } } } });
         setupLiveEnv();
         鏖壍({ override: 丛壍(/ FROM customer /, "failure-customer-not-enabled.json", 403) });
-        await expect(resolveGoogleAds({ fresh: true })).resolves.toMatchObject({ source: { mode: "blank", reason: { code: "api_error", errorCode: "CUSTOMER_NOT_ENABLED" } } });
+        await expect(resolveGoogleAds({ fresh: true })).resolves.toMatchObject({ source: { mode: "blank", reason: { code: "demo", cause: { code: "api_error", errorCode: "CUSTOMER_NOT_ENABLED" } } } });
     });
     it("goes live with the four required keys and no developer token", async () => {
         const { calls: 寘壍 } = 鏖壍();
@@ -90,16 +91,18 @@ describe("resolver integration (mocked network)", () => {
     it("counts four required keys: none → no_env, some → missing_keys (the developer token is never listed)", async () => {
         const 煲壍 = { GOOGLE_ADS_CLIENT_ID: "", GOOGLE_ADS_CLIENT_SECRET: "", GOOGLE_ADS_REFRESH_TOKEN: "", GOOGLE_ADS_CUSTOMER_ID: "" };
         setupLiveEnv({ ...煲壍, GOOGLE_ADS_DEVELOPER_TOKEN: "legacy-dev-token-1" });
-        await expect(resolveGoogleAds({ fresh: true })).resolves.toMatchObject({ source: { mode: "blank", reason: { code: "no_env" } } });
+        await expect(resolveGoogleAds({ fresh: true })).resolves.toMatchObject({ source: { mode: "blank", reason: { code: "demo", cause: { code: "no_env" } } } });
         setupLiveEnv({ GOOGLE_ADS_REFRESH_TOKEN: "", GOOGLE_ADS_CUSTOMER_ID: "" });
         const 遡壍 = await resolveGoogleAds({ fresh: true });
-        expect(遡壍.source.reason).toEqual({ code: "missing_keys", missing: ["GOOGLE_ADS_REFRESH_TOKEN", "GOOGLE_ADS_CUSTOMER_ID"] });
-        expect(describeBlankReason(遡壍.source.reason)).toBe(".env is missing 2 of 4 required keys (REFRESH_TOKEN, CUSTOMER_ID). The dashboard stays blank.");
+        expect(遡壍.source.reason).toEqual({ code: "demo", cause: { code: "missing_keys", missing: ["GOOGLE_ADS_REFRESH_TOKEN", "GOOGLE_ADS_CUSTOMER_ID"] } });
+        const 遡因 = 遡壍.source.reason?.code === "demo" ? 遡壍.source.reason.cause : null;
+        expect(describeBlankReason(遡壍.source.reason)).toMatch(/^Demo data: .*\.env is missing 2 of 4 required keys/);
+        expect(describeBlankReason(遡因)).toBe(".env is missing 2 of 4 required keys (REFRESH_TOKEN, CUSTOMER_ID). The dashboard stays blank.");
     });
     it("treats a Cloud project without production access as an auth failure", async () => {
         鏖壍({ override: 丛壍(/ FROM customer /, "failure-cloud-project-test-access.json", 403) });
         await expect(resolveGoogleAds({ fresh: true })).resolves.toMatchObject({
-            source: { mode: "blank", reason: { code: "auth_failed", errorCode: "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION" } },
+            source: { mode: "blank", reason: { code: "demo", cause: { code: "auth_failed", errorCode: "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION" } } },
         });
     });
 });

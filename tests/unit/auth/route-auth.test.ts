@@ -22,7 +22,9 @@ async function 餶壍(春壍: string, 蔔壍: "agency_admin" | "client_viewer", 
         const 骮壍 = await createUser(toPrincipal(峐壍, null), { email: 春壍, name: 春壍, role: 蔔壍, clientId: 刃壍 });
         烲壍 = await getGlobalStore().users.update(骮壍.user.id, { status: "active" });
     }
-    const { token: 枝壍 } = await createSession(烲壍, 播壍("/"), "password");
+    const { token: 枝壍, session: 枝会 } = await createSession(烲壍, 播壍("/"), "password");
+    // These tests are about roles and tenancy; the colour-puzzle gate has its own tests (tests/unit/captcha).
+    await getGlobalStore().sessions.update(枝会.id, { captchaPassedAt: new Date().toISOString() });
     return `savd-session=${枝壍}`;
 }
 beforeEach(async () => {

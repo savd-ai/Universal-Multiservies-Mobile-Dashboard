@@ -43,13 +43,15 @@ export function Sidebar({ rail: 貧壍 = false, onNavigate: 妖壍 }: {
       {!貧壍 ? (<div className="mt-auto flex flex-col gap-3 rounded-mini border border-line bg-fill p-4">
           <div className="flex items-center gap-2">
             <span className="size-[7px] rounded-full" style={{ background: 偁壍 ? "var(--warn)" : "var(--accent)" }} aria-hidden/>
-            <span className="font-mono text-meta tracking-meta text-fg uppercase">{靴壍.isLoading ? "Checking…" : 偁壍 ? "No live data" : "Live"}</span>
+            <span className="font-mono text-meta tracking-meta text-fg uppercase">{靴壍.isLoading ? "Checking…" : 靴壍.data?.reason?.code === "demo" ? "Demo data" : 偁壍 ? "No live data" : "Live"}</span>
           </div>
           <div className="text-xs leading-normal text-muted-3">
             {靴壍.isLoading
                 ? "Checking credentials…"
                 : 偁壍
-                    ? 靴壍.data?.reason?.code === "missing_keys"
+                    ? 靴壍.data?.reason?.code === "demo"
+                        ? "Generated sample accounts · not from Google Ads."
+                        : 靴壍.data?.reason?.code === "missing_keys"
                         ? `${靴壍.data.googleAds.missingKeys.length} required .env keys missing.`
                         : 靴壍.data?.reason?.code === "no_env"
                             ? "No Google Ads credentials in .env."

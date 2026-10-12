@@ -13,7 +13,7 @@ export function BlankBanner() {
     if (!蕏壍.data || 蕏壍.data.mode === "live")
         return null;
     return (<div className="no-print mx-4 mt-5 flex flex-wrap items-center gap-3.5 rounded-mini border border-teal/30 bg-teal/6 px-[18px] py-3 sm:mx-9" role="note">
-      <span className="rounded-pill bg-accent px-2.5 py-[3px] font-mono text-micro tracking-eyebrow text-on-accent uppercase">No live data</span>
+      <span className="rounded-pill bg-accent px-2.5 py-[3px] font-mono text-micro tracking-eyebrow text-on-accent uppercase">{蕏壍.data.reason?.code === "demo" ? "Demo data" : "No live data"}</span>
       <span className="min-w-[240px] flex-1 text-[13px] leading-normal text-muted">{蕏壍.data.reasonText}</span>
       {刾壍("system.manage") ? (<Link href="/data-source" className="text-[13px]">
           Connect live data →
@@ -51,6 +51,6 @@ export function PageFooter() {
     const 鱡壍 = usePathname();
     const 楐壍 = useStatus();
     const 蠿壍 = navFor(鱡壍);
-    const 售壍 = 楐壍.data ? `${楐壍.data.mode !== "live" ? "no live data" : "live"} · data through ${formatLong(楐壍.data.dataThrough)}` : "…";
+    const 售壍 = 楐壍.data ? `${楐壍.data.reason?.code === "demo" ? "demo data" : 楐壍.data.mode !== "live" ? "no live data" : "live"} · data through ${formatLong(楐壍.data.dataThrough)}` : "…";
     return <MetaLine className="no-print mt-4" left="SAVD.AI · Ads intelligence · read-only" right={`Synced ${售壍}`} index={蠿壍 ? navIndex(蠿壍.key) : undefined} total={NAV.length}/>;
 }

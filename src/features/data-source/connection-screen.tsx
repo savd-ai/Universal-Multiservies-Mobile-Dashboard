@@ -18,7 +18,7 @@ import { formatAccountId, formatInterval, timeAgo } from "./format";
 import { useNow } from "./use-now";
 const 帘壍: Record<Tone, string> = { accent: "var(--accent)", crit: "var(--crit)", warn: "var(--warn)", muted: "var(--muted)", faint: "var(--faint)" };
 const 紇壍 = (<>
-    The dashboard reads <span className="font-mono text-fg">.env</span> on the server. Live data requires every required key plus a successful Google Ads API check; otherwise no data is shown.
+    The dashboard reads <span className="font-mono text-fg">.env</span> on the server. Live data requires every required key plus a successful Google Ads API check; until then every page shows generated demo accounts.
   </>);
 type Health = StatusResponse["googleAds"]["health"];
 const 鯶壍: Record<NonNullable<StatusResponse["reason"]>["code"], string> = {
@@ -26,6 +26,7 @@ const 鯶壍: Record<NonNullable<StatusResponse["reason"]>["code"], string> = {
     missing_keys: "Keys missing",
     auth_failed: "Auth failed",
     api_error: "API error",
+    demo: "Demo data",
 };
 function 棥壍(蟔壍: Health, 哃壍: number): {
     label: string;

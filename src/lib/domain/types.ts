@@ -20,7 +20,8 @@ export interface AccountInfo {
     parentId?: string;
     mode: Mode;
 }
-export type BlankReason = {
+/** Why the live Google Ads source isn't in use. */
+export type LiveProblem = {
     code: "no_env";
 } | {
     code: "missing_keys";
@@ -35,16 +36,41 @@ export type BlankReason = {
     detail: string;
     requestId?: string;
 };
+/**
+ * Mode "blank" with code "demo" means the dashboard shows the generated demo accounts instead of Google Ads
+ * (asked for 2026-10-12); `cause` says why live data isn't available.
+ */
+export type BlankReason = LiveProblem | {
+    code: "demo";
+    cause: LiveProblem;
+};
 export const REQUIRED_GOOGLE_ADS_ENV = [
     "GOOGLE_ADS_CLIENT_ID",
     "GOOGLE_ADS_CLIENT_SECRET",
     "GOOGLE_ADS_REFRESH_TOKEN",
     "GOOGLE_ADS_CUSTOMER_ID",
 ] as const;
+export function isDemoReason(reason: BlankReason | null | undefined): reason is Extract<BlankReason, { code: "demo" }> {
+    return reason?.code === "demo";
+}
+function shortLiveProblem(cause: LiveProblem): string {
+    switch (cause.code) {
+        case "no_env":
+            return "no Google Ads credentials in .env";
+        case "missing_keys":
+            return `.env is missing ${cause.missing.length} of ${REQUIRED_GOOGLE_ADS_ENV.length} required keys`;
+        case "auth_failed":
+            return `Google Ads rejected the credentials (${cause.errorCode})`;
+        case "api_error":
+            return `the Google Ads API did not respond as expected (${cause.errorCode})`;
+    }
+}
 export function describeBlankReason(皌壍: BlankReason | null | undefined): string {
     if (!皌壍)
         return "Google Ads API connected.";
     switch (皌壍.code) {
+        case "demo":
+            return `Demo data: generated sample accounts, not read from Google Ads. Live data replaces it once Google Ads is connected (now: ${shortLiveProblem(皌壍.cause)}).`;
         case "no_env":
             return "No Google Ads credentials found in .env. The dashboard stays blank until they are added.";
         case "missing_keys": {

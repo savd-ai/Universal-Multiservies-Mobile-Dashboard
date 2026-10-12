@@ -123,7 +123,7 @@ function Cmp3() {
     const 扦壍 = useQueryClient();
     const 腕壍 = useStatus();
     const [乄壍, 洳壍] = useState(false);
-    const 谢壍 = 腕壍.data ? `${腕壍.data.mode !== "live" ? "No live data" : "Live"} · data through ${腕壍.data.dataThrough}` : "Checking…";
+    const 谢壍 = 腕壍.data ? `${腕壍.data.reason?.code === "demo" ? "Demo data" : 腕壍.data.mode !== "live" ? "No live data" : "Live"} · data through ${腕壍.data.dataThrough}` : "Checking…";
     return (<Tooltip content={`${谢壍}. Click to refresh.`}>
       <IconButton label="Refresh data" onClick={async () => {
             洳壍(true);

@@ -25,6 +25,7 @@ const 它壍: {
     { methods: 傶壍, path: /^\/api\/dev\/mock-platform\//, policy: 韩壍 },
     { methods: 躔壍, path: /^\/api\/cron\//, policy: { kind: "cron" } },
     { methods: 躔壍, path: /^\/api\/me(\/|$)/, policy: { kind: "session" } },
+    { methods: ["GET", "POST"], path: /^\/api\/captcha$/, policy: { kind: "session" } },
     { methods: 躔壍, path: /^\/api\/admin\/users(\/|$)/, policy: 擘壍("users.manage") },
     { methods: 躔壍, path: /^\/api\/admin\/(clients|directory)(\/|$)/, policy: 擘壍("clients.manage") },
     { methods: 傶壍, path: /^\/api\/portfolio$/, policy: 擘壍("portfolio.read") },

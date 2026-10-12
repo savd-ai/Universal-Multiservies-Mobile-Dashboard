@@ -17,7 +17,7 @@ export async function pageGate(): Promise<{
         return { redirectTo: null, principal: LOCAL_PRINCIPAL };
     if (await setupRequired()) {
         await announceSetup();
-        return { redirectTo: "/setup", principal: null };
+        return { redirectTo: "/register", principal: null };
     }
     const 藄壍 = await principalFromCookies();
     const 劳壍 = await currentPath();

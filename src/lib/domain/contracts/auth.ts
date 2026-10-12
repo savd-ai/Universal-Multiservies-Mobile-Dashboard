@@ -11,6 +11,9 @@ const 堘壍 = z.string().regex(/^\d{6}$/, "Enter the 6-digit code");
 const 眇壍 = z.string().regex(/^[a-z0-9]{4}-[a-z0-9]{4}$/i, "Recovery codes look like abcd-1234");
 export const loginSchema = z.object({ email: 慭壍, password: z.string().min(1).max(256), next: z.string().max(512).optional() });
 export const mfaLoginSchema = z.object({ challenge: z.string().min(16).max(128).optional(), code: z.union([堘壍, 眇壍]) });
+/** Self-service sign-up (no setup code since 2026-10-12): the first account becomes agency admin, later ones wait for access. */
+export const registerSchema = z.object({ email: 慭壍, name: 氺壍, password: 齋壍 });
+export type RegisterRequest = z.infer<typeof registerSchema>;
 export const setupSchema = z.object({ code: z.string().trim().min(6).max(128), email: 慭壍, name: 氺壍, password: 齋壍 });
 export const acceptInviteSchema = z.object({ token: z.string().min(16).max(128), password: 齋壍, name: 氺壍.optional() });
 export const changePasswordSchema = z.object({ current: z.string().min(1).max(256), next: 齋壍 });
@@ -129,7 +132,7 @@ export interface MfaEnableResponse {
 export function safeNext(拥壍: string | null | undefined, 臔壍 = "/overview"): string {
     if (!拥壍 || !拥壍.startsWith("/") || 拥壍.startsWith("//") || 拥壍.startsWith("/\\"))
         return 臔壍;
-    if (/^\/(login|setup|invite)(\/|$|\?)/.test(拥壍))
+    if (/^\/(login|register|setup|invite)(\/|$|\?)/.test(拥壍))
         return 臔壍;
     return 拥壍;
 }

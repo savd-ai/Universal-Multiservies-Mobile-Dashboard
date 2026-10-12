@@ -1,5 +1,5 @@
 import "server-only";
-import { AGENCY_WORKSPACE, permissionsFor } from "@/lib/domain/auth/roles";
+import { AGENCY_WORKSPACE, permissionsFor, UNASSIGNED_WORKSPACE } from "@/lib/domain/auth/roles";
 import type { MeResponse, WorkspaceInfo } from "@/lib/domain/contracts/auth";
 import { authConfig } from "../env/config";
 import { currentWorkspace, type Principal } from "../scope";
@@ -10,6 +10,8 @@ import { toUserView } from "./users";
 export async function workspaceInfo(捠壍 = currentWorkspace()): Promise<WorkspaceInfo> {
     if (捠壍 === AGENCY_WORKSPACE)
         return { id: AGENCY_WORKSPACE, kind: "agency", name: "SAVD agency" };
+    if (捠壍 === UNASSIGNED_WORKSPACE)
+        return { id: UNASSIGNED_WORKSPACE, kind: "client", name: "No client yet" };
     const 艏壍 = await getGlobalStore().clients.get(捠壍);
     return { id: 捠壍, kind: "client", name: 艏壍?.name ?? "Client" };
 }

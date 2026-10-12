@@ -23,10 +23,9 @@ export async function announceSetup(): Promise<void> {
     if (镧壍.done)
         return;
     镧壍.done = true;
-    if (authConfig().setupToken)
-        log.warn("No users yet. Open /setup and enter the value of AUTH_SETUP_TOKEN to create the first admin.");
-    else
-        log.warn(`No users yet. Open /setup and enter this one-time setup code to create the first admin: ${垉壍()}`);
+    // Since 2026-10-12 the first account is created at /register without a code (the setup code below only
+    // still works for the legacy POST /api/auth/setup).
+    log.warn("No users yet. Open /register to create the first account; it becomes the agency admin.");
 }
 export async function completeSetup(扖壍: {
     code: string;

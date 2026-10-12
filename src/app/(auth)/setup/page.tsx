@@ -1,11 +1,5 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { SetupScreen } from "@/features/auth/setup-screen";
-import { announceSetup, setupRequired } from "@/lib/server/auth/setup";
-export const metadata: Metadata = { title: "Set up" };
-export default async function SetupPage() {
-    if (!(await setupRequired()))
-        redirect("/login");
-    await announceSetup();
-    return <SetupScreen />;
+// The first admin no longer needs a setup code (2026-10-12): accounts are created at /register.
+export default function SetupPage() {
+    redirect("/register");
 }

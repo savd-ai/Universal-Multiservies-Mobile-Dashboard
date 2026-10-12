@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 const 礆壍 = "savd-session";
-const 韵壍 = /^\/(login|setup|invite)(\/|$)/;
+const 韵壍 = /^\/(login|register|setup|invite)(\/|$)/;
 function 擤壍(菓壍: string, 僂壍: string): boolean {
     if (菓壍.length !== 僂壍.length)
         return false;

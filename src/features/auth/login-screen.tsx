@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/inputs";
@@ -54,7 +55,13 @@ export function LoginScreen({ next: 跕壍, error: 嫄壍, googleSignIn: 禳壍,
         {禳壍 ? (<a href={`/api/auth/google/start${跕壍 ? `?next=${encodeURIComponent(跕壍)}` : ""}`} className="inline-flex items-center justify-center gap-2 rounded-pill border border-line-strong px-4 py-[9px] text-[13px] font-semibold text-fg hover:border-tone/30 hover:opacity-100">
             <span aria-hidden className="font-display text-sm">G</span> Sign in with Google
           </a>) : null}
-        <p className="m-0 text-xs leading-[1.6] text-muted-3">No account yet? Ask your SAVD contact or your organization&apos;s admin for an invite link. Forgot your password? They can send you a reset link.</p>
+        <p className="m-0 text-[13px] leading-[1.6] text-muted">
+          No account yet?{" "}
+          <Link href={跕壍 ? `/register?next=${encodeURIComponent(跕壍)}` : "/register"} className="font-semibold">
+            Create an account
+          </Link>
+        </p>
+        <p className="m-0 text-xs leading-[1.6] text-muted-3">Forgot your password? Your SAVD contact or your organization&apos;s admin can send you a reset link.</p>
       </form>
     </AuthLayout>);
 }

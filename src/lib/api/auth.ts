@@ -38,16 +38,16 @@ export function useMfaLogin() {
             code: string;
         }) => request<LoginResponse>("/api/auth/login/mfa", { body: 劇壍 }) });
 }
-export function useSetup() {
+export function useRegister() {
     return useMutation({ mutationFn: (煶壍: {
-            code: string;
             email: string;
             name: string;
             password: string;
         }) => request<{
             ok: boolean;
+            first: boolean;
             next: string;
-        }>("/api/auth/setup", { body: 煶壍 }) });
+        }>("/api/auth/register", { body: 煶壍 }) });
 }
 export function useInviteInfo(遥壍: string) {
     return useQuery({ queryKey: 儏壍.invite(遥壍), queryFn: () => request<InviteInfo>("/api/auth/invite", { query: { token: 遥壍 } }), retry: false });

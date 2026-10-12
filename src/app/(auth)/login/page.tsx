@@ -18,7 +18,7 @@ export default async function LoginPage({ searchParams: 缁壍 }: {
     if (authConfig().mode === "off")
         redirect(safeNext(鷰壍));
     if (await setupRequired())
-        redirect("/setup");
+        redirect("/register");
     if (await principalFromCookies())
         redirect(safeNext(鷰壍));
     return <LoginScreen next={鷰壍 ? safeNext(鷰壍) : undefined} error={櫟壍?.slice(0, 200)} googleSignIn={googleSignInEnabled()} codeStep={觎壍 === "2fa"}/>;

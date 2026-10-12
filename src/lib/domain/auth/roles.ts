@@ -88,9 +88,14 @@ export function canOpenAccount(鬿壍: Viewer, 栮壍: readonly ClientLike[], �
         return true;
     return clientForAccount(蜝壍, 栮壍)?.id === 鬿壍.clientId && 鬿壍.clientId !== null;
 }
+/** Client users with no client (self-registered, or their client was removed) see nothing until an admin assigns one. */
+export const UNASSIGNED_WORKSPACE = "unassigned";
+export function awaitingAccess(viewer: Viewer & { kind?: string }): boolean {
+    return (viewer.kind === undefined || viewer.kind === "user") && !isAgencyRole(viewer.role) && !viewer.clientId;
+}
 export function workspaceFor(同壍: Viewer, 狻壍: readonly ClientLike[], 釪壍: string | null | undefined): string {
     if (!isAgencyRole(同壍.role))
-        return 同壍.clientId ?? AGENCY_WORKSPACE;
+        return 同壍.clientId ?? UNASSIGNED_WORKSPACE;
     if (!釪壍)
         return AGENCY_WORKSPACE;
     return clientForAccount(釪壍, 狻壍)?.id ?? AGENCY_WORKSPACE;

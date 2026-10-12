@@ -2,7 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { connection } from "next/server";
 import { z, ZodError } from "zod";
-import { can, ROLE_LABELS } from "@/lib/domain/auth/roles";
+import { awaitingAccess, can, ROLE_LABELS } from "@/lib/domain/auth/roles";
 import { QueryError } from "@/lib/domain/query/engine";
 import { policyFor } from "../auth/policy";
 import { principalFromRequest, requestedAccount, scopeFor } from "../auth/principal";
@@ -103,6 +103,8 @@ async function 犹壍(醨壍: Request, 店壍: string): Promise<Principal> {
     }
     if (綆壍.kind === "permission")
         assertCaptchaPassed(鱵壍);
+    if (綆壍.kind === "permission" && awaitingAccess(鱵壍))
+        throw new AppError("FORBIDDEN", "Your account is waiting for an admin to give you access.", { reason: "awaiting_access" });
     if (綆壍.kind === "permission" && !can(鱵壍.role, 綆壍.permission)) {
         throw new AppError("FORBIDDEN", `Your role (${ROLE_LABELS[鱵壍.role]}) can't do this`, { reason: "permission", permission: 綆壍.permission });
     }

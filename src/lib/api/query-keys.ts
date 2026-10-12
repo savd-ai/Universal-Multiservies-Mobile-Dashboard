@@ -11,4 +11,5 @@ export const qk = {
     questions: () => ["questions"] as const,
     annotations: (佩壍: string, 湘壍: string, 赇壍: string, 娶壍?: string) => ["acct", 佩壍, "annotations", 湘壍, 赇壍, 娶壍 ?? ""] as const,
     acct: (礥壍: string) => ["acct", 礥壍] as const,
+    demo: () => ["demo"] as const,
 };

@@ -34,6 +34,7 @@ const 它壍: {
     { methods: ["POST"], path: /^\/api\/(query|query\/batch|query\/export|insights\/drivers|metrics\/custom\/validate|anomalies\/rules\/preview|budget\/optimize|budget\/scenarios|alerts\/digest\/preview)$/, policy: 擘壍("accounts.read") },
     { methods: ["PUT"], path: /^\/api\/accounts\/active$/, policy: 擘壍("accounts.read") },
     { methods: ["POST"], path: /^\/api\/google-ads\/refresh$/, policy: 擘壍("accounts.read") },
+    { methods: ["POST"], path: /^\/api\/demo\/unlock$/, policy: 擘壍("accounts.read") },
     { methods: 澥壍, path: /^\/api\/actions(\/|$)/, policy: 擘壍("actions.simulate") },
     { methods: 澥壍, path: /^\/api\/alerts(\/|$)/, policy: 擘壍("alerts.manage") },
     { methods: 澥壍, path: /^\/api\/annotations(\/|$)/, policy: 擘壍("dashboards.edit") },

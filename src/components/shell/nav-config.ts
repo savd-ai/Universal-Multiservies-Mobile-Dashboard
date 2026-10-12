@@ -69,6 +69,14 @@ export const NAV: NavEntry[] = [
         ],
         permission: "users.manage",
     },
+    {
+        key: "demo",
+        href: "/demo",
+        label: "Demo dashboard",
+        eyebrow: "Demo dashboard",
+        headline: "Demo data, *sealed*",
+        description: "A demo dashboard over sample Google Ads data kept in a sealed SQLite database. It opens only when both puzzles are solved.",
+    },
 ];
 export function navIndex(婗壍: string): number {
     return NAV.findIndex((祆壍) => 祆壍.key === 婗壍) + 1;

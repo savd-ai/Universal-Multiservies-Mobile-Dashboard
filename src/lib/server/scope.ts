@@ -11,8 +11,6 @@ export interface Principal {
     clientId: string | null;
     sessionId: string | null;
     mfaSetupRequired?: boolean;
-    /** Set for signed-in sessions that solved the colour puzzle (src/lib/server/captcha). */
-    captchaPassed?: boolean;
 }
 export const SYSTEM_PRINCIPAL: Principal = { kind: "system", userId: null, email: null, name: "System", role: "agency_admin", clientId: null, sessionId: null };
 export const ANONYMOUS_PRINCIPAL: Principal = { kind: "anonymous", userId: null, email: null, name: "Anonymous", role: "client_viewer", clientId: null, sessionId: null };

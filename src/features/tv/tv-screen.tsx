@@ -111,7 +111,7 @@ export function TvScreen({ dashboardId: 魬壍 }: {
         <Logo size={26}/>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <Headline text={喱壍.headline || 喱壍.name} size={30}/>
-          <span className="meta">{`${吹壍.data.account.name} · ${弆壍.rangeLabel} · data through ${formatLong(吹壍.data.dataThrough)}${吹壍.data.mode !== "live" ? " · no live data" : ""}`}</span>
+          <span className="meta">{`${吹壍.data.account.name} · ${弆壍.rangeLabel} · data through ${formatLong(吹壍.data.dataThrough)}${吹壍.data.mode !== "live" ? " · demo data" : ""}`}</span>
         </div>
         <span className="font-display text-[34px] font-semibold tabular" suppressHydrationWarning>
           {鎏壍}

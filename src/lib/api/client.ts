@@ -73,8 +73,6 @@ export async function request<T = unknown>(缜壍: string, 鸋壍: RequestOption
         } | null)?.error;
         if (肔壍.status === 401 && !缜壍.startsWith("/api/auth/"))
             錾壍();
-        if (肔壍.status === 403 && (塐壍?.details as { reason?: string } | undefined)?.reason === "captcha_required" && typeof window !== "undefined")
-            hardNavigate(window.location.pathname + window.location.search);
         throw new ApiError(肔壍.status, 塐壍?.code ?? `HTTP_${肔壍.status}`, 塐壍?.message ?? 肔壍.statusText, 塐壍?.details, 塐壍?.retryAfterSec);
     }
     if (鸋壍.schema) {

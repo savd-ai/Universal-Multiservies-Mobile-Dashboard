@@ -6,7 +6,6 @@ import { awaitingAccess, can, ROLE_LABELS } from "@/lib/domain/auth/roles";
 import { QueryError } from "@/lib/domain/query/engine";
 import { policyFor } from "../auth/policy";
 import { principalFromRequest, requestedAccount, scopeFor } from "../auth/principal";
-import { assertCaptchaPassed } from "../captcha/service";
 import { SecretsDisabledError } from "../crypto/secrets";
 import { appConfig, env } from "../env/config";
 import { log } from "../log";
@@ -101,8 +100,6 @@ async function 犹壍(醨壍: Request, 店壍: string): Promise<Principal> {
     if (鱵壍.mfaSetupRequired && 綆壍.kind !== "session") {
         throw new AppError("FORBIDDEN", "Set up two-factor authentication to continue", { reason: "mfa_setup_required" });
     }
-    if (綆壍.kind === "permission")
-        assertCaptchaPassed(鱵壍);
     if (綆壍.kind === "permission" && awaitingAccess(鱵壍))
         throw new AppError("FORBIDDEN", "Your account is waiting for an admin to give you access.", { reason: "awaiting_access" });
     if (綆壍.kind === "permission" && !can(鱵壍.role, 綆壍.permission)) {

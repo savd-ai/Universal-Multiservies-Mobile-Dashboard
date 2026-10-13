@@ -73,7 +73,7 @@ export function ClientsScreen() {
           <span className="flex items-center gap-2 truncate font-medium text-fg">
             {懒壍.name}
             {懒壍.mode !== "live" ? (<Pill tone="muted" className="px-1.5 py-px text-[9px]">
-                No data
+                Demo
               </Pill>) : null}
           </span>
           <span className="font-mono text-micro text-faint">

@@ -21,7 +21,6 @@ export function toPrincipal(刮壍: UserRecord, 焝壍: SessionRecord | null): P
         clientId: 刮壍.clientId,
         sessionId: 焝壍?.id ?? null,
         mfaSetupRequired: requiresMfa(刮壍) && !刮壍.mfa,
-        captchaPassed: !!焝壍?.captchaPassedAt,
     };
 }
 export async function principalFromToken(逌壍: string | null): Promise<Principal | null> {

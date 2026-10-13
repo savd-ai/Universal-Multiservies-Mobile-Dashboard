@@ -74,8 +74,8 @@ export const NAV: NavEntry[] = [
         href: "/demo",
         label: "Demo dashboard",
         eyebrow: "Demo dashboard",
-        headline: "Demo data, *sealed*",
-        description: "A demo dashboard over sample Google Ads data kept in a sealed SQLite database. It opens only when both puzzles are solved.",
+        headline: "Demo data, *open*",
+        description: "A demo dashboard over generated sample Google Ads accounts. The numbers are not read from Google Ads.",
     },
 ];
 export function navIndex(婗壍: string): number {

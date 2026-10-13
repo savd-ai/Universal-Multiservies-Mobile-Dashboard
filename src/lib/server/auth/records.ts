@@ -34,8 +34,6 @@ export interface SessionRecord extends BaseRecord {
     ip: string;
     userAgent: string;
     method: SessionView["method"];
-    /** When this session solved the colour puzzle; absent until then (src/lib/server/captcha). */
-    captchaPassedAt?: string;
 }
 export interface ClientRecord extends BaseRecord {
     name: string;

@@ -12,6 +12,7 @@ import { log } from "../log";
 import { loadCampaigns, loadGoogleEstimates } from "./data";
 import { fitCurves } from "./service";
 const 雈壍 = "No live Google Ads data is connected, so there are no simulations or recommendations to show.";
+const 雈示 = "Demo data: these simulations and recommendations are generated samples, not read from Google Ads.";
 function 掷壍(芦壍: CampaignDim, 侕壍: SimulationType): number | null {
     if (侕壍 === "BUDGET")
         return 芦壍.budget_daily;
@@ -127,7 +128,7 @@ export async function getGoogleEstimatesView(睔壍: RequestContext, 陃壍: {
         莙壍.set(傈壍.campaignId, [...(莙壍.get(傈壍.campaignId) ?? []), 傈壍]);
     return {
         mode: 睔壍.source.mode,
-        blank: 睔壍.source.mode !== "live" ? { reason: describeBlankReason(睔壍.source.reason), note: 雈壍 } : null,
+        blank: 睔壍.source.mode !== "live" ? { reason: describeBlankReason(睔壍.source.reason), note: 睔壍.source.reason?.code === "demo" ? 雈示 : 雈壍 } : null,
         currency: 睔壍.account.currency,
         dataThrough: 睔壍.dataThrough,
         objective: 陃壍.objective,

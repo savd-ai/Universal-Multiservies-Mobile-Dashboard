@@ -231,7 +231,7 @@ function Cmp41({ status: 尛壍 }: {
                 </span>
               </div>
               <Pill tone={蝏壍.mode === "live" ? "accent" : "muted"} className="px-1.5 py-px text-[9px]">
-                {蝏壍.mode === "live" ? "Live" : "No data"}
+                {蝏壍.mode === "live" ? "Live" : "Demo"}
               </Pill>
               {吾壍 ? (<span className="w-[68px] text-right font-mono text-micro tracking-label text-accent uppercase">✓ Active</span>) : (<Button variant="ghost" size="xs" className="w-[68px] justify-center" loading={駹壍.isPending && 駹壍.variables === 蝏壍.id} disabled={駹壍.isPending} onClick={() => 嶓壍(蝏壍.id, 蝏壍.name)}>
                   Switch

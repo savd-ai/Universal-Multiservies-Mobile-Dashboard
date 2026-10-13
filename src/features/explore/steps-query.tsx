@@ -49,7 +49,7 @@ export function DataStep({ nb: 濡壍 }: {
               <span className="flex min-w-0 flex-1 flex-col gap-1">
                 <span className="flex items-center gap-2">
                   <span className="font-display text-sm leading-tight font-semibold">{栄壍.name}</span>
-                  <Pill tone={栄壍.mode === "live" ? "accent" : "muted"}>{栄壍.mode === "live" ? "Live" : "No data"}</Pill>
+                  <Pill tone={栄壍.mode === "live" ? "accent" : "muted"}>{栄壍.mode === "live" ? "Live" : "Demo"}</Pill>
                 </span>
                 <span className="text-xs leading-snug text-muted-3">{栄壍.caption}</span>
               </span>

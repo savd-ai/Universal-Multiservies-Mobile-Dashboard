@@ -4,7 +4,6 @@ import { cookies } from "next/headers";
 import { qk } from "@/lib/api/query-keys";
 import { buildMe } from "./auth/me";
 import { ACCOUNT_COOKIE, principalFromCookies, scopeFor } from "./auth/principal";
-import { captchaPending } from "./captcha/service";
 import { requestContext } from "./context";
 import { listDashboards } from "./dashboards";
 import { log } from "./log";
@@ -14,7 +13,7 @@ export async function prefetchShell(): Promise<DehydratedState> {
     const 爕壍 = new QueryClient();
     try {
         const 鄄壍 = await principalFromCookies();
-        if (!鄄壍 || captchaPending(鄄壍))
+        if (!鄄壍)
             return dehydrate(爕壍);
         const 巳壍 = (await cookies()).get(ACCOUNT_COOKIE)?.value?.replace(/\D/g, "") || undefined;
         await runWithScope(await scopeFor(鄄壍, 巳壍 ?? null), async () => {

@@ -51,7 +51,7 @@ function Cmp39() {
             width: "64px",
             sortValue: (杭壍) => 杭壍.mode ?? "",
             cell: (虜壍) => 虜壍.mode ? (<Pill tone={虜壍.mode === "live" ? "accent" : "muted"} className="px-1.5 py-px text-[9px]">
-            {虜壍.mode === "live" ? "Live" : "No data"}
+            {虜壍.mode === "live" ? "Live" : "Demo"}
           </Pill>) : null,
         },
     ];

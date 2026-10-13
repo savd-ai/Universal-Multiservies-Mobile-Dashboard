@@ -280,7 +280,7 @@ function 韁壍({ data: 撰壍 }: {
 }) {
     const 莟壍 = 撰壍.mode === "live";
     return (<Card className="flex flex-col gap-4">
-      <CardHeader title="Google's budget recommendations" sub={莟壍 ? "Read from Google Ads · apply them in Google Ads" : "No live data · recommendations appear once Google Ads is connected"}/>
+      <CardHeader title="Google's budget recommendations" sub={莟壍 ? "Read from Google Ads · apply them in Google Ads" : 撰壍.blank?.reason.startsWith("Demo data") ? "Demo data · generated sample recommendations" : "No live data · recommendations appear once Google Ads is connected"}/>
       {撰壍.recommendations.length ? (撰壍.recommendations.map((傎壍) => <挸壍 key={傎壍.id} rec={傎壍} currency={撰壍.currency}/>)) : (<p className="m-0 text-[13px] text-muted-3">Google has no budget recommendations for this account right now.</p>)}
       <p className="m-0 text-xs leading-relaxed text-muted-3">Recommendations are Google&apos;s: this dashboard only reads them. Applying or dismissing one happens in Google Ads.</p>
     </Card>);

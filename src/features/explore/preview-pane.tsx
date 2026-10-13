@@ -160,7 +160,7 @@ function 萚壍({ q: 儉壍, tableLabel: 濸壍 }: {
         {寖壍.compareRange ? <span>{`vs ${formatRange(寖壍.compareRange)}`}</span> : null}
         <span className="flex-1"/>
         {寖壍.sources.map((竅壍) => (<span key={竅壍.id} className="inline-flex items-center gap-1.5 normal-case" title={竅壍.reason}>
-            <Pill tone={竅壍.mode === "live" ? "accent" : "muted"}>{竅壍.mode}</Pill>
+            <Pill tone={竅壍.mode === "live" ? "accent" : "muted"}>{竅壍.mode === "live" ? "live" : "demo"}</Pill>
             <span className="tracking-normal text-muted-3">{竅壍.label}</span>
           </span>))}
         {儉壍.isFetching ? <span className="animate-shimmer">Updating…</span> : null}

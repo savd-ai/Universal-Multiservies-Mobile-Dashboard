@@ -1,18 +1,12 @@
 "use client";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import type { DemoDataset, DemoLockStatus, DemoUnlockBody } from "@/lib/domain/contracts/demo";
+import { useQuery } from "@tanstack/react-query";
+import type { DemoResponse } from "@/lib/domain/contracts/demo";
 import { request } from "./client";
 import { qk } from "./query-keys";
-export function useDemoLock() {
+export function useDemo(account: string | null) {
     return useQuery({
-        queryKey: qk.demo(),
-        queryFn: ({ signal }) => request<DemoLockStatus>("/api/demo", { signal }),
-        staleTime: Infinity,
-        refetchOnWindowFocus: false,
-    });
-}
-export function useDemoUnlock() {
-    return useMutation({
-        mutationFn: (body: DemoUnlockBody) => request<DemoDataset>("/api/demo/unlock", { body }),
+        queryKey: [...qk.demo(), account ?? "default"],
+        queryFn: ({ signal }) => request<DemoResponse>(`/api/demo${account ? `?account=${encodeURIComponent(account)}` : ""}`, { signal }),
+        staleTime: 5 * 60000,
     });
 }

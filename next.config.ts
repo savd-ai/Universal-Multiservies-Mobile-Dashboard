@@ -12,11 +12,6 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // Provider SDKs and the HTTP client stay in node_modules on the server; they are never bundled for the browser.
   serverExternalPackages: ["@anthropic-ai/sdk", "openai", "@google/genai", "undici"],
-  // The sealed demo database is read with fs at runtime, so the trace has to be told about it.
-  outputFileTracingIncludes: {
-    "/api/demo": ["./demo/demo-dashboard.sqlite"],
-    "/api/demo/unlock": ["./demo/demo-dashboard.sqlite"],
-  },
   poweredByHeader: false,
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

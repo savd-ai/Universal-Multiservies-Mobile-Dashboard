@@ -16,12 +16,6 @@ const register = (body: unknown, ip = "1") =>
   registerRoute.POST(new Request(`${BASE}/api/auth/register`, { method: "POST", headers: { "content-type": "application/json", "x-real-ip": `10.0.0.${ip}` }, body: JSON.stringify(body) }));
 const cookieOf = (res: Response) => res.headers.get("set-cookie")!.split(";")[0]!;
 
-async function passCaptcha(cookie: string) {
-  const sessions = await getGlobalStore().sessions.list(() => true);
-  for (const session of sessions) await getGlobalStore().sessions.update(session.id, { captchaPassedAt: new Date().toISOString() });
-  return cookie;
-}
-
 beforeEach(() => {
   resetServerState();
   vi.stubEnv("AUTH_MODE", "required");
@@ -53,7 +47,7 @@ describe("self-service registration", () => {
     expect(awaitingAccess({ role: user.role, clientId: user.clientId })).toBe(true);
     expect(workspaceFor({ role: user.role, clientId: null }, [], null)).toBe("unassigned");
 
-    const cookie = await passCaptcha(cookieOf(res));
+    const cookie = cookieOf(res);
     const status = await statusRoute.GET(new Request(`${BASE}/api/status`, { headers: { cookie } }));
     expect(status.status).toBe(403);
     expect((await status.json()).error.details).toEqual({ reason: "awaiting_access" });

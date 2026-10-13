@@ -367,7 +367,7 @@ export function DataHealthWidget() {
         value: string;
         tone: "accent" | "warn" | "faint";
     }[] = [
-        { label: "Google Ads", value: 嫵壍.mode === "live" ? `Live · API ${嫵壍.googleAds.apiVersion}` : `No live data · ${(嫵壍.reason?.code ?? "no_env").replace(/_/g, " ")}`, tone: 嫵壍.mode === "live" ? "accent" : "warn" },
+        { label: "Google Ads", value: 嫵壍.mode === "live" ? `Live · API ${嫵壍.googleAds.apiVersion}` : 嫵壍.reason?.code === "demo" ? `Demo data · ${嫵壍.reason.cause.code.replace(/_/g, " ")}` : `No live data · ${(嫵壍.reason?.code ?? "no_env").replace(/_/g, " ")}`, tone: 嫵壍.mode === "live" ? "accent" : "warn" },
         { label: "Data through", value: formatShort(嫵壍.dataThrough), tone: "accent" },
         { label: "Storage", value: 嫵壍.store.driver === "file" ? "File store" : "Memory (not persisted)", tone: 嫵壍.store.driver === "file" ? "accent" : "warn" },
     ];

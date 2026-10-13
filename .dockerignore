@@ -1,0 +1,12 @@
+node_modules
+.next
+coverage
+.env
+.env.*
+data
+demo/demo-open.sqlite
+.agents
+.claude
+.git
+*.log
+.DS_Store

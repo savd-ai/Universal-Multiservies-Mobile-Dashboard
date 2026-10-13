@@ -43,6 +43,7 @@ export function useRegister() {
             email: string;
             name: string;
             password: string;
+            setupCode?: string;
         }) => request<{
             ok: boolean;
             first: boolean;

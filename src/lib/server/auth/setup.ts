@@ -10,6 +10,14 @@ import { findUserByEmail, normalizeEmail, userCount } from "./users";
 export async function setupRequired(): Promise<boolean> {
     return authConfig().mode === "required" && (await userCount()) === 0;
 }
+/** True when AUTH_SETUP_TOKEN is set: the first account on /register must then enter it. */
+export function setupTokenConfigured(): boolean {
+    return !!authConfig().setupToken;
+}
+export function setupTokenMatches(code: string | undefined): boolean {
+    const token = authConfig().setupToken;
+    return !!token && !!code && safeEqual(code.trim().toUpperCase(), token.trim().toUpperCase());
+}
 function 垉壍(): string {
     const 癸壍 = authConfig().setupToken;
     if (癸壍)
@@ -23,9 +31,10 @@ export async function announceSetup(): Promise<void> {
     if (镧壍.done)
         return;
     镧壍.done = true;
-    // Since 2026-10-12 the first account is created at /register without a code (the setup code below only
-    // still works for the legacy POST /api/auth/setup).
-    log.warn("No users yet. Open /register to create the first account; it becomes the agency admin.");
+    // The first account is created at /register; with AUTH_SETUP_TOKEN set it must enter that token (never logged).
+    log.warn(setupTokenConfigured()
+        ? "No users yet. Open /register and enter AUTH_SETUP_TOKEN to create the first account; it becomes the agency admin."
+        : "No users yet. Open /register to create the first account; it becomes the agency admin. Set AUTH_SETUP_TOKEN on any server others can reach.");
 }
 export async function completeSetup(扖壍: {
     code: string;

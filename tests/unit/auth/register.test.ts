@@ -29,7 +29,7 @@ describe("self-service registration", () => {
     expect(safeNext("/register")).toBe("/overview");
   });
 
-  it("makes the first account the agency admin without any setup code", async () => {
+  it("makes the first account the agency admin without a code when AUTH_SETUP_TOKEN is unset", async () => {
     const res = await register({ name: "First Admin", email: "First@Example.com", password: "correct horse battery" });
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ ok: true, first: true });
@@ -67,5 +67,43 @@ describe("self-service registration", () => {
   it("has nothing to register for when sign-in is off", async () => {
     vi.stubEnv("AUTH_MODE", "off");
     expect((await register({ name: "X", email: "x@example.com", password: "correct horse battery" })).status).toBe(409);
+  });
+
+  describe("with AUTH_SETUP_TOKEN set", () => {
+    beforeEach(() => vi.stubEnv("AUTH_SETUP_TOKEN", "test-setup-code"));
+    const users = () => getGlobalStore().users.list(() => true);
+
+    it("refuses the first account without the code or with a wrong one", async () => {
+      const missing = await register({ name: "Visitor", email: "visitor@example.com", password: "correct horse battery" }, "20");
+      expect(missing.status).toBe(401);
+      expect((await missing.json()).error.details).toEqual({ reason: "setup_code" });
+      expect(missing.headers.get("set-cookie")).toBeNull();
+      const wrong = await register({ name: "Visitor", email: "visitor@example.com", password: "correct horse battery", setupCode: "guess" }, "21");
+      expect(wrong.status).toBe(401);
+      expect(await users()).toHaveLength(0);
+    });
+
+    it("makes the first account admin with the right code (case and spaces ignored)", async () => {
+      const res = await register({ name: "Owner", email: "owner@example.com", password: "correct horse battery", setupCode: "  TEST-SETUP-CODE " }, "22");
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ ok: true, first: true });
+      expect((await users())[0]).toMatchObject({ email: "owner@example.com", role: "agency_admin" });
+    });
+
+    it("does not ask later accounts for the code, and they still get no access", async () => {
+      await register({ name: "Owner", email: "owner@example.com", password: "correct horse battery", setupCode: "test-setup-code" }, "23");
+      const res = await register({ name: "Later", email: "later@example.com", password: "another long password" }, "24");
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ ok: true, first: false });
+      expect((await users()).find((u) => u.email === "later@example.com")).toMatchObject({ role: "client_viewer", clientId: null });
+    });
+
+    it("starts over after a reset: the first account needs the code again", async () => {
+      await register({ name: "Owner", email: "owner@example.com", password: "correct horse battery", setupCode: "test-setup-code" }, "25");
+      resetServerState();
+      vi.stubEnv("AUTH_MODE", "required");
+      vi.stubEnv("AUTH_SETUP_TOKEN", "test-setup-code");
+      expect((await register({ name: "Visitor", email: "visitor@example.com", password: "correct horse battery" }, "26")).status).toBe(401);
+    });
   });
 });

@@ -34,7 +34,7 @@ export const ENV_VARS: EnvVarDef[] = [
     { key: "CRON_SECRET", group: "alerts", description: "Bearer token for /api/cron/alerts (external cron).", secret: true },
     { key: "APP_BASE_URL", group: "alerts", description: "Public base URL used in alert links and the CSRF origin check.", default: "http://localhost:3000" },
     { key: "AUTH_MODE", group: "security", description: "required = everyone signs in (users, roles, client workspaces); off = no login, everyone is a local admin (local use only).", default: "required" },
-    { key: "AUTH_SETUP_TOKEN", group: "security", description: "One-time code for creating the first admin on /setup. If unset, a random code is printed to the server log while no user exists.", secret: true },
+    { key: "AUTH_SETUP_TOKEN", group: "security", description: "Code the first account must enter on /register to become the agency admin. Set it on any server others can reach (otherwise whoever registers first is admin).", secret: true },
     { key: "AUTH_SESSION_DAYS", group: "security", description: "Maximum session length in days.", default: "7" },
     { key: "AUTH_IDLE_HOURS", group: "security", description: "Sign out after this many hours without activity.", default: "24" },
     { key: "AUTH_INVITE_HOURS", group: "security", description: "How long invite and password-reset links stay valid.", default: "72" },

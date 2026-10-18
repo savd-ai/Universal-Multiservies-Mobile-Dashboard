@@ -7,7 +7,7 @@ import { LOCAL_PRINCIPAL, type Principal, type RequestScope } from "../scope";
 import { getGlobalStore, getWorkspaceStore } from "../store";
 import { listClientRecords } from "./clients";
 import type { SessionRecord, UserRecord } from "./records";
-import { readCookie, SESSION_COOKIE, validateSession } from "./sessions";
+import { bearerToken, readCookie, SESSION_COOKIE, validateSession } from "./sessions";
 import { requiresMfa } from "./users";
 export const ACCOUNT_HEADER = "x-savd-account";
 export const ACCOUNT_COOKIE = "savd-acct";
@@ -30,7 +30,8 @@ export async function principalFromToken(逌壍: string | null): Promise<Princip
     return 峻壍 ? toPrincipal(峻壍.user, 峻壍.session) : null;
 }
 export async function principalFromRequest(篪壍: Request): Promise<Principal | null> {
-    return principalFromToken(readCookie(篪壍.headers.get("cookie"), SESSION_COOKIE));
+    // The mobile app sends its session token as a bearer token; browsers use the HttpOnly cookie.
+    return principalFromToken(bearerToken(篪壍.headers.get("authorization")) ?? readCookie(篪壍.headers.get("cookie"), SESSION_COOKIE));
 }
 export async function principalFromCookies(): Promise<Principal | null> {
     const 髙壍 = await cookies();

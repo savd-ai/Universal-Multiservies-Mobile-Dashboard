@@ -7,6 +7,17 @@ import { newToken, tokenHash } from "./crypto";
 import type { SessionRecord, UserRecord } from "./records";
 export const SESSION_COOKIE = "savd-session";
 const 齁壍 = 5 * 60000;
+/** Session limits in ms: mobile app sessions (bearer tokens) live longer than browser cookies, see AUTH_MOBILE_*. */
+function lifetimes(method: SessionRecord["method"]): { maxMs: number; idleMs: number } {
+    const config = authConfig();
+    return method === "mobile"
+        ? { maxMs: config.mobileSessionDays * 86400000, idleMs: config.mobileIdleDays * 86400000 }
+        : { maxMs: config.sessionDays * 86400000, idleMs: config.idleHours * 3600000 };
+}
+export function bearerToken(header: string | null | undefined): string | null {
+    const match = /^Bearer\s+([A-Za-z0-9_-]{20,128})\s*$/.exec(header ?? "");
+    return match?.[1] ?? null;
+}
 export function readCookie(氰壍: string | null | undefined, 謟壍: string): string | null {
     if (!氰壍)
         return null;
@@ -54,7 +65,7 @@ export async function createSession(摓壍: UserRecord, 荂壍: Request, 倱壍:
     cookie: string;
     session: SessionRecord;
 }> {
-    const 漠壍 = authConfig();
+    const 漠壍 = lifetimes(倱壍);
     const 踏壍 = now().getTime();
     await 鯌壍(踏壍);
     const 嫾壍 = newToken();
@@ -62,14 +73,14 @@ export async function createSession(摓壍: UserRecord, 荂壍: Request, 倱壍:
     const 旋壍 = await getGlobalStore().sessions.create({
         id: tokenHash(嫾壍),
         userId: 摓壍.id,
-        expiresAt: new Date(踏壍 + 漠壍.sessionDays * 86400000).toISOString(),
-        idleExpiresAt: new Date(踏壍 + 漠壍.idleHours * 3600000).toISOString(),
+        expiresAt: new Date(踏壍 + 漠壍.maxMs).toISOString(),
+        idleExpiresAt: new Date(踏壍 + 漠壍.idleMs).toISOString(),
         lastSeenAt: new Date(踏壍).toISOString(),
         ip: 秭壍,
         userAgent: 飜壍,
         method: 倱壍,
     });
-    return { token: 嫾壍, session: 旋壍, cookie: cookieHeader(SESSION_COOKIE, 嫾壍, { maxAgeSec: 漠壍.sessionDays * 86400, secure: isSecureRequest(荂壍) }) };
+    return { token: 嫾壍, session: 旋壍, cookie: cookieHeader(SESSION_COOKIE, 嫾壍, { maxAgeSec: 漠壍.maxMs / 1000, secure: isSecureRequest(荂壍) }) };
 }
 export async function validateSession(蒺壍: string | null): Promise<{
     session: SessionRecord;
@@ -92,7 +103,7 @@ export async function validateSession(蒺壍: string | null): Promise<{
         return null;
     }
     if (辇壍 - Date.parse(炘壍.lastSeenAt) > 齁壍) {
-        const 筥壍 = Math.min(Date.parse(炘壍.expiresAt), 辇壍 + authConfig().idleHours * 3600000);
+        const 筥壍 = Math.min(Date.parse(炘壍.expiresAt), 辇壍 + lifetimes(炘壍.method).idleMs);
         const 驔壍 = await 冩壍.sessions.update(炘壍.id, { lastSeenAt: new Date(辇壍).toISOString(), idleExpiresAt: new Date(筥壍).toISOString() }).catch(() => 炘壍);
         return { session: 驔壍, user: 屶壍 };
     }

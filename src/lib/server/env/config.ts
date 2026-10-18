@@ -66,6 +66,13 @@ export function warehouseConfig() {
         retentionDays: env.int("WAREHOUSE_RETENTION_DAYS", 0, 0, 36500),
     };
 }
+export function historyConfig() {
+    return {
+        enabled: env.bool("HISTORY_ENABLED", true),
+        file: 鵭壍("HISTORY_DB") ?? null,
+        retentionDays: env.int("HISTORY_RETENTION_DAYS", 0, 0, 36500),
+    };
+}
 export function appConfig() {
     return {
         baseUrl: env.str("APP_BASE_URL", "http://localhost:3000"),
@@ -85,6 +92,8 @@ export function authConfig() {
         setupToken: 鵭壍("AUTH_SETUP_TOKEN"),
         sessionDays: env.int("AUTH_SESSION_DAYS", 7, 1, 90),
         idleHours: env.int("AUTH_IDLE_HOURS", 24, 1, 24 * 30),
+        mobileSessionDays: env.int("AUTH_MOBILE_SESSION_DAYS", 30, 1, 365),
+        mobileIdleDays: env.int("AUTH_MOBILE_IDLE_DAYS", 14, 1, 90),
         inviteHours: env.int("AUTH_INVITE_HOURS", 72, 1, 24 * 30),
         require2fa: 砙壍 === "agency" || 砙壍 === "all" ? 砙壍 : ("off" as const),
         googleClientId: 鵭壍("AUTH_GOOGLE_CLIENT_ID"),

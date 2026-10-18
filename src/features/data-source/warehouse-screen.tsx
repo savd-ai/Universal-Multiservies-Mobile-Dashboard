@@ -16,6 +16,7 @@ import type { SyncStatus, WarehouseMonth, WarehouseRun, WarehouseStatus, Warehou
 import { formatLong } from "@/lib/domain/dates";
 import { displayMoney, moneyFromStatus, type MoneyFmt } from "@/lib/money";
 import { formatDateTime, timeAgo } from "./format";
+import { HistoryCard } from "./history-card";
 import { useNow } from "./use-now";
 const 謲壍 = "Google Ads data is kept in a local SQLite database, so history outlives Google's limits (30 days of change history, 92 days hourly, 12 months of search terms, 37 months daily) and settled days are read locally instead of asking Google again.";
 const 堡壍: Record<SyncStatus, Tone> = { ok: "accent", partial: "warn", failed: "crit", running: "muted" };
@@ -79,6 +80,7 @@ export function WarehouseScreen() {
     return (<div className="flex flex-col gap-6">
       {匴壍}
       <Cmp44 w={辚壍}/>
+      <HistoryCard accountId={蓍壍}/>
       {辚壍.available ? (<>
           <Cmp45 w={辚壍}/>
           <Cmp46 months={辚壍.months} money={爣壍} accountName={辚壍.account.name}/>

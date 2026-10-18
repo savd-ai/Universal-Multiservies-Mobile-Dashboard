@@ -13,6 +13,7 @@ import { singleton } from "../cache";
 import { now } from "../clock";
 import type { RequestContext } from "../context";
 import { AppError, notFound } from "../http/errors";
+import { recordEvaluation } from "../history/record";
 import { getStore } from "../store";
 export interface ListSignalsOptions {
     includeInactive?: boolean;
@@ -144,6 +145,7 @@ async function 譍壍(堼壍: readonly StateDraft[], 眫壍: ReadonlyMap<string,
 export async function evaluateAndPersist(碣壍: RequestContext): Promise<EvaluationResult> {
     const 鞒壍 = 柶壍(碣壍);
     return 觕壍(鞒壍, async () => {
+        const startedAt = now().toISOString();
         const 撁壍 = await getAnomalySettings();
         const { signals: 荰壍 } = await 軂壍(碣壍, 撁壍);
         const 偟壍 = getStore();
@@ -155,11 +157,14 @@ export async function evaluateAndPersist(碣壍: RequestContext): Promise<Evalua
             await 偟壍.signalStates.delete(養壍);
         const 旹壍 = joinSignals(荰壍, await 叔壍(碣壍), 潎壍);
         const 蓨壍 = new Set(嬬壍.newOrEscalated);
-        return {
+        const outcome: EvaluationResult = {
             signals: 旹壍,
             newOrEscalated: 旹壍.filter((凗壍) => 蓨壍.has(凗壍.id)),
             resolved: 嬬壍.resolved.map(resolvedView).filter((烆壍): 烆壍 is SignalView => 烆壍 !== null),
         };
+        // Long-term record + phone notifications (src/lib/server/history); never fails the evaluation.
+        recordEvaluation(碣壍, outcome, startedAt);
+        return outcome;
     });
 }
 export interface SignalActionResult {

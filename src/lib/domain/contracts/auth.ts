@@ -120,7 +120,7 @@ export interface SessionView {
     expiresAt: string;
     userAgent: string;
     ip: string;
-    method: "password" | "google" | "setup" | "invite";
+    method: "password" | "google" | "setup" | "invite" | "mobile";
 }
 export interface MfaSetupResponse {
     secret: string;

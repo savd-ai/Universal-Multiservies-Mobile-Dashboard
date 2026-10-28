@@ -13,69 +13,69 @@ export interface PrefsForm {
     targetCpa: string;
     targetRoas: string;
 }
-const 僦壍 = (濕壍: number | null | undefined) => (濕壍 === null || 濕壍 === undefined ? "" : String(濕壍));
-export function prefsToForm(軄壍: AppSettings): PrefsForm {
-    const 害壍 = 軄壍.displayCurrency ?? "";
+const num = (v: number | null | undefined) => (v === null || v === undefined ? "" : String(v));
+export function prefsToForm(s: AppSettings): PrefsForm {
+    const currency = s.displayCurrency ?? "";
     return {
-        currency: 害壍,
-        fxRate: 害壍 ? 僦壍(軄壍.fxRates[害壍]) : "",
-        refreshSeconds: 軄壍.refreshSeconds,
-        brandTerms: 軄壍.brandTerms.join(", "),
-        competitorTerms: 軄壍.competitorTerms.join(", "),
-        monthlyConversions: 僦壍(軄壍.goals.monthlyConversions),
-        monthlyRevenue: 僦壍(軄壍.goals.monthlyRevenue),
-        targetCpa: 僦壍(軄壍.goals.targetCpa),
-        targetRoas: 僦壍(軄壍.goals.targetRoas),
+        currency,
+        fxRate: currency ? num(s.fxRates[currency]) : "",
+        refreshSeconds: s.refreshSeconds,
+        brandTerms: s.brandTerms.join(", "),
+        competitorTerms: s.competitorTerms.join(", "),
+        monthlyConversions: num(s.goals.monthlyConversions),
+        monthlyRevenue: num(s.goals.monthlyRevenue),
+        targetCpa: num(s.goals.targetCpa),
+        targetRoas: num(s.goals.targetRoas),
     };
 }
-export function currencyOptions(窢壍: AppSettings, 馑壍: string): string[] {
-    const 暀壍 = new Set<string>([馑壍, ...DISPLAY_CURRENCIES, ...Object.keys(窢壍.fxRates), ...(窢壍.displayCurrency ? [窢壍.displayCurrency] : [])]);
-    暀壍.delete("");
-    return [...暀壍];
+export function currencyOptions(s: AppSettings, accountCurrency: string): string[] {
+    const value = new Set<string>([accountCurrency, ...DISPLAY_CURRENCIES, ...Object.keys(s.fxRates), ...(s.displayCurrency ? [s.displayCurrency] : [])]);
+    value.delete("");
+    return [...value];
 }
 export type PrefsErrors = Partial<Record<keyof PrefsForm, string>>;
-function 蕯壍(剞壍: string, 煍壍: keyof PrefsForm, 逼壍: PrefsErrors): number | null {
-    const 崫壍 = 剞壍.trim();
-    if (!崫壍)
+function goal(v: string, key: keyof PrefsForm, errors: PrefsErrors): number | null {
+    const t = v.trim();
+    if (!t)
         return null;
-    const 簚壍 = Number(崫壍);
-    if (!Number.isFinite(簚壍) || 簚壍 < 0) {
-        逼壍[煍壍] = "Enter a number ≥ 0 or leave empty";
+    const n = Number(t);
+    if (!Number.isFinite(n) || n < 0) {
+        errors[key] = "Enter a number ≥ 0 or leave empty";
         return null;
     }
-    return 簚壍;
+    return n;
 }
-export function prefsPatch(鬉壍: PrefsForm, 柸壍: AppSettings, 蛧壍: string): {
+export function prefsPatch(f: PrefsForm, s: AppSettings, accountCurrency: string): {
     patch: Partial<AppSettings> | null;
     errors: PrefsErrors;
 } {
-    const 取壍: PrefsErrors = {};
-    const 狅壍 = 鬉壍.currency && 鬉壍.currency !== 蛧壍 ? 鬉壍.currency : "";
-    const 醴壍 = { ...柸壍.fxRates };
-    if (狅壍) {
-        const 庣壍 = Number(鬉壍.fxRate.trim());
-        if (!鬉壍.fxRate.trim() || !Number.isFinite(庣壍) || 庣壍 <= 0)
-            取壍.fxRate = `How many ${狅壍} is 1 ${蛧壍}?`;
+    const errors: PrefsErrors = {};
+    const currency = f.currency && f.currency !== accountCurrency ? f.currency : "";
+    const fxRates = { ...s.fxRates };
+    if (currency) {
+        const rate = Number(f.fxRate.trim());
+        if (!f.fxRate.trim() || !Number.isFinite(rate) || rate <= 0)
+            errors.fxRate = `How many ${currency} is 1 ${accountCurrency}?`;
         else
-            醴壍[狅壍] = 庣壍;
+            fxRates[currency] = rate;
     }
-    const 綒壍 = {
-        monthlyConversions: 蕯壍(鬉壍.monthlyConversions, "monthlyConversions", 取壍),
-        monthlyRevenue: 蕯壍(鬉壍.monthlyRevenue, "monthlyRevenue", 取壍),
-        targetCpa: 蕯壍(鬉壍.targetCpa, "targetCpa", 取壍),
-        targetRoas: 蕯壍(鬉壍.targetRoas, "targetRoas", 取壍),
+    const goals = {
+        monthlyConversions: goal(f.monthlyConversions, "monthlyConversions", errors),
+        monthlyRevenue: goal(f.monthlyRevenue, "monthlyRevenue", errors),
+        targetCpa: goal(f.targetCpa, "targetCpa", errors),
+        targetRoas: goal(f.targetRoas, "targetRoas", errors),
     };
-    if (Object.keys(取壍).length)
-        return { patch: null, errors: 取壍 };
+    if (Object.keys(errors).length)
+        return { patch: null, errors };
     return {
         patch: {
-            displayCurrency: 狅壍 || null,
-            fxRates: 醴壍,
-            refreshSeconds: Math.max(0, Math.min(3600, Math.round(鬉壍.refreshSeconds))),
-            brandTerms: parseTerms(鬉壍.brandTerms),
-            competitorTerms: parseTerms(鬉壍.competitorTerms),
-            goals: 綒壍,
+            displayCurrency: currency || null,
+            fxRates,
+            refreshSeconds: Math.max(0, Math.min(3600, Math.round(f.refreshSeconds))),
+            brandTerms: parseTerms(f.brandTerms),
+            competitorTerms: parseTerms(f.competitorTerms),
+            goals,
         },
-        errors: 取壍,
+        errors,
     };
 }

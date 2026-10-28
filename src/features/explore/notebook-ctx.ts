@@ -4,7 +4,7 @@ import type { ExploreSpec, ExploreState, NotebookAction } from "./notebook-state
 export interface NotebookCtx {
     state: ExploreState;
     spec: ExploreSpec;
-    dispatch: (翦壍: NotebookAction) => void;
+    dispatch: (action: NotebookAction) => void;
     catalog: Catalog;
     today: string | undefined;
     dataThrough: string | undefined;
@@ -12,6 +12,6 @@ export interface NotebookCtx {
     mode: "live" | "blank";
     pageRange: DateRangeSpec;
     pageRangeLabel: string;
-    setSource: (黕壍: string) => void;
-    editMetric: (毄壍?: string) => void;
+    setSource: (source: string) => void;
+    editMetric: (key?: string) => void;
 }

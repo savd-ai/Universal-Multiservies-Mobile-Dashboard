@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { defaultAnomalySettings, type SignalView } from "@/lib/domain/contracts/anomaly";
 import { changeContextLabel, changeContextTone, changeMeta, countBySeverity, countByStatus, detectionFootnote, filterSignals, impactHref, isExpectedSignal, lagLabel, openTarget, overrideParams, quickRulesFrom, quickRulesPatch, resolveView, sameQuickRules, severityLabel, statusAfter, typeLabel, visibleChangeContext, zLabel, } from "@/features/anomalies/helpers/signals";
-function 茮壍(倝壍: Partial<SignalView> & {
+function sig(p: Partial<SignalView> & {
     id: string;
 }): SignalView {
     return {
@@ -31,27 +31,27 @@ function 茮壍(倝壍: Partial<SignalView> & {
         detectedAt: "2026-09-29T00:00:00.000Z",
         status: "open",
         notes: [],
-        ...倝壍,
+        ...p,
     };
 }
-const 漌壍: SignalView[] = [
-    茮壍({ id: "a", severity: "warning", score: 5 }),
-    茮壍({ id: "b", severity: "critical", score: 1 }),
-    茮壍({ id: "c", severity: "info", polarity: "good", score: 9 }),
-    茮壍({ id: "d", severity: "critical", score: 7, status: "snoozed" }),
-    茮壍({ id: "e", severity: "critical", score: 3 }),
-    茮壍({ id: "f", severity: "warning", status: "resolved" }),
+const list: SignalView[] = [
+    sig({ id: "a", severity: "warning", score: 5 }),
+    sig({ id: "b", severity: "critical", score: 1 }),
+    sig({ id: "c", severity: "info", polarity: "good", score: 9 }),
+    sig({ id: "d", severity: "critical", score: 7, status: "snoozed" }),
+    sig({ id: "e", severity: "critical", score: 3 }),
+    sig({ id: "f", severity: "warning", status: "resolved" }),
 ];
 describe("status tabs and severity chips", () => {
     it("counts per status and per severity", () => {
-        expect(countByStatus(漌壍)).toEqual({ open: 4, acknowledged: 0, snoozed: 1, resolved: 1 });
-        expect(countBySeverity(漌壍.filter((跻壍) => 跻壍.status === "open"))).toEqual({ all: 4, critical: 2, warning: 1, info: 1 });
+        expect(countByStatus(list)).toEqual({ open: 4, acknowledged: 0, snoozed: 1, resolved: 1 });
+        expect(countBySeverity(list.filter((s) => s.status === "open"))).toEqual({ all: 4, critical: 2, warning: 1, info: 1 });
     });
     it("filters by tab + severity and sorts by severity, polarity then score", () => {
-        expect(filterSignals(漌壍, { status: "open", severity: "all" }).map((嫪壍) => 嫪壍.id)).toEqual(["e", "b", "a", "c"]);
-        expect(filterSignals(漌壍, { status: "open", severity: "critical" }).map((秙壍) => 秙壍.id)).toEqual(["e", "b"]);
-        expect(filterSignals(漌壍, { status: "snoozed", severity: "all" }).map((飈壍) => 飈壍.id)).toEqual(["d"]);
-        expect(filterSignals(漌壍, { status: "acknowledged", severity: "all" })).toEqual([]);
+        expect(filterSignals(list, { status: "open", severity: "all" }).map((s) => s.id)).toEqual(["e", "b", "a", "c"]);
+        expect(filterSignals(list, { status: "open", severity: "critical" }).map((s) => s.id)).toEqual(["e", "b"]);
+        expect(filterSignals(list, { status: "snoozed", severity: "all" }).map((s) => s.id)).toEqual(["d"]);
+        expect(filterSignals(list, { status: "acknowledged", severity: "all" })).toEqual([]);
     });
     it("opens the focused signal's tab unless the URL picks one", () => {
         expect(resolveView({ tab: null, severity: null, focus: { status: "snoozed" } })).toEqual({ tab: "snoozed", severity: "all" });
@@ -98,16 +98,16 @@ describe("change-history labels", () => {
         expect(changeContextLabel({ verdict: "no_recent_changes" })).toBe("No account changes");
         expect(changeContextTone({ verdict: "likely_cause" })).toBe("accent");
         expect(changeContextTone({ verdict: "expected" })).toBe("muted");
-        expect(visibleChangeContext(茮壍({ id: "n", changeContext: { verdict: "none", note: "x" } }))).toBeNull();
-        expect(visibleChangeContext(茮壍({ id: "e", changeContext: { verdict: "expected", note: "x" } }))?.verdict).toBe("expected");
-        expect(visibleChangeContext(茮壍({ id: "u" }))).toBeNull();
+        expect(visibleChangeContext(sig({ id: "n", changeContext: { verdict: "none", note: "x" } }))).toBeNull();
+        expect(visibleChangeContext(sig({ id: "e", changeContext: { verdict: "expected", note: "x" } }))?.verdict).toBe("expected");
+        expect(visibleChangeContext(sig({ id: "u" }))).toBeNull();
     });
     it("calls expected signals 'Expected' instead of 'Opportunity'", () => {
-        const 斷壍 = 茮壍({ id: "e", severity: "info", changeContext: { verdict: "expected", note: "x" } });
-        expect(isExpectedSignal(斷壍)).toBe(true);
-        expect(severityLabel(斷壍)).toBe("Expected");
-        expect(severityLabel(茮壍({ id: "o", severity: "info", polarity: "good" }))).toBe("Opportunity");
-        expect(severityLabel(茮壍({ id: "c", severity: "critical" }))).toBe("Critical");
+        const expected = sig({ id: "e", severity: "info", changeContext: { verdict: "expected", note: "x" } });
+        expect(isExpectedSignal(expected)).toBe(true);
+        expect(severityLabel(expected)).toBe("Expected");
+        expect(severityLabel(sig({ id: "o", severity: "info", polarity: "good" }))).toBe("Opportunity");
+        expect(severityLabel(sig({ id: "c", severity: "critical" }))).toBe("Critical");
     });
     it("describes a related change and links to its impact analysis", () => {
         expect(changeMeta({ category: "budget", clientLabel: "Google Ads web" })).toBe("Budget · Google Ads web");
@@ -120,27 +120,27 @@ describe("change-history labels", () => {
     });
 });
 describe("quick rules draft", () => {
-    const 蒦壍 = defaultAnomalySettings();
+    const saved = defaultAnomalySettings();
     it("round-trips the saved settings and detects changes", () => {
-        const 冕壍 = quickRulesFrom(蒦壍);
-        expect(冕壍).toEqual({ threshold: 2.5, baselineDays: 14, pacing: true, metrics: { spend: true, conversions: true, cpa: true, ctr: true, cpc: false, cvr: false, roas: false } });
-        expect(sameQuickRules(冕壍, quickRulesFrom(蒦壍))).toBe(true);
-        expect(sameQuickRules(冕壍, { ...冕壍, threshold: 2.6 })).toBe(false);
-        expect(sameQuickRules(冕壍, { ...冕壍, metrics: { ...冕壍.metrics, roas: true } })).toBe(false);
+        const q = quickRulesFrom(saved);
+        expect(q).toEqual({ threshold: 2.5, baselineDays: 14, pacing: true, metrics: { spend: true, conversions: true, cpa: true, ctr: true, cpc: false, cvr: false, roas: false } });
+        expect(sameQuickRules(q, quickRulesFrom(saved))).toBe(true);
+        expect(sameQuickRules(q, { ...q, threshold: 2.6 })).toBe(false);
+        expect(sameQuickRules(q, { ...q, metrics: { ...q.metrics, roas: true } })).toBe(false);
     });
     it("builds preview query overrides (empty when nothing changed)", () => {
-        const 炄壍 = quickRulesFrom(蒦壍);
+        const q = quickRulesFrom(saved);
         expect(overrideParams(null)).toEqual({});
-        expect(overrideParams({ ...炄壍, threshold: 3.04, baselineDays: 28 })).toEqual({ threshold: "3.0", baselineDays: "28", metrics: "spend,conversions,cpa,ctr", pacing: "true" });
-        const 轳壍 = { ...炄壍, pacing: false, metrics: { spend: false, conversions: false, cpa: false, ctr: false, cpc: false, cvr: false, roas: false } };
-        expect(overrideParams(轳壍)).toEqual({ threshold: "2.5", baselineDays: "14", metrics: "pacing", pacing: "false" });
+        expect(overrideParams({ ...q, threshold: 3.04, baselineDays: 28 })).toEqual({ threshold: "3.0", baselineDays: "28", metrics: "spend,conversions,cpa,ctr", pacing: "true" });
+        const none = { ...q, pacing: false, metrics: { spend: false, conversions: false, cpa: false, ctr: false, cpc: false, cvr: false, roas: false } };
+        expect(overrideParams(none)).toEqual({ threshold: "2.5", baselineDays: "14", metrics: "pacing", pacing: "false" });
     });
     it("builds the settings patch for Save as default", () => {
-        const 屢壍 = { ...quickRulesFrom(蒦壍), threshold: 3.2, pacing: false };
-        expect(quickRulesPatch(屢壍)).toEqual({ zscore: { threshold: 3.2, baselineDays: 14, metrics: 屢壍.metrics }, pacing: { enabled: false } });
+        const q = { ...quickRulesFrom(saved), threshold: 3.2, pacing: false };
+        expect(quickRulesPatch(q)).toEqual({ zscore: { threshold: 3.2, baselineDays: 14, metrics: q.metrics }, pacing: { enabled: false } });
     });
     it("writes the footnote from the saved windows", () => {
-        expect(detectionFootnote(蒦壍)).toBe("Last 3 days are compared against the baseline mean. A signal fires when the deviation exceeds the z-score threshold; budget pacing fires above 105% projected.");
-        expect(detectionFootnote({ ...蒦壍, zscore: { ...蒦壍.zscore, recentDays: 1 }, pacing: { ...蒦壍.pacing, over: 1.1 } })).toMatch(/^The last day is compared.*above 110% projected\.$/);
+        expect(detectionFootnote(saved)).toBe("Last 3 days are compared against the baseline mean. A signal fires when the deviation exceeds the z-score threshold; budget pacing fires above 105% projected.");
+        expect(detectionFootnote({ ...saved, zscore: { ...saved.zscore, recentDays: 1 }, pacing: { ...saved.pacing, over: 1.1 } })).toMatch(/^The last day is compared.*above 110% projected\.$/);
     });
 });

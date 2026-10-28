@@ -8,7 +8,7 @@ import { useCan } from "@/lib/api/auth";
 import { useTheme } from "@/lib/theme";
 import { useUi } from "@/stores/ui";
 import { NAV } from "./nav-config";
-const 琝壍: [
+const SHORTCUTS: [
     string,
     string
 ][] = [
@@ -20,61 +20,61 @@ const 琝壍: [
     ["?", "This help"],
     ["Esc", "Close overlay · clear cross-filters"],
 ];
-function 錌壍(忻壍: EventTarget | null): boolean {
-    const 绪壍 = 忻壍 as HTMLElement | null;
-    if (!绪壍)
+function isTyping(el: EventTarget | null): boolean {
+    const t = el as HTMLElement | null;
+    if (!t)
         return false;
-    return 绪壍.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(绪壍.tagName) || 绪壍.getAttribute("role") === "textbox";
+    return t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName) || t.getAttribute("role") === "textbox";
 }
 export function useGlobalShortcuts(): void {
-    const 鷙壍 = useRouter();
-    const 櫈壍 = useQueryClient();
-    const { toggle: 覷壍 } = useTheme();
-    const 嚦壍 = useCan();
-    const 疕壍 = useRef(0);
+    const router = useRouter();
+    const qc = useQueryClient();
+    const { toggle } = useTheme();
+    const can = useCan();
+    const pendingG = useRef(0);
     useEffect(() => {
-        const 钄壍 = (慳壍: KeyboardEvent) => {
-            const 聢壍 = 慳壍.metaKey || 慳壍.ctrlKey;
-            const 齑壍 = useUi.getState();
-            if (聢壍 && 慳壍.key.toLowerCase() === "k") {
-                慳壍.preventDefault();
-                齑壍.setPalette(!齑壍.paletteOpen);
+        const onKey = (e: KeyboardEvent) => {
+            const mod = e.metaKey || e.ctrlKey;
+            const ui = useUi.getState();
+            if (mod && e.key.toLowerCase() === "k") {
+                e.preventDefault();
+                ui.setPalette(!ui.paletteOpen);
                 return;
             }
-            if (聢壍 || 慳壍.altKey || 錌壍(慳壍.target))
+            if (mod || e.altKey || isTyping(e.target))
                 return;
-            if (疕壍.current && Date.now() - 疕壍.current < 1200 && /^[0-9]$/.test(慳壍.key)) {
-                const 汀壍 = NAV[慳壍.key === "0" ? 9 : Number(慳壍.key) - 1];
-                疕壍.current = 0;
-                if (汀壍 && (!汀壍.permission || 嚦壍(汀壍.permission)))
-                    鷙壍.push(汀壍.href);
+            if (pendingG.current && Date.now() - pendingG.current < 1200 && /^[0-9]$/.test(e.key)) {
+                const n = NAV[e.key === "0" ? 9 : Number(e.key) - 1];
+                pendingG.current = 0;
+                if (n && (!n.permission || can(n.permission)))
+                    router.push(n.href);
                 return;
             }
-            疕壍.current = 0;
-            if (慳壍.key === "g")
-                疕壍.current = Date.now();
-            else if (慳壍.key === "?")
-                齑壍.setShortcuts(true);
-            else if (慳壍.key === "t")
-                覷壍();
-            else if (慳壍.key === "r")
-                void 櫈壍.invalidateQueries();
-            else if (慳壍.key === "e")
+            pendingG.current = 0;
+            if (e.key === "g")
+                pendingG.current = Date.now();
+            else if (e.key === "?")
+                ui.setShortcuts(true);
+            else if (e.key === "t")
+                toggle();
+            else if (e.key === "r")
+                void qc.invalidateQueries();
+            else if (e.key === "e")
                 window.dispatchEvent(new CustomEvent("savd:toggle-edit"));
         };
-        window.addEventListener("keydown", 钄壍);
-        return () => window.removeEventListener("keydown", 钄壍);
-    }, [鷙壍, 櫈壍, 覷壍, 嚦壍]);
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [router, qc, toggle, can]);
 }
 export function ShortcutsDialog() {
-    const 謯壍 = useUi((堞壍) => 堞壍.shortcutsOpen);
-    const 眍壍 = useUi((闼壍) => 闼壍.setShortcuts);
-    return (<Modal open={謯壍} onOpenChange={眍壍} eyebrow="Keyboard" title="Shortcuts" width={420}>
+    const open = useUi((s) => s.shortcutsOpen);
+    const setOpen = useUi((s) => s.setShortcuts);
+    return (<Modal open={open} onOpenChange={setOpen} eyebrow="Keyboard" title="Shortcuts" width={420}>
       <div className="flex flex-col">
-        {琝壍.map(([拫壍, 臚壍]) => (<div key={拫壍} className="flex items-center justify-between border-b border-line-soft py-2.5 text-[13px]">
-            <span className="text-muted">{臚壍}</span>
+        {SHORTCUTS.map(([k, label]) => (<div key={k} className="flex items-center justify-between border-b border-line-soft py-2.5 text-[13px]">
+            <span className="text-muted">{label}</span>
             <span className="flex gap-1">
-              {拫壍.split(" ").map((仉壍, 涸壍) => (<Kbd key={涸壍}>{仉壍}</Kbd>))}
+              {k.split(" ").map((p, i) => (<Kbd key={i}>{p}</Kbd>))}
             </span>
           </div>))}
       </div>

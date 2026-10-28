@@ -68,33 +68,33 @@ export interface PortfolioResponse {
     excludedFromTotals: string[];
     warnings: string[];
 }
-export function ratioKpis(仃壍: Omit<PortfolioKpis, "cpa" | "roas" | "ctr">): PortfolioKpis {
+export function ratioKpis(k: Omit<PortfolioKpis, "cpa" | "roas" | "ctr">): PortfolioKpis {
     return {
-        ...仃壍,
-        cpa: 仃壍.conversions > 0 ? 仃壍.cost / 仃壍.conversions : null,
-        roas: 仃壍.cost > 0 ? 仃壍.convValue / 仃壍.cost : null,
-        ctr: 仃壍.impressions > 0 ? 仃壍.clicks / 仃壍.impressions : null,
+        ...k,
+        cpa: k.conversions > 0 ? k.cost / k.conversions : null,
+        roas: k.cost > 0 ? k.convValue / k.cost : null,
+        ctr: k.impressions > 0 ? k.clicks / k.impressions : null,
     };
 }
-export function sumKpis(液壍: {
+export function sumKpis(parts: {
     kpis: PortfolioKpis | null;
     factor: number | null;
 }[]): PortfolioKpis | null {
-    const 財壍 = 液壍.filter((妐壍): 妐壍 is {
+    const usable = parts.filter((p): p is {
         kpis: PortfolioKpis;
         factor: number;
-    } => !!妐壍.kpis && 妐壍.factor !== null);
-    if (!財壍.length)
+    } => !!p.kpis && p.factor !== null);
+    if (!usable.length)
         return null;
-    const 硿壍 = (靮壍: "cost" | "convValue") => 財壍.reduce((摝壍, 荌壍) => 摝壍 + 荌壍.kpis[靮壍] * 荌壍.factor, 0);
-    const 倻壍 = (漪壍: "conversions" | "clicks" | "impressions") => 財壍.reduce((踙壍, 嬈壍) => 踙壍 + 嬈壍.kpis[漪壍], 0);
-    return ratioKpis({ cost: 硿壍("cost"), convValue: 硿壍("convValue"), conversions: 倻壍("conversions"), clicks: 倻壍("clicks"), impressions: 倻壍("impressions") });
+    const add = (key: "cost" | "convValue") => usable.reduce((s, p) => s + p.kpis[key] * p.factor, 0);
+    const count = (key: "conversions" | "clicks" | "impressions") => usable.reduce((s, p) => s + p.kpis[key], 0);
+    return ratioKpis({ cost: add("cost"), convValue: add("convValue"), conversions: count("conversions"), clicks: count("clicks"), impressions: count("impressions") });
 }
-export function fxFactor(秷壍: string, 飦壍: string, 旕壍: Record<string, number>): number | null {
-    if (秷壍 === 飦壍)
+export function fxFactor(text: string, to: string, rates: Record<string, number>): number | null {
+    if (text === to)
         return 1;
-    const 蓄壍 = (决壍: string) => (决壍 === "USD" ? 1 : (旕壍[决壍] ?? null));
-    const 炢壍 = 蓄壍(秷壍);
-    const 辑壍 = 蓄壍(飦壍);
-    return 炢壍 && 辑壍 ? 辑壍 / 炢壍 : null;
+    const rate = (c: string) => (c === "USD" ? 1 : (rates[c] ?? null));
+    const a = rate(text);
+    const b = rate(to);
+    return a && b ? b / a : null;
 }

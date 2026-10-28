@@ -18,12 +18,12 @@ export interface DetectorContext {
     conversionLag: boolean;
     registry?: MetricRegistry;
 }
-const 莖壍 = 1e-9;
+const EPS = 1e-9;
 export const MAX_ONSET_LOOKBACK = 7;
-const 傅壍 = 5;
+const MIN_BASELINE_POINTS = 5;
 export const DEFAULT_DAILY_OVER = 1.2;
 export const DEFAULT_DAILY_OVER_CRITICAL = 1.5;
-const 潴壍 = 7;
+const BUDGET_LIMITED_DAYS = 7;
 interface Draft {
     entity: Signal["entity"];
     scope?: Signal["scope"];
@@ -53,50 +53,50 @@ interface Draft {
     cpaDrivers?: Signal["cpaDrivers"];
     format: MetricFormat;
 }
-function 蹣壍(孒壍: number, 穁壍: number): number {
-    if (穁壍 === 0)
-        return 孒壍 === 0 ? 0 : 孒壍 > 0 ? 1 : -1;
-    const 餰壍 = 孒壍 / 穁壍 - 1;
-    return Number.isFinite(餰壍) ? 餰壍 : 0;
+function relChange(observed: number, expected: number): number {
+    if (expected === 0)
+        return observed === 0 ? 0 : observed > 0 ? 1 : -1;
+    const v = observed / expected - 1;
+    return Number.isFinite(v) ? v : 0;
 }
-export function makeSignal(星壍: DetectorContext, 蔎壍: Draft): Signal {
-    const 函壍 = 蔎壍.changePct ?? 蹣壍(蔎壍.observed, 蔎壍.expected);
+export function makeSignal(ctx: DetectorContext, d: Draft): Signal {
+    const changePct = d.changePct ?? relChange(d.observed, d.expected);
     return {
-        id: signalId(蔎壍.entity.id, 蔎壍.kind, 蔎壍.detector, 蔎壍.window.recentEnd, 蔎壍.metric, 蔎壍.ruleId),
-        accountId: 星壍.accountId,
-        mode: 星壍.mode,
-        scope: 蔎壍.scope ?? "campaign",
-        entity: 蔎壍.entity,
-        kind: 蔎壍.kind,
-        detectors: [蔎壍.detector],
-        ruleId: 蔎壍.ruleId,
-        metric: 蔎壍.metric,
-        direction: 蔎壍.direction,
-        polarity: 蔎壍.polarity,
-        severity: 蔎壍.severity,
-        score: round(Math.max(0, 蔎壍.strength) * SEVERITY_WEIGHT[蔎壍.severity], 3),
-        observed: 蔎壍.observed,
-        expected: 蔎壍.expected,
-        changePct: 函壍,
-        z: 蔎壍.z,
-        band: 蔎壍.band,
-        window: 蔎壍.window,
-        onsetDate: 蔎壍.onsetDate,
-        series: 蔎壍.series,
-        title: 蔎壍.title,
-        summary: 蔎壍.summary,
-        recommendation: 蔎壍.recommendation,
-        evidence: 蔎壍.evidence,
+        id: signalId(d.entity.id, d.kind, d.detector, d.window.recentEnd, d.metric, d.ruleId),
+        accountId: ctx.accountId,
+        mode: ctx.mode,
+        scope: d.scope ?? "campaign",
+        entity: d.entity,
+        kind: d.kind,
+        detectors: [d.detector],
+        ruleId: d.ruleId,
+        metric: d.metric,
+        direction: d.direction,
+        polarity: d.polarity,
+        severity: d.severity,
+        score: round(Math.max(0, d.strength) * SEVERITY_WEIGHT[d.severity], 3),
+        observed: d.observed,
+        expected: d.expected,
+        changePct,
+        z: d.z,
+        band: d.band,
+        window: d.window,
+        onsetDate: d.onsetDate,
+        series: d.series,
+        title: d.title,
+        summary: d.summary,
+        recommendation: d.recommendation,
+        evidence: d.evidence,
         relatedChanges: [],
-        ...(蔎壍.cpaDrivers ? { cpaDrivers: 蔎壍.cpaDrivers } : {}),
-        format: 蔎壍.format,
-        dataAsOf: 星壍.dataThrough,
-        detectedAt: 星壍.now,
+        ...(d.cpaDrivers ? { cpaDrivers: d.cpaDrivers } : {}),
+        format: d.format,
+        dataAsOf: ctx.dataThrough,
+        detectedAt: ctx.now,
     };
 }
-const 烬壍 = (进壍: EntitySeries): Signal["entity"] => ({ id: 进壍.id, name: 进壍.name, type: 进壍.type });
-function 峊壍(箹壍: EntitySeries, 骨壍: number, 林壍: number): string {
-    return `${formatShort(dateAt(箹壍, 骨壍))} – ${formatShort(dateAt(箹壍, 林壍))}`;
+const entityOf = (s: EntitySeries): Signal["entity"] => ({ id: s.id, name: s.name, type: s.type });
+function range(s: EntitySeries, value: number, to: number): string {
+    return `${formatShort(dateAt(s, value))} – ${formatShort(dateAt(s, to))}`;
 }
 export interface Deviation {
     observed: number;
@@ -109,275 +109,275 @@ export interface Deviation {
     baselineEnd: number;
     onsetIndex: number;
 }
-export function zDeviation(蚆壍: EntitySeries, 卵壍: MonitoredDef, 牤壍: number, 酓壍: number, 幂壍: number, 紱壍 = 蚆壍.days.length - 1): Deviation | null {
-    const 鰠壍 = 紱壍 - 牤壍 + 1;
-    const 椏壍 = firstDataIndex(蚆壍);
-    if (鰠壍 <= 椏壍)
+export function zDeviation(s: EntitySeries, def: MonitoredDef, recentDays: number, baselineDays: number, thr: number, end = s.days.length - 1): Deviation | null {
+    const rStart = end - recentDays + 1;
+    const first = firstDataIndex(s);
+    if (rStart <= first)
         return null;
-    const 蟾壍 = 卵壍.window(sumWindow(蚆壍, 鰠壍, 紱壍));
-    if (蟾壍 === null)
+    const observed = def.window(sumWindow(s, rStart, end));
+    if (observed === null)
         return null;
-    let 哭壍 = 0;
-    while (哭壍 < MAX_ONSET_LOOKBACK) {
-        const 珜壍 = 鰠壍 - 哭壍 - 1;
-        const 鋋壍 = 珜壍 - 1;
-        const 徺壍 = 鋋壍 - 酓壍 + 1;
-        if (徺壍 < 椏壍)
+    let extra = 0;
+    while (extra < MAX_ONSET_LOOKBACK) {
+        const cand = rStart - extra - 1;
+        const bEnd = cand - 1;
+        const bStart = bEnd - baselineDays + 1;
+        if (bStart < first)
             break;
-        const 纩壍 = dailyValues(蚆壍, 卵壍, 徺壍, 鋋壍);
-        const 鶘壍 = 卵壍.window(sumWindow(蚆壍, 徺壍, 鋋壍));
-        const 檇壍 = 蚆壍.days[珜壍];
-        const 襶壍 = 檇壍 ? 卵壍.daily(檇壍) : null;
-        if (纩壍.length < 傅壍 || 鶘壍 === null || 襶壍 === null)
+        const vals2 = dailyValues(s, def, bStart, bEnd);
+        const m = def.window(sumWindow(s, bStart, bEnd));
+        const day = s.days[cand];
+        const v = day ? def.daily(day) : null;
+        if (vals2.length < MIN_BASELINE_POINTS || m === null || v === null)
             break;
-        const 噥壍 = std(纩壍) || 莖壍;
-        const 畔壍 = Math.sign(蟾壍 - 鶘壍);
-        if (畔壍 !== 0 && ((襶壍 - 鶘壍) / 噥壍) * 畔壍 >= 幂壍)
-            哭壍++;
+        const sd2 = std(vals2) || EPS;
+        const dir = Math.sign(observed - m);
+        if (dir !== 0 && ((v - m) / sd2) * dir >= thr)
+            extra++;
         else
             break;
     }
-    const 鑃壍 = 鰠壍 - 哭壍 - 1;
-    const 愲壍 = Math.max(椏壍, 鑃壍 - 酓壍 + 1);
-    const 耡壍 = dailyValues(蚆壍, 卵壍, 愲壍, 鑃壍);
-    if (耡壍.length < 傅壍)
+    const baselineEnd = rStart - extra - 1;
+    const baselineStart = Math.max(first, baselineEnd - baselineDays + 1);
+    const vals = dailyValues(s, def, baselineStart, baselineEnd);
+    if (vals.length < MIN_BASELINE_POINTS)
         return null;
-    const 鼐壍 = 卵壍.window(sumWindow(蚆壍, 愲壍, 鑃壍));
-    if (鼐壍 === null)
+    const expected = def.window(sumWindow(s, baselineStart, baselineEnd));
+    if (expected === null)
         return null;
-    const 毿壍 = std(耡壍) || 莖壍;
-    const 諮壍 = (蟾壍 - 鼐壍) / 毿壍;
-    let 埝壍 = 鰠壍 - 哭壍;
-    if (哭壍 === 0) {
-        const 盌壍 = Math.sign(諮壍);
-        for (let 閻壍 = 鰠壍; 閻壍 <= 紱壍; 閻壍++) {
-            const 抪壍 = 蚆壍.days[閻壍];
-            const 膙壍 = 抪壍 ? 卵壍.daily(抪壍) : null;
-            if (膙壍 !== null && ((膙壍 - 鼐壍) / 毿壍) * 盌壍 >= 幂壍) {
-                埝壍 = 閻壍;
+    const sd = std(vals) || EPS;
+    const z = (observed - expected) / sd;
+    let onsetIndex = rStart - extra;
+    if (extra === 0) {
+        const dir = Math.sign(z);
+        for (let i = rStart; i <= end; i++) {
+            const d = s.days[i];
+            const v = d ? def.daily(d) : null;
+            if (v !== null && ((v - expected) / sd) * dir >= thr) {
+                onsetIndex = i;
                 break;
             }
         }
     }
-    return { observed: 蟾壍, expected: 鼐壍, sd: 毿壍, z: 諮壍, recentStart: 鰠壍, end: 紱壍, baselineStart: 愲壍, baselineEnd: 鑃壍, onsetIndex: 埝壍 };
+    return { observed, expected, sd, z, recentStart: rStart, end, baselineStart, baselineEnd, onsetIndex };
 }
-export function robustDeviation(予壍: EntitySeries, 海壍: MonitoredDef, 豦壍: number, 奕壍: number, 硄壍 = 予壍.days.length - 1): Deviation | null {
-    const 霳壍 = 硄壍 - 豦壍 + 1;
-    const 搢壍 = 霳壍 - 1;
-    const 茑壍 = Math.max(firstDataIndex(予壍), 搢壍 - 奕壍 + 1);
-    const 倀壍 = dailyValues(予壍, 海壍, 茑壍, 搢壍);
-    const 滯壍 = 海壍.window(sumWindow(予壍, 霳壍, 硄壍));
-    if (倀壍.length < 傅壍 || 滯壍 === null)
+export function robustDeviation(s: EntitySeries, def: MonitoredDef, recentDays: number, baselineDays: number, end = s.days.length - 1): Deviation | null {
+    const rStart = end - recentDays + 1;
+    const baselineEnd = rStart - 1;
+    const baselineStart = Math.max(firstDataIndex(s), baselineEnd - baselineDays + 1);
+    const vals = dailyValues(s, def, baselineStart, baselineEnd);
+    const observed = def.window(sumWindow(s, rStart, end));
+    if (vals.length < MIN_BASELINE_POINTS || observed === null)
         return null;
-    const 跞壍 = median(倀壍);
-    const 嫍壍 = mad(倀壍) || 莖壍;
-    return { observed: 滯壍, expected: 跞壍, sd: 嫍壍, z: (滯壍 - 跞壍) / 嫍壍, recentStart: 霳壍, end: 硄壍, baselineStart: 茑壍, baselineEnd: 搢壍, onsetIndex: 霳壍 };
+    const expected = median(vals);
+    const sd = mad(vals) || EPS;
+    return { observed, expected, sd, z: (observed - expected) / sd, recentStart: rStart, end, baselineStart, baselineEnd, onsetIndex: rStart };
 }
-export function seasonalDeviation(禼壍: EntitySeries, 颫壍: MonitoredDef, 斚壍: number, 蒉壍 = 禼壍.days.length - 1): Deviation | null {
-    const 典壍 = firstDataIndex(禼壍);
-    const 灧壍: number[] = [];
-    for (let 轖壍 = 1; 轖壍 <= 斚壍; 轖壍++)
-        if (蒉壍 - 7 * 轖壍 >= 典壍)
-            灧壍.push(蒉壍 - 7 * 轖壍);
-    if (灧壍.length < 2)
+export function seasonalDeviation(s: EntitySeries, def: MonitoredDef, weeks: number, end = s.days.length - 1): Deviation | null {
+    const first = firstDataIndex(s);
+    const idx: number[] = [];
+    for (let k = 1; k <= weeks; k++)
+        if (end - 7 * k >= first)
+            idx.push(end - 7 * k);
+    if (idx.length < 2)
         return null;
-    const 居壍 = 禼壍.days[蒉壍];
-    const 笴壍 = 居壍 ? 颫壍.daily(居壍) : null;
-    if (笴壍 === null)
+    const day = s.days[end];
+    const observed = day ? def.daily(day) : null;
+    if (observed === null)
         return null;
-    const 騣壍: WindowSum = { ...emptyDay(), n: 0 };
-    const 朒壍: number[] = [];
-    for (const 蘁壍 of 灧壍) {
-        const 勰壍 = 禼壍.days[蘁壍];
-        if (!勰壍)
+    const w: WindowSum = { ...emptyDay(), n: 0 };
+    const vals: number[] = [];
+    for (const i of idx) {
+        const d = s.days[i];
+        if (!d)
             continue;
-        const 營壍 = 颫壍.daily(勰壍);
-        if (營壍 !== null)
-            朒壍.push(營壍);
-        騣壍.cost += 勰壍.cost;
-        騣壍.clicks += 勰壍.clicks;
-        騣壍.impressions += 勰壍.impressions;
-        騣壍.conversions += 勰壍.conversions;
-        騣壍.conv_value += 勰壍.conv_value;
-        騣壍.n++;
+        const v = def.daily(d);
+        if (v !== null)
+            vals.push(v);
+        w.cost += d.cost;
+        w.clicks += d.clicks;
+        w.impressions += d.impressions;
+        w.conversions += d.conversions;
+        w.conv_value += d.conv_value;
+        w.n++;
     }
-    const 郎壍 = 颫壍.window(騣壍);
-    if (郎壍 === null || 朒壍.length < 2)
+    const expected = def.window(w);
+    if (expected === null || vals.length < 2)
         return null;
-    const 嶽壍 = std(朒壍) || 莖壍;
-    return { observed: 笴壍, expected: 郎壍, sd: 嶽壍, z: (笴壍 - 郎壍) / 嶽壍, recentStart: 蒉壍, end: 蒉壍, baselineStart: 灧壍[灧壍.length - 1] as number, baselineEnd: 灧壍[0] as number, onsetIndex: 蒉壍 };
+    const sd = std(vals) || EPS;
+    return { observed, expected, sd, z: (observed - expected) / sd, recentStart: end, end, baselineStart: idx[idx.length - 1] as number, baselineEnd: idx[0] as number, onsetIndex: end };
 }
-function 粬壍(鮛壍: EntitySeries, 梊壍: MonitoredDef, 蝹壍: Deviation, 周壍: AnomalySettings["minVolume"]): boolean {
-    const 獗壍 = sumWindow(鮛壍, 蝹壍.baselineStart, 蝹壍.baselineEnd);
-    const 鉆壍 = 獗壍.n || 1;
-    if (獗壍.impressions / 鉆壍 < 周壍.imprPerDay)
+function volumeOk(s: EntitySeries, def: MonitoredDef, dev: Deviation, mv: AnomalySettings["minVolume"]): boolean {
+    const b = sumWindow(s, dev.baselineStart, dev.baselineEnd);
+    const n = b.n || 1;
+    if (b.impressions / n < mv.imprPerDay)
         return false;
-    if ((梊壍.volume === "clicks" || 梊壍.volume === "conv") && 獗壍.clicks / 鉆壍 < 周壍.clicksPerDay)
+    if ((def.volume === "clicks" || def.volume === "conv") && b.clicks / n < mv.clicksPerDay)
         return false;
-    if (梊壍.volume === "conv" && 獗壍.conversions / 鉆壍 < 周壍.convPerDay)
+    if (def.volume === "conv" && b.conversions / n < mv.convPerDay)
         return false;
     return true;
 }
-const 張壍: ReadonlySet<MonitoredMetric> = new Set(["conversions", "cpa", "cvr", "roas"]);
-function 縤壍(鴓壍: EntitySeries, 樂壍: Deviation): {
+const CONVERSION_METRICS: ReadonlySet<MonitoredMetric> = new Set(["conversions", "cpa", "cvr", "roas"]);
+function cpaDrivers(s: EntitySeries, dev: Deviation): {
     cpc: number;
     cvr: number;
 } | null {
-    const 裱壍 = (嗠壍: number, 瓏壍: number) => {
-        const 鎾壍 = { cost: 0, clicks: 0, conv: 0 };
-        for (let 悭壍 = Math.max(0, 嗠壍); 悭壍 <= 瓏壍; 悭壍++) {
-            const 羜壍 = 鴓壍.days[悭壍];
-            if (!羜壍)
+    const sum = (a: number, b2: number) => {
+        const t = { cost: 0, clicks: 0, conv: 0 };
+        for (let i = Math.max(0, a); i <= b2; i++) {
+            const d = s.days[i];
+            if (!d)
                 continue;
-            鎾壍.cost += 羜壍.cost;
-            鎾壍.clicks += 羜壍.clicks;
-            鎾壍.conv += 羜壍.conversions;
+            t.cost += d.cost;
+            t.clicks += d.clicks;
+            t.conv += d.conversions;
         }
-        return 鎾壍;
+        return t;
     };
-    const 麋壍 = 裱壍(樂壍.recentStart, 樂壍.end);
-    const 歺壍 = 裱壍(樂壍.baselineStart, 樂壍.baselineEnd);
-    if (!麋壍.clicks || !歺壍.clicks || !麋壍.conv || !歺壍.conv || !麋壍.cost || !歺壍.cost)
+    const r = sum(dev.recentStart, dev.end);
+    const b = sum(dev.baselineStart, dev.baselineEnd);
+    if (!r.clicks || !b.clicks || !r.conv || !b.conv || !r.cost || !b.cost)
         return null;
-    return { cpc: 麋壍.cost / 麋壍.clicks / (歺壍.cost / 歺壍.clicks) - 1, cvr: 麋壍.conv / 麋壍.clicks / (歺壍.conv / 歺壍.clicks) - 1 };
+    return { cpc: r.cost / r.clicks / (b.cost / b.clicks) - 1, cvr: r.conv / r.clicks / (b.conv / b.clicks) - 1 };
 }
-function 詩壍(坘壍: DetectorContext, 癇壍: EntitySeries, 锶壍: MonitoredDef, 戥壍: "zscore" | "robust" | "seasonal", 脔壍: Deviation, 七壍: number, 泲壍: Severity, 诡壍: string): Signal {
-    const 壐壍 = 泲壍 !== "info";
-    const 瞿壍 = 脔壍.z > 0;
-    const 隮壍 = 蹣壍(脔壍.observed, 脔壍.expected);
-    const 掝壍 = (芌壍: number) => fmt(锶壍.format, 芌壍, 坘壍.currency);
-    const 佻壍 = 锶壍.key === "spend" || 锶壍.key === "conversions";
-    const 湪壍 = 脔壍.end - 脔壍.recentStart + 1;
-    const 赙壍 = 脔壍.baselineEnd - 脔壍.baselineStart + 1;
-    const 婈壍 = dateAt(癇壍, 脔壍.onsetIndex);
-    const 礷壍 = 戥壍 === "robust" ? "Robust z" : "z-score";
-    const 頦壍 = 锶壍.key === "cpa" && 戥壍 !== "seasonal" ? 縤壍(癇壍, 脔壍) : null;
-    let 攕壍: string;
-    if (戥壍 === "seasonal") {
-        攕壍 = `${锶壍.label} was ${掝壍(脔壍.observed)} on ${formatShort(dateAt(癇壍, 脔壍.end))} vs ${掝壍(脔壍.expected)} on the same weekday over the previous ${plural(Math.round((脔壍.baselineEnd - 脔壍.baselineStart) / 7) + 1, "week")} (z ${脔壍.z.toFixed(1)}).`;
+function deviationSignal(ctx: DetectorContext, s: EntitySeries, def: MonitoredDef, detector: "zscore" | "robust" | "seasonal", dev: Deviation, thr: number, severity: Severity, note: string): Signal {
+    const bad = severity !== "info";
+    const up = dev.z > 0;
+    const changePct = relChange(dev.observed, dev.expected);
+    const f = (v: number) => fmt(def.format, v, ctx.currency);
+    const additive = def.key === "spend" || def.key === "conversions";
+    const recentDays = dev.end - dev.recentStart + 1;
+    const baseDays = dev.baselineEnd - dev.baselineStart + 1;
+    const onset = dateAt(s, dev.onsetIndex);
+    const zLabel = detector === "robust" ? "Robust z" : "z-score";
+    const drivers = def.key === "cpa" && detector !== "seasonal" ? cpaDrivers(s, dev) : null;
+    let summary: string;
+    if (detector === "seasonal") {
+        summary = `${def.label} was ${f(dev.observed)} on ${formatShort(dateAt(s, dev.end))} vs ${f(dev.expected)} on the same weekday over the previous ${plural(Math.round((dev.baselineEnd - dev.baselineStart) / 7) + 1, "week")} (z ${dev.z.toFixed(1)}).`;
     }
     else {
-        const 萄壍 = 佻壍 ? "averaged" : "was";
-        const 僳壍 = 佻壍 ? "/day" : "";
-        const 濢壍 = 戥壍 === "robust" ? "median of the" : "the";
-        攕壍 = `${锶壍.label} ${萄壍} ${掝壍(脔壍.observed)}${僳壍} over the last ${plural(湪壍, "day")} vs ${掝壍(脔壍.expected)}${僳壍} expected from ${濢壍} ${赙壍}-day baseline (${戥壍 === "robust" ? "robust " : ""}z ${脔壍.z.toFixed(1)}).`;
-        if (脔壍.onsetIndex < 脔壍.recentStart)
-            攕壍 += ` The shift started ${formatShort(婈壍)}.`;
+        const verb = additive ? "averaged" : "was";
+        const unit = additive ? "/day" : "";
+        const method = detector === "robust" ? "median of the" : "the";
+        summary = `${def.label} ${verb} ${f(dev.observed)}${unit} over the last ${plural(recentDays, "day")} vs ${f(dev.expected)}${unit} expected from ${method} ${baseDays}-day baseline (${detector === "robust" ? "robust " : ""}z ${dev.z.toFixed(1)}).`;
+        if (dev.onsetIndex < dev.recentStart)
+            summary += ` The shift started ${formatShort(onset)}.`;
     }
-    攕壍 += 诡壍;
-    return makeSignal(坘壍, {
-        entity: 烬壍(癇壍),
+    summary += note;
+    return makeSignal(ctx, {
+        entity: entityOf(s),
         kind: "metric_deviation",
-        detector: 戥壍,
-        metric: 锶壍.key,
-        direction: 瞿壍 ? "up" : "down",
-        polarity: 壐壍 ? "bad" : "good",
-        severity: 泲壍,
-        strength: Math.abs(脔壍.z),
-        observed: 脔壍.observed,
-        expected: 脔壍.expected,
-        changePct: 隮壍,
-        z: 脔壍.z,
-        band: { lo: Math.max(0, 脔壍.expected - 七壍 * 脔壍.sd), hi: 脔壍.expected + 七壍 * 脔壍.sd },
-        window: { recentStart: dateAt(癇壍, 脔壍.recentStart), recentEnd: dateAt(癇壍, 脔壍.end), baselineStart: dateAt(癇壍, 脔壍.baselineStart), baselineEnd: dateAt(癇壍, 脔壍.baselineEnd) },
-        onsetDate: 婈壍,
-        series: displaySeries(癇壍, 锶壍.display),
-        title: deviationTitle(锶壍.label, 隮壍),
-        summary: 攕壍,
-        recommendation: 頦壍 && 壐壍 && cpaDrivenByCvr(頦壍) ? RECOMMENDATIONS.cpaFromCvr : metricRecommendation(锶壍.key, 壐壍),
+        detector,
+        metric: def.key,
+        direction: up ? "up" : "down",
+        polarity: bad ? "bad" : "good",
+        severity,
+        strength: Math.abs(dev.z),
+        observed: dev.observed,
+        expected: dev.expected,
+        changePct,
+        z: dev.z,
+        band: { lo: Math.max(0, dev.expected - thr * dev.sd), hi: dev.expected + thr * dev.sd },
+        window: { recentStart: dateAt(s, dev.recentStart), recentEnd: dateAt(s, dev.end), baselineStart: dateAt(s, dev.baselineStart), baselineEnd: dateAt(s, dev.baselineEnd) },
+        onsetDate: onset,
+        series: displaySeries(s, def.display),
+        title: deviationTitle(def.label, changePct),
+        summary,
+        recommendation: drivers && bad && cpaDrivenByCvr(drivers) ? RECOMMENDATIONS.cpaFromCvr : metricRecommendation(def.key, bad),
         evidence: [
-            { label: "Observed", value: 掝壍(脔壍.observed) },
-            { label: "Expected", value: 掝壍(脔壍.expected) },
-            { label: 礷壍, value: 脔壍.z.toFixed(1) },
-            { label: "Change", value: signedPct(隮壍, 1) },
-            ...(頦壍 ? [{ label: "CPC", value: signedPct(頦壍.cpc, 0) }, { label: "Conv. rate", value: signedPct(頦壍.cvr, 0) }] : []),
-            { label: "Baseline", value: `${峊壍(癇壍, 脔壍.baselineStart, 脔壍.baselineEnd)} (${plural(戥壍 === "seasonal" ? Math.round((脔壍.baselineEnd - 脔壍.baselineStart) / 7) + 1 : 赙壍, 戥壍 === "seasonal" ? "week" : "day")})` },
+            { label: "Observed", value: f(dev.observed) },
+            { label: "Expected", value: f(dev.expected) },
+            { label: zLabel, value: dev.z.toFixed(1) },
+            { label: "Change", value: signedPct(changePct, 1) },
+            ...(drivers ? [{ label: "CPC", value: signedPct(drivers.cpc, 0) }, { label: "Conv. rate", value: signedPct(drivers.cvr, 0) }] : []),
+            { label: "Baseline", value: `${range(s, dev.baselineStart, dev.baselineEnd)} (${plural(detector === "seasonal" ? Math.round((dev.baselineEnd - dev.baselineStart) / 7) + 1 : baseDays, detector === "seasonal" ? "week" : "day")})` },
         ],
-        ...(頦壍 ? { cpaDrivers: 頦壍 } : {}),
-        format: 锶壍.format,
+        ...(drivers ? { cpaDrivers: drivers } : {}),
+        format: def.format,
     });
 }
-type DeviationFn = (軑壍: EntitySeries, 寀壍: MonitoredDef, 窯壍?: number) => Deviation | null;
-function 馞壍(暍壍: DetectorContext, 蕼壍: readonly EntitySeries[], 剫壍: "zscore" | "robust" | "seasonal", 煚壍: number, 遉壍: DeviationFn, 崸壍: Signal[]): void {
-    const 簧壍 = MONITORED_METRICS.filter((鬖壍) => 暍壍.settings.zscore.metrics[鬖壍]);
-    for (const 栅壍 of 蕼壍) {
-        const 蛴壍 = 遉壍(栅壍, MONITORED.spend);
-        for (const 口壍 of 簧壍) {
-            const 狒壍 = MONITORED[口壍];
-            const 釁壍 = 口壍 === "spend" ? 蛴壍 : 遉壍(栅壍, 狒壍);
-            if (!釁壍 || !粬壍(栅壍, 狒壍, 釁壍, 暍壍.settings.minVolume))
+type DeviationFn = (s: EntitySeries, def: MonitoredDef, end?: number) => Deviation | null;
+function detectDeviations(ctx: DetectorContext, series: readonly EntitySeries[], detector: "zscore" | "robust" | "seasonal", thr: number, compute: DeviationFn, out: Signal[]): void {
+    const metrics = MONITORED_METRICS.filter((m) => ctx.settings.zscore.metrics[m]);
+    for (const s of series) {
+        const spendDev = compute(s, MONITORED.spend);
+        for (const metric of metrics) {
+            const def = MONITORED[metric];
+            const dev = metric === "spend" ? spendDev : compute(s, def);
+            if (!dev || !volumeOk(s, def, dev, ctx.settings.minVolume))
                 continue;
-            if (Math.abs(釁壍.z) < 煚壍)
+            if (Math.abs(dev.z) < thr)
                 continue;
-            const 庰壍 = 釁壍.z > 0;
-            const 綟壍 = 狒壍.badUp ? 庰壍 : !庰壍;
-            if (!綟壍 && 口壍 === "spend")
+            const up = dev.z > 0;
+            const bad = def.badUp ? up : !up;
+            if (!bad && metric === "spend")
                 continue;
-            if (!綟壍 && 口壍 === "conversions" && 蛴壍 && 蛴壍.z >= 煚壍)
+            if (!bad && metric === "conversions" && spendDev && spendDev.z >= thr)
                 continue;
-            let 鲎壍: Severity = !綟壍 ? "info" : Math.abs(釁壍.z) >= 煚壍 * 1.8 ? "critical" : "warning";
-            let 楽壍 = "";
-            if (綟壍 && 暍壍.conversionLag && 張壍.has(口壍) && 釁壍.end - 釁壍.recentStart >= 1) {
-                const 衬壍 = 遉壍(栅壍, 狒壍, 釁壍.end - 1);
-                if (!衬壍 || Math.abs(衬壍.z) < 煚壍 || Math.sign(衬壍.z) !== Math.sign(釁壍.z)) {
-                    if (鲎壍 === "warning")
+            let severity: Severity = !bad ? "info" : Math.abs(dev.z) >= thr * 1.8 ? "critical" : "warning";
+            let note = "";
+            if (bad && ctx.conversionLag && CONVERSION_METRICS.has(metric) && dev.end - dev.recentStart >= 1) {
+                const lagFree = compute(s, def, dev.end - 1);
+                if (!lagFree || Math.abs(lagFree.z) < thr || Math.sign(lagFree.z) !== Math.sign(dev.z)) {
+                    if (severity === "warning")
                         continue;
-                    鲎壍 = "warning";
-                    楽壍 = " Severity is reduced because conversions for the most recent day may still be arriving.";
+                    severity = "warning";
+                    note = " Severity is reduced because conversions for the most recent day may still be arriving.";
                 }
             }
-            崸壍.push(詩壍(暍壍, 栅壍, 狒壍, 剫壍, 釁壍, 煚壍, 鲎壍, 楽壍));
+            out.push(deviationSignal(ctx, s, def, detector, dev, thr, severity, note));
         }
     }
 }
-export function detectZscore(啛壍: DetectorContext, 瑊壍: readonly EntitySeries[], 錹壍: Signal[]): void {
-    const 怨壍 = 啛壍.settings.zscore;
-    if (!怨壍.enabled)
+export function detectZscore(ctx: DetectorContext, series: readonly EntitySeries[], out: Signal[]): void {
+    const cfg = ctx.settings.zscore;
+    if (!cfg.enabled)
         return;
-    馞壍(啛壍, 瑊壍, "zscore", 怨壍.threshold, (缗壍, 鸆壍, 櫵壍) => zDeviation(缗壍, 鸆壍, 怨壍.recentDays, 怨壍.baselineDays, 怨壍.threshold, 櫵壍), 錹壍);
+    detectDeviations(ctx, series, "zscore", cfg.threshold, (s, def, end) => zDeviation(s, def, cfg.recentDays, cfg.baselineDays, cfg.threshold, end), out);
 }
-export function detectRobust(觤壍: DetectorContext, 囓壍: readonly EntitySeries[], 痂壍: Signal[]): void {
-    const 钱壍 = 觤壍.settings.robust;
-    if (!钱壍.enabled)
+export function detectRobust(ctx: DetectorContext, series: readonly EntitySeries[], out: Signal[]): void {
+    const cfg = ctx.settings.robust;
+    if (!cfg.enabled)
         return;
-    const 憠壍 = 觤壍.settings.zscore.recentDays;
-    馞壍(觤壍, 囓壍, "robust", 钱壍.threshold, (肏壍, 齾壍, 汭壍) => robustDeviation(肏壍, 齾壍, 憠壍, 钱壍.baselineDays, 汭壍), 痂壍);
+    const recent = ctx.settings.zscore.recentDays;
+    detectDeviations(ctx, series, "robust", cfg.threshold, (s, def, end) => robustDeviation(s, def, recent, cfg.baselineDays, end), out);
 }
-export function detectSeasonal(譜壍: DetectorContext, 塋壍: readonly EntitySeries[], 眺壍: Signal[]): void {
-    const 阩壍 = 譜壍.settings.seasonal;
-    if (!阩壍.enabled)
+export function detectSeasonal(ctx: DetectorContext, series: readonly EntitySeries[], out: Signal[]): void {
+    const cfg = ctx.settings.seasonal;
+    if (!cfg.enabled)
         return;
-    馞壍(譜壍, 塋壍, "seasonal", 阩壍.threshold, (挘壍, 與壍, 件壍) => seasonalDeviation(挘壍, 與壍, 阩壍.weeks, 件壍), 眺壍);
+    detectDeviations(ctx, series, "seasonal", cfg.threshold, (s, def, end) => seasonalDeviation(s, def, cfg.weeks, end), out);
 }
-function 淥壍(賔壍: DayTotals): Aggregates {
+function aggregates(w: DayTotals): Aggregates {
     return {
-        cost: 賔壍.cost,
-        clicks: 賔壍.clicks,
-        impressions: 賔壍.impressions,
-        conversions: 賔壍.conversions,
-        conv_value: 賔壍.conv_value,
-        is_search_impr: 賔壍.is_search_impr,
-        is_eligible: 賔壍.is_eligible,
-        is_lost_budget: 賔壍.is_lost_budget,
-        is_lost_rank: 賔壍.is_lost_rank,
+        cost: w.cost,
+        clicks: w.clicks,
+        impressions: w.impressions,
+        conversions: w.conversions,
+        conv_value: w.conv_value,
+        is_search_impr: w.is_search_impr,
+        is_eligible: w.is_eligible,
+        is_lost_budget: w.is_lost_budget,
+        is_lost_rank: w.is_lost_rank,
     };
 }
-const 姃壍: Record<ThresholdRule["op"], string> = { gt: "above", gte: "at or above", lt: "below", lte: "at or below", change_pct_gt: "up more than", change_pct_lt: "down more than" };
-function 碲壍(鞡壍: ThresholdRule["op"], 撐壍: number, 荿壍: number): boolean {
-    switch (鞡壍) {
+const OP_TEXT: Record<ThresholdRule["op"], string> = { gt: "above", gte: "at or above", lt: "below", lte: "at or below", change_pct_gt: "up more than", change_pct_lt: "down more than" };
+function compare(op: ThresholdRule["op"], v: number, threshold: number): boolean {
+    switch (op) {
         case "gt":
         case "change_pct_gt":
-            return 撐壍 > 荿壍;
+            return v > threshold;
         case "gte":
-            return 撐壍 >= 荿壍;
+            return v >= threshold;
         case "lt":
         case "change_pct_lt":
-            return 撐壍 < 荿壍;
+            return v < threshold;
         case "lte":
-            return 撐壍 <= 荿壍;
+            return v <= threshold;
     }
 }
-const 偮壍: Record<string, MonitoredMetric> = { cost: "spend", conversions: "conversions", cpa: "cpa", ctr: "ctr", cpc: "cpc", cvr: "cvr", roas: "roas" };
+const REC_BY_METRIC: Record<string, MonitoredMetric> = { cost: "spend", conversions: "conversions", cpa: "cpa", ctr: "ctr", cpc: "cpc", cvr: "cvr", roas: "roas" };
 export interface RuleHit {
     observed: number;
     expected: number;
@@ -386,412 +386,412 @@ export interface RuleHit {
     baselineStart?: number;
     baselineEnd?: number;
 }
-export function evaluateRule(潝壍: ThresholdRule, 蹌壍: EntitySeries, 嬻壍: MetricRegistry, 稪壍 = 蹌壍.days.length - 1): RuleHit | null {
-    const 餙壍 = (昈壍: number, 蓷壍: number): number | null => {
-        const 処壍 = sumWindow(蹌壍, 昈壍, 蓷壍);
-        if (処壍.n === 0)
+export function evaluateRule(rule: ThresholdRule, s: EntitySeries, registry: MetricRegistry, end = s.days.length - 1): RuleHit | null {
+    const value = (value2: number, to: number): number | null => {
+        const w = sumWindow(s, value2, to);
+        if (w.n === 0)
             return null;
-        return 嬻壍.computeValue(潝壍.metric, 淥壍(処壍));
+        return registry.computeValue(rule.metric, aggregates(w));
     };
-    const 烕壍 = 潝壍.window.days;
-    const 迄壍 = 潝壍.op === "change_pct_gt" || 潝壍.op === "change_pct_lt";
-    const 岳壍 = firstDataIndex(蹌壍);
-    if (稪壍 - 烕壍 + 1 < 岳壍)
+    const n = rule.window.days;
+    const change = rule.op === "change_pct_gt" || rule.op === "change_pct_lt";
+    const first = firstDataIndex(s);
+    if (end - n + 1 < first)
         return null;
-    if (潝壍.window.kind === "last_n_days") {
-        const 箢壍 = 餙壍(稪壍 - 烕壍 + 1, 稪壍);
-        if (箢壍 === null)
+    if (rule.window.kind === "last_n_days") {
+        const cur2 = value(end - n + 1, end);
+        if (cur2 === null)
             return null;
-        if (!迄壍)
-            return 碲壍(潝壍.op, 箢壍, 潝壍.value) ? { observed: 箢壍, expected: 潝壍.value, recentStart: 稪壍 - 烕壍 + 1, end: 稪壍 } : null;
-        if (稪壍 - 2 * 烕壍 + 1 < 岳壍)
+        if (!change)
+            return compare(rule.op, cur2, rule.value) ? { observed: cur2, expected: rule.value, recentStart: end - n + 1, end } : null;
+        if (end - 2 * n + 1 < first)
             return null;
-        const 骑壍 = 餙壍(稪壍 - 2 * 烕壍 + 1, 稪壍 - 烕壍);
-        if (骑壍 === null || 骑壍 === 0)
+        const prev = value(end - 2 * n + 1, end - n);
+        if (prev === null || prev === 0)
             return null;
-        return 碲壍(潝壍.op, 箢壍 / 骑壍 - 1, 潝壍.value) ? { observed: 箢壍, expected: 骑壍, recentStart: 稪壍 - 烕壍 + 1, end: 稪壍, baselineStart: 稪壍 - 2 * 烕壍 + 1, baselineEnd: 稪壍 - 烕壍 } : null;
+        return compare(rule.op, cur2 / prev - 1, rule.value) ? { observed: cur2, expected: prev, recentStart: end - n + 1, end, baselineStart: end - 2 * n + 1, baselineEnd: end - n } : null;
     }
-    const 枀壍 = 稪壍 - 烕壍;
-    const 虯壍 = Math.max(岳壍, 枀壍 - 13);
-    const 卞壍 = 迄壍 ? 餙壍(虯壍, 枀壍) : null;
-    if (迄壍 && (卞壍 === null || 卞壍 === 0))
+    const bEnd = end - n;
+    const bStart = Math.max(first, bEnd - 13);
+    const base = change ? value(bStart, bEnd) : null;
+    if (change && (base === null || base === 0))
         return null;
-    for (let 牍壍 = 稪壍 - 烕壍 + 1; 牍壍 <= 稪壍; 牍壍++) {
-        const 鄼壍 = 餙壍(牍壍, 牍壍);
-        if (鄼壍 === null)
+    for (let i = end - n + 1; i <= end; i++) {
+        const v = value(i, i);
+        if (v === null)
             return null;
-        if (!碲壍(潝壍.op, 迄壍 ? 鄼壍 / (卞壍 as number) - 1 : 鄼壍, 潝壍.value))
+        if (!compare(rule.op, change ? v / (base as number) - 1 : v, rule.value))
             return null;
     }
-    const 師壍 = 餙壍(稪壍 - 烕壍 + 1, 稪壍);
-    if (師壍 === null)
+    const cur = value(end - n + 1, end);
+    if (cur === null)
         return null;
-    return 迄壍 ? { observed: 師壍, expected: 卞壍 as number, recentStart: 稪壍 - 烕壍 + 1, end: 稪壍, baselineStart: 虯壍, baselineEnd: 枀壍 } : { observed: 師壍, expected: 潝壍.value, recentStart: 稪壍 - 烕壍 + 1, end: 稪壍 };
+    return change ? { observed: cur, expected: base as number, recentStart: end - n + 1, end, baselineStart: bStart, baselineEnd: bEnd } : { observed: cur, expected: rule.value, recentStart: end - n + 1, end };
 }
-export function ruleEntities(級壍: ThresholdRule, 鰉壍: readonly EntitySeries[], 棸壍: EntitySeries): EntitySeries[] {
-    if (級壍.scope.level === "account")
-        return [棸壍];
-    return 鰉壍.filter((蟧壍) => {
-        if (級壍.scope.campaignIds?.length && !級壍.scope.campaignIds.includes(蟧壍.id))
+export function ruleEntities(rule: ThresholdRule, campaigns: readonly EntitySeries[], account: EntitySeries): EntitySeries[] {
+    if (rule.scope.level === "account")
+        return [account];
+    return campaigns.filter((s) => {
+        if (rule.scope.campaignIds?.length && !rule.scope.campaignIds.includes(s.id))
             return false;
-        if (級壍.scope.campaignTypes?.length && !級壍.scope.campaignTypes.includes(蟧壍.campaign?.type ?? "Other"))
+        if (rule.scope.campaignTypes?.length && !rule.scope.campaignTypes.includes(s.campaign?.type ?? "Other"))
             return false;
         return true;
     });
 }
-export function detectThreshold(哖壍: DetectorContext, 珅壍: readonly EntitySeries[], 銴壍: EntitySeries, 徣壍: Signal[], 纒壍: string[]): void {
-    const 鶁壍 = 哖壍.registry;
-    const 橰壍 = 哖壍.settings.thresholdRules.filter((襟壍) => 襟壍.enabled);
-    if (!橰壍.length)
+export function detectThreshold(ctx: DetectorContext, campaigns: readonly EntitySeries[], account: EntitySeries, out: Signal[], warnings: string[]): void {
+    const registry = ctx.registry;
+    const rules = ctx.settings.thresholdRules.filter((r) => r.enabled);
+    if (!rules.length)
         return;
-    if (!鶁壍) {
-        纒壍.push("Threshold rules need the metric registry; skipped.");
+    if (!registry) {
+        warnings.push("Threshold rules need the metric registry; skipped.");
         return;
     }
-    for (const 噎壍 of 橰壍) {
-        const 甽壍 = 鶁壍.get(噎壍.metric);
-        if (!甽壍 || !鶁壍.availableIn(噎壍.metric).includes("campaign_daily")) {
-            纒壍.push(`Rule “${噎壍.name}” uses ${噎壍.metric}, which is not available from daily campaign data; skipped.`);
+    for (const rule of rules) {
+        const def = registry.get(rule.metric);
+        if (!def || !registry.availableIn(rule.metric).includes("campaign_daily")) {
+            warnings.push(`Rule “${rule.name}” uses ${rule.metric}, which is not available from daily campaign data; skipped.`);
             continue;
         }
-        const 鐬壍 = 噎壍.op === "change_pct_gt" || 噎壍.op === "change_pct_lt";
-        for (const 愛壍 of ruleEntities(噎壍, 珅壍, 銴壍)) {
-            const 耊壍 = evaluateRule(噎壍, 愛壍, 鶁壍);
-            if (!耊壍)
+        const change = rule.op === "change_pct_gt" || rule.op === "change_pct_lt";
+        for (const s of ruleEntities(rule, campaigns, account)) {
+            const hit = evaluateRule(rule, s, registry);
+            if (!hit)
                 continue;
-            const 黹壍 = (毨壍: number) => fmt(甽壍.format, 毨壍, 哖壍.currency);
-            const 諗壍 = 蹣壍(耊壍.observed, 耊壍.expected);
-            const 埆壍 = 鐬壍 ? 噎壍.op === "change_pct_gt" : 噎壍.op === "gt" || 噎壍.op === "gte";
-            const 皵壍 = 噎壍.window.kind === "last_n_days" ? `over the last ${plural(噎壍.window.days, "day")}` : `on each of the last ${plural(噎壍.window.days, "day")}`;
-            const 閤壍 = 鐬壍 ? `${姃壍[噎壍.op]} ${Math.abs(噎壍.value * 100).toFixed(0)}% vs the previous period` : `${姃壍[噎壍.op]} ${黹壍(噎壍.value)}`;
-            const 抓壍 = 偮壍[噎壍.metric];
-            徣壍.push(makeSignal(哖壍, {
-                entity: 愛壍 === 銴壍 ? { id: 哖壍.accountId, name: 哖壍.accountName } : 烬壍(愛壍),
-                scope: 愛壍 === 銴壍 ? "account" : "campaign",
+            const f = (v: number) => fmt(def.format, v, ctx.currency);
+            const changePct = relChange(hit.observed, hit.expected);
+            const up = change ? rule.op === "change_pct_gt" : rule.op === "gt" || rule.op === "gte";
+            const windowText = rule.window.kind === "last_n_days" ? `over the last ${plural(rule.window.days, "day")}` : `on each of the last ${plural(rule.window.days, "day")}`;
+            const condition = change ? `${OP_TEXT[rule.op]} ${Math.abs(rule.value * 100).toFixed(0)}% vs the previous period` : `${OP_TEXT[rule.op]} ${f(rule.value)}`;
+            const monitored = REC_BY_METRIC[rule.metric];
+            out.push(makeSignal(ctx, {
+                entity: s === account ? { id: ctx.accountId, name: ctx.accountName } : entityOf(s),
+                scope: s === account ? "account" : "campaign",
                 kind: "threshold",
                 detector: "threshold",
-                ruleId: 噎壍.id,
-                metric: 噎壍.metric,
-                direction: 埆壍 ? "up" : "down",
+                ruleId: rule.id,
+                metric: rule.metric,
+                direction: up ? "up" : "down",
                 polarity: "bad",
-                severity: 噎壍.severity,
-                strength: 2.5 * (1 + Math.min(3, Math.abs(鐬壍 ? 諗壍 : 蹣壍(耊壍.observed, 噎壍.value)))),
-                observed: 耊壍.observed,
-                expected: 耊壍.expected,
-                changePct: 諗壍,
+                severity: rule.severity,
+                strength: 2.5 * (1 + Math.min(3, Math.abs(change ? changePct : relChange(hit.observed, rule.value)))),
+                observed: hit.observed,
+                expected: hit.expected,
+                changePct,
                 window: {
-                    recentStart: dateAt(愛壍, 耊壍.recentStart),
-                    recentEnd: dateAt(愛壍, 耊壍.end),
-                    baselineStart: 耊壍.baselineStart !== undefined ? dateAt(愛壍, 耊壍.baselineStart) : undefined,
-                    baselineEnd: 耊壍.baselineEnd !== undefined ? dateAt(愛壍, 耊壍.baselineEnd) : undefined,
+                    recentStart: dateAt(s, hit.recentStart),
+                    recentEnd: dateAt(s, hit.end),
+                    baselineStart: hit.baselineStart !== undefined ? dateAt(s, hit.baselineStart) : undefined,
+                    baselineEnd: hit.baselineEnd !== undefined ? dateAt(s, hit.baselineEnd) : undefined,
                 },
-                onsetDate: dateAt(愛壍, 耊壍.recentStart),
-                series: displaySeries(愛壍, (膂壍) => 鶁壍.computeValue(噎壍.metric, 淥壍(膂壍))),
-                title: 噎壍.name,
-                summary: `${甽壍.short} was ${黹壍(耊壍.observed)} ${皵壍} — rule: ${閤壍}.`,
-                recommendation: 抓壍 && 抓壍 !== "spend" ? metricRecommendation(抓壍, true) : 抓壍 === "spend" ? RECOMMENDATIONS.spend : `Threshold rule “${噎壍.name}” fired. Review recent changes for this campaign and adjust budgets or targets.`,
+                onsetDate: dateAt(s, hit.recentStart),
+                series: displaySeries(s, (d) => registry.computeValue(rule.metric, aggregates(d))),
+                title: rule.name,
+                summary: `${def.short} was ${f(hit.observed)} ${windowText} — rule: ${condition}.`,
+                recommendation: monitored && monitored !== "spend" ? metricRecommendation(monitored, true) : monitored === "spend" ? RECOMMENDATIONS.spend : `Threshold rule “${rule.name}” fired. Review recent changes for this campaign and adjust budgets or targets.`,
                 evidence: [
-                    { label: "Observed", value: 黹壍(耊壍.observed) },
-                    { label: "Expected", value: 鐬壍 ? 黹壍(耊壍.expected) : `${姃壍[噎壍.op]} ${黹壍(噎壍.value)}` },
-                    { label: "Rule", value: `${甽壍.short} ${閤壍}` },
-                    { label: "Window", value: `${峊壍(愛壍, 耊壍.recentStart, 耊壍.end)}` },
+                    { label: "Observed", value: f(hit.observed) },
+                    { label: "Expected", value: change ? f(hit.expected) : `${OP_TEXT[rule.op]} ${f(rule.value)}` },
+                    { label: "Rule", value: `${def.short} ${condition}` },
+                    { label: "Window", value: `${range(s, hit.recentStart, hit.end)}` },
                 ],
-                format: 甽壍.format,
+                format: def.format,
             }));
         }
     }
 }
-function 乱壍(浠壍: PacingRow, 豏壍: ReadonlyMap<string, EntitySeries>, 夾壍: CivilDate[]): EntitySeries {
-    const 砭壍 = 浠壍.campaignIds.map((霜壍) => 豏壍.get(霜壍)).filter((搋壍): 搋壍 is EntitySeries => !!搋壍);
-    if (砭壍.length === 1 && 砭壍[0])
-        return 砭壍[0];
-    return { ...combineSeries(浠壍.unitId, 浠壍.name, 砭壍, 夾壍), type: 浠壍.type };
+function unitSeries(row: PacingRow, all: ReadonlyMap<string, EntitySeries>, dates: CivilDate[]): EntitySeries {
+    const parts = row.campaignIds.map((id) => all.get(id)).filter((s): s is EntitySeries => !!s);
+    if (parts.length === 1 && parts[0])
+        return parts[0];
+    return { ...combineSeries(row.unitId, row.name, parts, dates), type: row.type };
 }
-export function detectPacing(苺壍: DetectorContext, 俩壍: PacingReport | null | undefined, 滘壍: ReadonlyMap<string, EntitySeries>, 跇壍: CivilDate[], 媶壍: ReadonlySet<string>, 禥壍: Signal[]): void {
-    const 颔壍 = 苺壍.settings.pacing;
-    if (!颔壍.enabled || !俩壍)
+export function detectPacing(ctx: DetectorContext, report: PacingReport | null | undefined, all: ReadonlyMap<string, EntitySeries>, dates: CivilDate[], monitorable: ReadonlySet<string>, out: Signal[]): void {
+    const cfg = ctx.settings.pacing;
+    if (!cfg.enabled || !report)
         return;
-    const 斃壍 = (葲壍: number) => fmt("money", 葲壍, 苺壍.currency);
-    const 兡壍 = 颔壍.dailyOver ?? DEFAULT_DAILY_OVER;
-    const 灐壍 = 颔壍.dailyOverCritical ?? DEFAULT_DAILY_OVER_CRITICAL;
-    const 輿壍 = 苺壍.settings.zscore.recentDays;
-    for (const 尮壍 of 俩壍.rows) {
-        if (尮壍.paused || !尮壍.campaignIds.some((笝壍) => 媶壍.has(笝壍)))
+    const money = (v: number) => fmt("money", v, ctx.currency);
+    const dailyOver = cfg.dailyOver ?? DEFAULT_DAILY_OVER;
+    const dailyCrit = cfg.dailyOverCritical ?? DEFAULT_DAILY_OVER_CRITICAL;
+    const recentDays = ctx.settings.zscore.recentDays;
+    for (const row of report.rows) {
+        if (row.paused || !row.campaignIds.some((id) => monitorable.has(id)))
             continue;
-        if (尮壍.status === "no_budget" || 尮壍.status === "unsupported_period")
+        if (row.status === "no_budget" || row.status === "unsupported_period")
             continue;
-        const 騌壍 = 乱壍(尮壍, 滘壍, 跇壍);
-        const 曻壍 = 騌壍.days.length - 1;
-        const 藪壍 = { id: 尮壍.unitId, name: 尮壍.name, type: 尮壍.type };
-        const 務壍 = displaySeries(騌壍, (燈壍) => 燈壍.cost);
-        if (俩壍.remainingDays > 0 && 尮壍.monthlyTarget > 0 && 尮壍.paceRatio > 颔壍.over) {
-            const 邷壍: Severity = 尮壍.paceRatio > 颔壍.overCritical ? "critical" : "warning";
-            const 嶦壍 = 尮壍.monthlyTarget / 俩壍.daysInMonth;
-            禥壍.push(makeSignal(苺壍, {
-                entity: 藪壍,
+        const s = unitSeries(row, all, dates);
+        const end = s.days.length - 1;
+        const entity = { id: row.unitId, name: row.name, type: row.type };
+        const spendSeries = displaySeries(s, (d) => d.cost);
+        if (report.remainingDays > 0 && row.monthlyTarget > 0 && row.paceRatio > cfg.over) {
+            const severity: Severity = row.paceRatio > cfg.overCritical ? "critical" : "warning";
+            const perDay = row.monthlyTarget / report.daysInMonth;
+            out.push(makeSignal(ctx, {
+                entity,
                 kind: "pacing",
                 detector: "pacing",
                 metric: "spend",
                 direction: "up",
                 polarity: "bad",
-                severity: 邷壍,
-                strength: 2.5 + 10 * (尮壍.paceRatio - 1),
-                observed: 尮壍.projected,
-                expected: 尮壍.monthlyTarget,
-                changePct: 尮壍.paceRatio - 1,
-                band: { lo: 嶦壍 * 0.9, hi: 嶦壍 * 1.1 },
-                window: { recentStart: `${俩壍.month}-01`, recentEnd: 苺壍.dataThrough },
-                series: 務壍,
-                title: pacingTitle(尮壍.paceRatio),
-                summary: `Month-to-date spend is ${斃壍(尮壍.mtdSpend)} after ${俩壍.elapsedDays} of ${俩壍.daysInMonth} days; at about ${斃壍(尮壍.expectedDaily)}/day the month ends near ${斃壍(尮壍.projected)} (${(尮壍.paceRatio * 100).toFixed(0)}% of the ${斃壍(尮壍.monthlyTarget)} budget).`,
-                recommendation: pacingRecommendation(斃壍(尮壍.projected), 斃壍(尮壍.monthlyTarget), 斃壍(尮壍.recommendedDaily ?? 0), 俩壍.remainingDays),
+                severity,
+                strength: 2.5 + 10 * (row.paceRatio - 1),
+                observed: row.projected,
+                expected: row.monthlyTarget,
+                changePct: row.paceRatio - 1,
+                band: { lo: perDay * 0.9, hi: perDay * 1.1 },
+                window: { recentStart: `${report.month}-01`, recentEnd: ctx.dataThrough },
+                series: spendSeries,
+                title: pacingTitle(row.paceRatio),
+                summary: `Month-to-date spend is ${money(row.mtdSpend)} after ${report.elapsedDays} of ${report.daysInMonth} days; at about ${money(row.expectedDaily)}/day the month ends near ${money(row.projected)} (${(row.paceRatio * 100).toFixed(0)}% of the ${money(row.monthlyTarget)} budget).`,
+                recommendation: pacingRecommendation(money(row.projected), money(row.monthlyTarget), money(row.recommendedDaily ?? 0), report.remainingDays),
                 evidence: [
-                    { label: "Observed", value: 斃壍(尮壍.projected) },
-                    { label: "Expected", value: 斃壍(尮壍.monthlyTarget) },
-                    { label: "Projected EOM", value: `${(尮壍.paceRatio * 100).toFixed(0)}% of budget` },
-                    { label: "Spent to date", value: 斃壍(尮壍.mtdSpend) },
-                    { label: "Days left", value: String(俩壍.remainingDays) },
+                    { label: "Observed", value: money(row.projected) },
+                    { label: "Expected", value: money(row.monthlyTarget) },
+                    { label: "Projected EOM", value: `${(row.paceRatio * 100).toFixed(0)}% of budget` },
+                    { label: "Spent to date", value: money(row.mtdSpend) },
+                    { label: "Days left", value: String(report.remainingDays) },
                 ],
                 format: "money",
             }));
         }
-        const 粕壍 = 尮壍.dailyBudget;
-        if (!粕壍 || 粕壍 <= 0 || 曻壍 - 輿壍 + 1 < firstDataIndex(騌壍))
+        const daily = row.dailyBudget;
+        if (!daily || daily <= 0 || end - recentDays + 1 < firstDataIndex(s))
             continue;
-        const 鮄壍 = sumWindow(騌壍, 曻壍 - 輿壍 + 1, 曻壍);
-        if (鮄壍.n === 0)
+        const w = sumWindow(s, end - recentDays + 1, end);
+        if (w.n === 0)
             continue;
-        const 桳壍 = 鮄壍.cost / 鮄壍.n;
-        const 蝢壍 = 桳壍 / 粕壍;
-        if (蝢壍 < 兡壍)
+        const runRate = w.cost / w.n;
+        const ratio = runRate / daily;
+        if (ratio < dailyOver)
             continue;
-        const 呑壍 = Math.max(曻壍 - 6, firstDataIndex(騌壍));
-        let 獀壍 = 0;
-        let 鈯壍 = 0;
-        for (let 弞壍 = 呑壍; 弞壍 <= 曻壍; 弞壍++) {
-            const 縍壍 = 騌壍.days[弞壍]?.cost ?? 0;
-            獀壍 += 縍壍;
-            if (縍壍 <= 0)
-                鈯壍++;
+        const weekFrom = Math.max(end - 6, firstDataIndex(s));
+        let weekCost = 0;
+        let idleDays = 0;
+        for (let i = weekFrom; i <= end; i++) {
+            const cost = s.days[i]?.cost ?? 0;
+            weekCost += cost;
+            if (cost <= 0)
+                idleDays++;
         }
-        const 鳼壍 = 獀壍 / (曻壍 - 呑壍 + 1);
-        if (鈯壍 > 0 && 鳼壍 / 粕壍 < 兡壍)
+        const calendarRate = weekCost / (end - weekFrom + 1);
+        if (idleDays > 0 && calendarRate / daily < dailyOver)
             continue;
-        let 槫壍 = 曻壍 - 輿壍 + 1;
-        while (槫壍 - 1 >= firstDataIndex(騌壍) && 曻壍 - 槫壍 < 14 && (騌壍.days[槫壍 - 1]?.cost ?? 0) >= 粕壍 * 兡壍)
-            槫壍--;
-        let 裚壍 = 0;
-        for (let 嗉壍 = Math.max(0, 曻壍 - 6); 嗉壍 <= 曻壍; 嗉壍++)
-            if ((騌壍.days[嗉壍]?.cost ?? 0) > 粕壍)
-                裚壍++;
-        const 璸壍 = 粕壍 * MONTHLY_CAP_FACTOR;
-        const 鎧壍 = 尮壍.mtdSpend + 桳壍 * 俩壍.remainingDays;
-        const 悖壍 = 俩壍.remainingDays > 0 && 鎧壍 > 璸壍 ? ` At this rate the month would pass Google's ${斃壍(璸壍)} cap (30.4 × daily), so delivery would stop before month-end.` : "";
-        禥壍.push(makeSignal(苺壍, {
-            entity: 藪壍,
+        let onset = end - recentDays + 1;
+        while (onset - 1 >= firstDataIndex(s) && end - onset < 14 && (s.days[onset - 1]?.cost ?? 0) >= daily * dailyOver)
+            onset--;
+        let overDays = 0;
+        for (let i = Math.max(0, end - 6); i <= end; i++)
+            if ((s.days[i]?.cost ?? 0) > daily)
+                overDays++;
+        const monthCap = daily * MONTHLY_CAP_FACTOR;
+        const runRateMonth = row.mtdSpend + runRate * report.remainingDays;
+        const capNote = report.remainingDays > 0 && runRateMonth > monthCap ? ` At this rate the month would pass Google's ${money(monthCap)} cap (30.4 × daily), so delivery would stop before month-end.` : "";
+        out.push(makeSignal(ctx, {
+            entity,
             kind: "overdelivery",
             detector: "pacing",
             metric: "spend",
             direction: "up",
             polarity: "bad",
-            severity: 蝢壍 >= 灐壍 ? "critical" : "warning",
-            strength: 2.5 + 10 * (蝢壍 - 1),
-            observed: 桳壍,
-            expected: 粕壍,
-            changePct: 蝢壍 - 1,
-            band: { lo: 0, hi: 粕壍 * 兡壍 },
-            window: { recentStart: dateAt(騌壍, 曻壍 - 輿壍 + 1), recentEnd: dateAt(騌壍, 曻壍) },
-            onsetDate: dateAt(騌壍, 槫壍),
-            series: 務壍,
-            title: `Overdelivering — ${(蝢壍 * 100).toFixed(0)}% of daily budget`,
-            summary: `Spend averaged ${斃壍(桳壍)}/day over the last ${plural(輿壍, "day")} against a ${斃壍(粕壍)} daily budget (${(蝢壍 * 100).toFixed(0)}%), since ${formatShort(dateAt(騌壍, 槫壍))}.${悖壍}`,
+            severity: ratio >= dailyCrit ? "critical" : "warning",
+            strength: 2.5 + 10 * (ratio - 1),
+            observed: runRate,
+            expected: daily,
+            changePct: ratio - 1,
+            band: { lo: 0, hi: daily * dailyOver },
+            window: { recentStart: dateAt(s, end - recentDays + 1), recentEnd: dateAt(s, end) },
+            onsetDate: dateAt(s, onset),
+            series: spendSeries,
+            title: `Overdelivering — ${(ratio * 100).toFixed(0)}% of daily budget`,
+            summary: `Spend averaged ${money(runRate)}/day over the last ${plural(recentDays, "day")} against a ${money(daily)} daily budget (${(ratio * 100).toFixed(0)}%), since ${formatShort(dateAt(s, onset))}.${capNote}`,
             recommendation: `Google may spend up to ${DAILY_OVERDELIVERY_FACTOR}× the daily budget on a single day but caps the month at ${MONTHLY_CAP_FACTOR}× — sustained overdelivery like this usually follows a bid-strategy or budget change. Confirm it is intended, or lower the daily budget and tighten targets.`,
             evidence: [
-                { label: "Observed", value: `${斃壍(桳壍)}/day` },
-                { label: "Expected", value: `${斃壍(粕壍)}/day` },
-                { label: "Run rate", value: `${(蝢壍 * 100).toFixed(0)}% of daily budget` },
-                { label: "7-day calendar average", value: `${斃壍(鳼壍)}/day` },
-                { label: "Days over budget", value: `${裚壍} of the last 7` },
+                { label: "Observed", value: `${money(runRate)}/day` },
+                { label: "Expected", value: `${money(daily)}/day` },
+                { label: "Run rate", value: `${(ratio * 100).toFixed(0)}% of daily budget` },
+                { label: "7-day calendar average", value: `${money(calendarRate)}/day` },
+                { label: "Days over budget", value: `${overDays} of the last 7` },
             ],
             format: "money",
         }));
     }
 }
-export function detectTrackingBreak(羅壍: DetectorContext, 鹴壍: readonly EntitySeries[], 正壍: Signal[]): void {
-    const 詒壍 = 羅壍.settings.trackingBreak;
-    if (!詒壍.enabled)
+export function detectTrackingBreak(ctx: DetectorContext, series: readonly EntitySeries[], out: Signal[]): void {
+    const cfg = ctx.settings.trackingBreak;
+    if (!cfg.enabled)
         return;
-    const 坁壍 = 羅壍.settings.zscore.recentDays;
-    const 瘰壍 = 羅壍.settings.zscore.baselineDays;
-    const 锟壍 = Math.min(2, 坁壍);
-    for (const 戎壍 of 鹴壍) {
-        const 能壍 = 戎壍.days.length - 1;
-        const 鿬壍 = 能壍 - 坁壍 + 1;
-        const 泛壍 = 鿬壍 - 1;
-        const 诊壍 = 泛壍 - 瘰壍 + 1;
-        if (诊壍 < firstDataIndex(戎壍))
+    const recentDays = ctx.settings.zscore.recentDays;
+    const baselineDays = ctx.settings.zscore.baselineDays;
+    const need = Math.min(2, recentDays);
+    for (const s of series) {
+        const end = s.days.length - 1;
+        const rStart = end - recentDays + 1;
+        const bEnd = rStart - 1;
+        const bStart = bEnd - baselineDays + 1;
+        if (bStart < firstDataIndex(s))
             continue;
-        let 墹壍 = 0;
-        let 瞨壍 = -1;
-        for (let 隗壍 = 鿬壍; 隗壍 <= 能壍; 隗壍++) {
-            const 掆壍 = 戎壍.days[隗壍];
-            if (掆壍 && 掆壍.conversions <= 0 && 掆壍.clicks >= 詒壍.minClicksPerDay) {
-                墹壍++;
-                if (瞨壍 < 0)
-                    瞨壍 = 隗壍;
+        let zeroDays = 0;
+        let onset = -1;
+        for (let i = rStart; i <= end; i++) {
+            const d = s.days[i];
+            if (d && d.conversions <= 0 && d.clicks >= cfg.minClicksPerDay) {
+                zeroDays++;
+                if (onset < 0)
+                    onset = i;
             }
         }
-        if (墹壍 < 锟壍)
+        if (zeroDays < need)
             continue;
-        const 艵壍 = sumWindow(戎壍, 诊壍, 泛壍);
-        const 佤壍 = 艵壍.n ? 艵壍.conversions / 艵壍.n : 0;
-        if (佤壍 < 詒壍.minBaselineConvPerDay)
+        const base = sumWindow(s, bStart, bEnd);
+        const baseConv = base.n ? base.conversions / base.n : 0;
+        if (baseConv < cfg.minBaselineConvPerDay)
             continue;
-        const 湓壍 = sumWindow(戎壍, 鿬壍, 能壍);
-        const 赂壍 = 湓壍.n ? 湓壍.conversions / 湓壍.n : 0;
-        const 娱壍 = 湓壍.n ? 湓壍.clicks / 湓壍.n : 0;
-        const 礠壍 = std(dailyValues(戎壍, MONITORED.conversions, 诊壍, 泛壍)) || 莖壍;
-        const 頏壍 = (擾壍: number) => fmt("decimal", 擾壍, 羅壍.currency);
-        正壍.push(makeSignal(羅壍, {
-            entity: 烬壍(戎壍),
-            scope: 戎壍.id === 羅壍.accountId ? "account" : "campaign",
+        const recent = sumWindow(s, rStart, end);
+        const observed = recent.n ? recent.conversions / recent.n : 0;
+        const clicksPerDay = recent.n ? recent.clicks / recent.n : 0;
+        const sd = std(dailyValues(s, MONITORED.conversions, bStart, bEnd)) || EPS;
+        const f = (v: number) => fmt("decimal", v, ctx.currency);
+        out.push(makeSignal(ctx, {
+            entity: entityOf(s),
+            scope: s.id === ctx.accountId ? "account" : "campaign",
             kind: "tracking_break",
             detector: "tracking_break",
             metric: "conversions",
             direction: "down",
             polarity: "bad",
             severity: "critical",
-            strength: 5 + 墹壍,
-            observed: 赂壍,
-            expected: 佤壍,
-            z: (赂壍 - 佤壍) / 礠壍,
-            band: { lo: Math.max(0, 佤壍 - 羅壍.settings.zscore.threshold * 礠壍), hi: 佤壍 + 羅壍.settings.zscore.threshold * 礠壍 },
-            window: { recentStart: dateAt(戎壍, 鿬壍), recentEnd: dateAt(戎壍, 能壍), baselineStart: dateAt(戎壍, 诊壍), baselineEnd: dateAt(戎壍, 泛壍) },
-            onsetDate: dateAt(戎壍, 瞨壍),
-            series: displaySeries(戎壍, (菭壍) => 菭壍.conversions),
-            title: `Tracking break — 0 conversions on ${墹壍} of ${坁壍} days`,
-            summary: `Clicks kept coming (${Math.round(娱壍).toLocaleString("en-US")}/day) but conversions were zero on ${墹壍} of the last ${plural(坁壍, "day")}, against a baseline of ${頏壍(佤壍)}/day.`,
+            strength: 5 + zeroDays,
+            observed,
+            expected: baseConv,
+            z: (observed - baseConv) / sd,
+            band: { lo: Math.max(0, baseConv - ctx.settings.zscore.threshold * sd), hi: baseConv + ctx.settings.zscore.threshold * sd },
+            window: { recentStart: dateAt(s, rStart), recentEnd: dateAt(s, end), baselineStart: dateAt(s, bStart), baselineEnd: dateAt(s, bEnd) },
+            onsetDate: dateAt(s, onset),
+            series: displaySeries(s, (d) => d.conversions),
+            title: `Tracking break — 0 conversions on ${zeroDays} of ${recentDays} days`,
+            summary: `Clicks kept coming (${Math.round(clicksPerDay).toLocaleString("en-US")}/day) but conversions were zero on ${zeroDays} of the last ${plural(recentDays, "day")}, against a baseline of ${f(baseConv)}/day.`,
             recommendation: RECOMMENDATIONS.trackingBreak,
             evidence: [
-                { label: "Observed", value: `${頏壍(赂壍)}/day` },
-                { label: "Expected", value: `${頏壍(佤壍)}/day` },
-                { label: "Zero-conversion days", value: `${墹壍} of ${坁壍}` },
-                { label: "Clicks/day", value: Math.round(娱壍).toLocaleString("en-US") },
+                { label: "Observed", value: `${f(observed)}/day` },
+                { label: "Expected", value: `${f(baseConv)}/day` },
+                { label: "Zero-conversion days", value: `${zeroDays} of ${recentDays}` },
+                { label: "Clicks/day", value: Math.round(clicksPerDay).toLocaleString("en-US") },
             ],
             format: "decimal",
         }));
     }
 }
-export function detectZeroDelivery(僜壍: DetectorContext, 濋壍: readonly EntitySeries[], 躺壍: Signal[]): void {
-    const 宩壍 = 僜壍.settings.zeroDelivery;
-    if (!宩壍.enabled)
+export function detectZeroDelivery(ctx: DetectorContext, series: readonly EntitySeries[], out: Signal[]): void {
+    const cfg = ctx.settings.zeroDelivery;
+    if (!cfg.enabled)
         return;
-    const 窘壍 = 僜壍.settings.zscore.baselineDays;
-    for (const 馇壍 of 濋壍) {
-        const 晶壍 = 馇壍.days.length - 1;
-        const 蕥壍 = 馇壍.days[晶壍];
-        if (!蕥壍 || 蕥壍.impressions > 0)
+    const baselineDays = ctx.settings.zscore.baselineDays;
+    for (const s of series) {
+        const end = s.days.length - 1;
+        const last = s.days[end];
+        if (!last || last.impressions > 0)
             continue;
-        let 剔壍 = 1;
-        while (晶壍 - 剔壍 >= 0 && 馇壍.days[晶壍 - 剔壍] && (馇壍.days[晶壍 - 剔壍]?.impressions ?? 0) === 0 && 剔壍 < 14)
-            剔壍++;
-        const 煃壍 = 晶壍 - 剔壍;
-        const 進壍 = 煃壍 - 窘壍 + 1;
-        if (進壍 < firstDataIndex(馇壍))
+        let zeroRun = 1;
+        while (end - zeroRun >= 0 && s.days[end - zeroRun] && (s.days[end - zeroRun]?.impressions ?? 0) === 0 && zeroRun < 14)
+            zeroRun++;
+        const bEnd = end - zeroRun;
+        const bStart = bEnd - baselineDays + 1;
+        if (bStart < firstDataIndex(s))
             continue;
-        const 崡壍 = sumWindow(馇壍, 進壍, 煃壍);
-        const 簐壍 = 崡壍.n ? 崡壍.impressions / 崡壍.n : 0;
-        if (簐壍 < 宩壍.minBaselineImpr)
+        const base = sumWindow(s, bStart, bEnd);
+        const baseImpr = base.n ? base.impressions / base.n : 0;
+        if (baseImpr < cfg.minBaselineImpr)
             continue;
-        const 髿壍 = 晶壍 - 剔壍 + 1;
-        躺壍.push(makeSignal(僜壍, {
-            entity: 烬壍(馇壍),
+        const onset = end - zeroRun + 1;
+        out.push(makeSignal(ctx, {
+            entity: entityOf(s),
             kind: "zero_delivery",
             detector: "zero_delivery",
             metric: "impressions",
             direction: "down",
             polarity: "bad",
             severity: "critical",
-            strength: 5 + 剔壍,
+            strength: 5 + zeroRun,
             observed: 0,
-            expected: 簐壍,
+            expected: baseImpr,
             changePct: -1,
-            band: { lo: 簐壍 * 0.5, hi: 簐壍 * 1.5 },
-            window: { recentStart: dateAt(馇壍, 髿壍), recentEnd: dateAt(馇壍, 晶壍), baselineStart: dateAt(馇壍, 進壍), baselineEnd: dateAt(馇壍, 煃壍) },
-            onsetDate: dateAt(馇壍, 髿壍),
-            series: displaySeries(馇壍, (柮壍) => 柮壍.impressions),
-            title: 剔壍 > 1 ? `Zero delivery — no impressions for ${剔壍} days` : `Zero delivery — no impressions on ${formatShort(dateAt(馇壍, 晶壍))}`,
-            summary: `The campaign is enabled but served 0 impressions ${剔壍 > 1 ? `for ${剔壍} days since ${formatShort(dateAt(馇壍, 髿壍))}` : `on ${formatShort(dateAt(馇壍, 晶壍))}`}, after averaging ${Math.round(簐壍).toLocaleString("en-US")} a day over the previous ${窘壍} days.`,
+            band: { lo: baseImpr * 0.5, hi: baseImpr * 1.5 },
+            window: { recentStart: dateAt(s, onset), recentEnd: dateAt(s, end), baselineStart: dateAt(s, bStart), baselineEnd: dateAt(s, bEnd) },
+            onsetDate: dateAt(s, onset),
+            series: displaySeries(s, (d) => d.impressions),
+            title: zeroRun > 1 ? `Zero delivery — no impressions for ${zeroRun} days` : `Zero delivery — no impressions on ${formatShort(dateAt(s, end))}`,
+            summary: `The campaign is enabled but served 0 impressions ${zeroRun > 1 ? `for ${zeroRun} days since ${formatShort(dateAt(s, onset))}` : `on ${formatShort(dateAt(s, end))}`}, after averaging ${Math.round(baseImpr).toLocaleString("en-US")} a day over the previous ${baselineDays} days.`,
             recommendation: RECOMMENDATIONS.zeroDelivery,
             evidence: [
                 { label: "Observed", value: "0 impressions" },
-                { label: "Expected", value: `${Math.round(簐壍).toLocaleString("en-US")}/day` },
-                { label: "Days without delivery", value: String(剔壍) },
+                { label: "Expected", value: `${Math.round(baseImpr).toLocaleString("en-US")}/day` },
+                { label: "Days without delivery", value: String(zeroRun) },
             ],
             format: "number",
         }));
     }
 }
-export function detectBudgetLimited(蛝壍: DetectorContext, 双壍: readonly EntitySeries[], 犻壍: readonly EntitySeries[], 醪壍: Signal[]): void {
-    const 庙壍 = 蛝壍.settings.budgetLimited;
-    if (!庙壍.enabled)
+export function detectBudgetLimited(ctx: DetectorContext, series: readonly EntitySeries[], accountParts: readonly EntitySeries[], out: Signal[]): void {
+    const cfg = ctx.settings.budgetLimited;
+    if (!cfg.enabled)
         return;
-    const 綈壍 = 潴壍;
-    let 鱷壍 = 0;
-    let 楦壍 = 0;
-    for (const 衕壍 of 犻壍) {
-        const 啄壍 = 衕壍.days.length - 1;
-        const 琳壍 = sumWindow(衕壍, 啄壍 - 綈壍 + 1, 啄壍);
-        鱷壍 += 琳壍.cost;
-        楦壍 += 琳壍.conv_value;
+    const days = BUDGET_LIMITED_DAYS;
+    let acctCost = 0;
+    let acctValue = 0;
+    for (const s of accountParts) {
+        const end = s.days.length - 1;
+        const w = sumWindow(s, end - days + 1, end);
+        acctCost += w.cost;
+        acctValue += w.conv_value;
     }
-    const 錢壍 = 鱷壍 > 0 ? 楦壍 / 鱷壍 : null;
-    if (錢壍 === null)
+    const acctRoas = acctCost > 0 ? acctValue / acctCost : null;
+    if (acctRoas === null)
         return;
-    const 怑壍 = (缀壍: number) => fmt("money", 缀壍, 蛝壍.currency);
-    for (const 鷯壍 of 双壍) {
-        const 櫞壍 = 鷯壍.campaign?.type;
-        if (櫞壍 !== "Search" && 櫞壍 !== "Shopping")
+    const money = (v: number) => fmt("money", v, ctx.currency);
+    for (const s of series) {
+        const value = s.campaign?.type;
+        if (value !== "Search" && value !== "Shopping")
             continue;
-        const 觍壍 = 鷯壍.days.length - 1;
-        const 嚼壍 = 觍壍 - 綈壍 + 1;
-        if (嚼壍 < firstDataIndex(鷯壍))
+        const end = s.days.length - 1;
+        const start = end - days + 1;
+        if (start < firstDataIndex(s))
             continue;
-        const 疫壍 = sumWindow(鷯壍, 嚼壍, 觍壍);
-        if (疫壍.is_eligible <= 0 || 疫壍.cost <= 0)
+        const w = sumWindow(s, start, end);
+        if (w.is_eligible <= 0 || w.cost <= 0)
             continue;
-        if (疫壍.conversions / 綈壍 < 蛝壍.settings.minVolume.convPerDay)
+        if (w.conversions / days < ctx.settings.minVolume.convPerDay)
             continue;
-        const 钚壍 = 疫壍.is_lost_budget / 疫壍.is_eligible;
-        const 憉壍 = 疫壍.conv_value / 疫壍.cost;
-        if (钚壍 < 庙壍.minLostIsBudget || 憉壍 < 庙壍.roasVsAccount * 錢壍)
+        const lost = w.is_lost_budget / w.is_eligible;
+        const roas = w.conv_value / w.cost;
+        if (lost < cfg.minLostIsBudget || roas < cfg.roasVsAccount * acctRoas)
             continue;
-        const 聸壍 = 疫壍.is_search_impr / 疫壍.is_eligible;
-        const 齧壍 = Math.min(1, 聸壍 > 0 ? 钚壍 / 聸壍 : 1);
-        const 汖壍 = 鷯壍.campaign?.budget_daily ?? null;
-        const 譅壍 = 汖壍 ? Math.round((汖壍 * (1 + 齧壍)) / 5) * 5 : null;
-        醪壍.push(makeSignal(蛝壍, {
-            entity: 烬壍(鷯壍),
+        const share = w.is_search_impr / w.is_eligible;
+        const raise = Math.min(1, share > 0 ? lost / share : 1);
+        const daily = s.campaign?.budget_daily ?? null;
+        const recommendedDaily = daily ? Math.round((daily * (1 + raise)) / 5) * 5 : null;
+        out.push(makeSignal(ctx, {
+            entity: entityOf(s),
             kind: "budget_limited",
             detector: "budget_limited",
             metric: "lost_is_budget",
             direction: "up",
             polarity: "good",
             severity: "info",
-            strength: 2.5 * (钚壍 / 庙壍.minLostIsBudget) + 憉壍 / 錢壍 / 10,
-            observed: 钚壍,
-            expected: 庙壍.minLostIsBudget,
-            band: { lo: 0, hi: 庙壍.minLostIsBudget },
-            window: { recentStart: dateAt(鷯壍, 嚼壍), recentEnd: dateAt(鷯壍, 觍壍) },
-            series: displaySeries(鷯壍, (場壍) => (場壍.is_eligible > 0 ? 場壍.is_lost_budget / 場壍.is_eligible : null)),
-            title: `Budget-limited — ${(钚壍 * 100).toFixed(0)}% of impressions lost`,
-            summary: `Lost ${(钚壍 * 100).toFixed(1)}% of eligible impressions to budget over the last ${綈壍} days while ROAS was ${憉壍.toFixed(2)}x (account ${錢壍.toFixed(2)}x).`,
-            recommendation: `Raise the daily budget by about ${(齧壍 * 100).toFixed(0)}%${譅壍 ? ` (to ${怑壍(譅壍)})` : ""} to capture the missed demand — the lost-budget share suggests that much extra volume at similar efficiency.`,
+            strength: 2.5 * (lost / cfg.minLostIsBudget) + roas / acctRoas / 10,
+            observed: lost,
+            expected: cfg.minLostIsBudget,
+            band: { lo: 0, hi: cfg.minLostIsBudget },
+            window: { recentStart: dateAt(s, start), recentEnd: dateAt(s, end) },
+            series: displaySeries(s, (d) => (d.is_eligible > 0 ? d.is_lost_budget / d.is_eligible : null)),
+            title: `Budget-limited — ${(lost * 100).toFixed(0)}% of impressions lost`,
+            summary: `Lost ${(lost * 100).toFixed(1)}% of eligible impressions to budget over the last ${days} days while ROAS was ${roas.toFixed(2)}x (account ${acctRoas.toFixed(2)}x).`,
+            recommendation: `Raise the daily budget by about ${(raise * 100).toFixed(0)}%${recommendedDaily ? ` (to ${money(recommendedDaily)})` : ""} to capture the missed demand — the lost-budget share suggests that much extra volume at similar efficiency.`,
             evidence: [
-                { label: "Observed", value: `${(钚壍 * 100).toFixed(1)}% lost (budget)` },
-                { label: "Expected", value: `< ${(庙壍.minLostIsBudget * 100).toFixed(0)}%` },
-                { label: "ROAS vs account", value: `${憉壍.toFixed(2)}x vs ${錢壍.toFixed(2)}x` },
-                { label: "Suggested daily", value: 譅壍 ? 怑壍(譅壍) : "—" },
+                { label: "Observed", value: `${(lost * 100).toFixed(1)}% lost (budget)` },
+                { label: "Expected", value: `< ${(cfg.minLostIsBudget * 100).toFixed(0)}%` },
+                { label: "ROAS vs account", value: `${roas.toFixed(2)}x vs ${acctRoas.toFixed(2)}x` },
+                { label: "Suggested daily", value: recommendedDaily ? money(recommendedDaily) : "—" },
             ],
             format: "percent",
         }));

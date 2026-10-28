@@ -5,46 +5,46 @@ import type { CustomMetric, CustomMetricBody, SavedQuestion, SavedQuestionBody }
 import type { DateRangeSpec, QuerySpecInput } from "@/lib/domain/query/spec";
 import { ApiError, download, request } from "./client";
 import { qk, useQueryResult } from "./hooks";
-const 餞壍 = (昍壍: number, 蓼壍: unknown) => !(蓼壍 instanceof ApiError && 蓼壍.status >= 400 && 蓼壍.status < 500) && 昍壍 < 2;
+const noRetry4xx = (count: number, err: unknown) => !(err instanceof ApiError && err.status >= 400 && err.status < 500) && count < 2;
 export const exploreKeys = {
     customMetrics: () => ["metrics", "custom"] as const,
-    validate: (凫壍: string, 烚壍: string) => ["metrics", "validate", 凫壍, 烚壍] as const,
+    validate: (key: string, formula: string) => ["metrics", "validate", key, formula] as const,
 };
 export function useCustomMetrics() {
     return useQuery({
         queryKey: exploreKeys.customMetrics(),
-        queryFn: ({ signal: 迉壍 }) => request<{
+        queryFn: ({ signal }) => request<{
             metrics: CustomMetric[];
-        }>("/api/metrics/custom", { signal: 迉壍 }).then((岸壍) => 岸壍.metrics),
+        }>("/api/metrics/custom", { signal }).then((r) => r.metrics),
         staleTime: 60000,
-        retry: 餞壍,
+        retry: noRetry4xx,
     });
 }
-function Cmp60() {
-    const 骖壍 = useQueryClient();
+function useInvalidateMetrics() {
+    const qc = useQueryClient();
     return () => {
-        void 骖壍.invalidateQueries({ queryKey: ["metrics"] });
-        void 骖壍.invalidateQueries({ queryKey: qk.catalog() });
-        void 骖壍.invalidateQueries({ queryKey: ["acct"] });
+        void qc.invalidateQueries({ queryKey: ["metrics"] });
+        void qc.invalidateQueries({ queryKey: qk.catalog() });
+        void qc.invalidateQueries({ queryKey: ["acct"] });
     };
 }
 export function useSaveCustomMetric() {
-    const 枅壍 = Cmp60();
+    const invalidate = useInvalidateMetrics();
     return useMutation({
-        mutationFn: ({ body: 虴壍, id: 卣壍 }: {
+        mutationFn: ({ body, id }: {
             body: CustomMetricBody;
             id?: string;
-        }) => 卣壍 ? request<CustomMetric>(`/api/metrics/custom/${encodeURIComponent(卣壍)}`, { method: "PUT", body: 虴壍 }) : request<CustomMetric>("/api/metrics/custom", { body: 虴壍 }),
-        onSuccess: 枅壍,
+        }) => id ? request<CustomMetric>(`/api/metrics/custom/${encodeURIComponent(id)}`, { method: "PUT", body }) : request<CustomMetric>("/api/metrics/custom", { body }),
+        onSuccess: invalidate,
     });
 }
 export function useDeleteCustomMetric() {
-    const 牒壍 = Cmp60();
+    const invalidate = useInvalidateMetrics();
     return useMutation({
-        mutationFn: (酁壍: string) => request<{
+        mutationFn: (id: string) => request<{
             ok: boolean;
-        }>(`/api/metrics/custom/${encodeURIComponent(酁壍)}`, { method: "DELETE" }),
-        onSuccess: 牒壍,
+        }>(`/api/metrics/custom/${encodeURIComponent(id)}`, { method: "DELETE" }),
+        onSuccess: invalidate,
     });
 }
 export interface FormulaCheckResult {
@@ -57,54 +57,54 @@ export interface FormulaCheckResult {
     };
     deps: string[];
 }
-export function useFormulaCheck(帰壍: string, 紟壍: string | undefined) {
+export function useFormulaCheck(formula: string, key: string | undefined) {
     return useQuery({
-        queryKey: exploreKeys.validate(紟壍 ?? "", 帰壍),
-        queryFn: ({ signal: 鰎壍 }) => request<FormulaCheckResult>("/api/metrics/custom/validate", { body: { formula: 帰壍, key: 紟壍 || undefined }, signal: 鰎壍 }),
-        enabled: 帰壍.trim().length > 0,
+        queryKey: exploreKeys.validate(key ?? "", formula),
+        queryFn: ({ signal }) => request<FormulaCheckResult>("/api/metrics/custom/validate", { body: { formula, key: key || undefined }, signal }),
+        enabled: formula.trim().length > 0,
         placeholderData: keepPreviousData,
         staleTime: 30000,
-        retry: 餞壍,
+        retry: noRetry4xx,
     });
 }
 export function useUpdateQuestion() {
-    const 棽壍 = useQueryClient();
+    const qc = useQueryClient();
     return useMutation({
-        mutationFn: ({ id: 蟬壍, body: 哛壍 }: {
+        mutationFn: ({ id, body }: {
             id: string;
             body: SavedQuestionBody;
-        }) => request<SavedQuestion>(`/api/questions/${encodeURIComponent(蟬壍)}`, { method: "PUT", body: 哛壍 }),
-        onSuccess: () => void 棽壍.invalidateQueries({ queryKey: qk.questions() }),
+        }) => request<SavedQuestion>(`/api/questions/${encodeURIComponent(id)}`, { method: "PUT", body }),
+        onSuccess: () => void qc.invalidateQueries({ queryKey: qk.questions() }),
     });
 }
 export function useDeleteQuestion() {
-    const 珊壍 = useQueryClient();
+    const qc = useQueryClient();
     return useMutation({
-        mutationFn: (銹壍: string) => request<{
+        mutationFn: (id: string) => request<{
             ok: boolean;
-        }>(`/api/questions/${encodeURIComponent(銹壍)}`, { method: "DELETE" }),
-        onSuccess: () => void 珊壍.invalidateQueries({ queryKey: qk.questions() }),
+        }>(`/api/questions/${encodeURIComponent(id)}`, { method: "DELETE" }),
+        onSuccess: () => void qc.invalidateQueries({ queryKey: qk.questions() }),
     });
 }
-export function useDimensionValues(徨壍: string, 纗壍: string | undefined, 鶆壍: DateRangeSpec, 橵壍: {
+export function useDimensionValues(source: string, dim: string | undefined, dateRange: DateRangeSpec, opts: {
     enabled?: boolean;
     time?: boolean;
 } = {}) {
-    const 襤壍: QuerySpecInput | null = 纗壍 && 橵壍.enabled !== false ? { source: 徨壍, metrics: ["cost"], dimensions: [纗壍 as NonNullable<QuerySpecInput["dimensions"]>[number]], dateRange: 鶆壍, ...(橵壍.time ? {} : { sort: [{ key: "cost", dir: "desc" as const }] }), limit: 200, totals: false } : null;
-    const 噓壍 = useQueryResult(襤壍);
-    const 畂壍 = useMemo(() => {
-        const 鐱壍: string[] = [];
-        if (!纗壍 || !噓壍.data)
-            return 鐱壍;
-        for (const 愠壍 of 噓壍.data.rows) {
-            const 耏壍 = 愠壍[纗壍];
-            if (耏壍 !== null && 耏壍 !== undefined && 耏壍 !== "" && !鐱壍.includes(String(耏壍)))
-                鐱壍.push(String(耏壍));
+    const spec: QuerySpecInput | null = dim && opts.enabled !== false ? { source, metrics: ["cost"], dimensions: [dim as NonNullable<QuerySpecInput["dimensions"]>[number]], dateRange, ...(opts.time ? {} : { sort: [{ key: "cost", dir: "desc" as const }] }), limit: 200, totals: false } : null;
+    const q = useQueryResult(spec);
+    const values = useMemo(() => {
+        const out: string[] = [];
+        if (!dim || !q.data)
+            return out;
+        for (const r of q.data.rows) {
+            const v = r[dim];
+            if (v !== null && v !== undefined && v !== "" && !out.includes(String(v)))
+                out.push(String(v));
         }
-        return 鐱壍;
-    }, [纗壍, 噓壍.data]);
-    return { values: 畂壍, isLoading: 噓壍.isLoading, error: 噓壍.error };
+        return out;
+    }, [dim, q.data]);
+    return { values, isLoading: q.isLoading, error: q.error };
 }
-export function exportQuery(黾壍: QuerySpecInput, 毭壍: "csv" | "json", 諜壍: string): Promise<void> {
-    return download("/api/query/export", { spec: 黾壍, format: 毭壍, filename: 諜壍 }, `${諜壍}.${毭壍}`);
+export function exportQuery(spec: QuerySpecInput, format: "csv" | "json", filename: string): Promise<void> {
+    return download("/api/query/export", { spec, format, filename }, `${filename}.${format}`);
 }

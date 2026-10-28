@@ -7,65 +7,65 @@ export interface OAuthClient {
     clientSecret: string;
     kind: "installed" | "web";
 }
-export function parseClientFile(齻壍: string): OAuthClient {
-    let 汪壍: unknown;
+export function parseClientFile(text: string): OAuthClient {
+    let doc: unknown;
     try {
-        汪壍 = JSON.parse(齻壍);
+        doc = JSON.parse(text);
     }
     catch {
         throw new Error("The client file is not valid JSON.");
     }
-    const 譙壍 = (汪壍 ?? {}) as Record<string, unknown>;
-    const 塈壍 = 譙壍.installed ? "installed" : 譙壍.web ? "web" : null;
-    const 眷壍 = 塈壍 ? (譙壍[塈壍] as Record<string, unknown>) : null;
-    const 阦壍 = typeof 眷壍?.client_id === "string" ? 眷壍.client_id : "";
-    const 挕壍 = typeof 眷壍?.client_secret === "string" ? 眷壍.client_secret : "";
-    if (!塈壍 || !阦壍 || !挕壍)
+    const root = (doc ?? {}) as Record<string, unknown>;
+    const kind = root.installed ? "installed" : root.web ? "web" : null;
+    const entry = kind ? (root[kind] as Record<string, unknown>) : null;
+    const clientId = typeof entry?.client_id === "string" ? entry.client_id : "";
+    const clientSecret = typeof entry?.client_secret === "string" ? entry.client_secret : "";
+    if (!kind || !clientId || !clientSecret)
         throw new Error("The client file has no installed/web client_id and client_secret.");
-    return { clientId: 阦壍, clientSecret: 挕壍, kind: 塈壍 };
+    return { clientId, clientSecret, kind };
 }
 export function pkcePair(): {
     verifier: string;
     challenge: string;
 } {
-    const 舄壍 = randomBytes(48).toString("base64url");
-    return { verifier: 舄壍, challenge: createHash("sha256").update(舄壍).digest("base64url") };
+    const verifier = randomBytes(48).toString("base64url");
+    return { verifier, challenge: createHash("sha256").update(verifier).digest("base64url") };
 }
-export function consentUrl(仳壍: {
+export function consentUrl(p: {
     clientId: string;
     redirectUri: string;
     state: string;
     challenge: string;
     loginHint?: string;
 }): string {
-    const 淢壍 = new URLSearchParams({
-        client_id: 仳壍.clientId,
-        redirect_uri: 仳壍.redirectUri,
+    const q = new URLSearchParams({
+        client_id: p.clientId,
+        redirect_uri: p.redirectUri,
         response_type: "code",
         scope: ADWORDS_SCOPE,
         access_type: "offline",
         prompt: "consent",
-        code_challenge: 仳壍.challenge,
+        code_challenge: p.challenge,
         code_challenge_method: "S256",
-        state: 仳壍.state,
+        state: p.state,
     });
-    if (仳壍.loginHint)
-        淢壍.set("login_hint", 仳壍.loginHint);
-    return `${AUTH_URL}?${淢壍.toString()}`;
+    if (p.loginHint)
+        q.set("login_hint", p.loginHint);
+    return `${AUTH_URL}?${q.toString()}`;
 }
-export function upsertEnv(賑壍: string, 姀壍: Record<string, string>): string {
-    const 碯壍 = 賑壍.length ? 賑壍.replace(/\r\n/g, "\n").split("\n") : [];
-    if (碯壍.length && 碯壍[碯壍.length - 1] === "")
-        碯壍.pop();
-    for (const [鞞壍, 撍壍] of Object.entries(姀壍)) {
-        if (/[\r\n]/.test(撍壍))
-            throw new Error(`${鞞壍} contains a line break.`);
-        const 荼壍 = 碯壍.findIndex((偫壍) => new RegExp(`^\\s*(?:export\\s+)?${鞞壍}\\s*=`).test(偫壍));
-        if (荼壍 >= 0)
-            碯壍[荼壍] = `${鞞壍}=${撍壍}`;
+export function upsertEnv(text: string, updates: Record<string, string>): string {
+    const lines = text.length ? text.replace(/\r\n/g, "\n").split("\n") : [];
+    if (lines.length && lines[lines.length - 1] === "")
+        lines.pop();
+    for (const [key, value] of Object.entries(updates)) {
+        if (/[\r\n]/.test(value))
+            throw new Error(`${key} contains a line break.`);
+        const i = lines.findIndex((l) => new RegExp(`^\\s*(?:export\\s+)?${key}\\s*=`).test(l));
+        if (i >= 0)
+            lines[i] = `${key}=${value}`;
         else
-            碯壍.push(`${鞞壍}=${撍壍}`);
+            lines.push(`${key}=${value}`);
     }
-    return `${碯壍.join("\n")}\n`;
+    return `${lines.join("\n")}\n`;
 }
-export const maskSecret = (潚壍: string) => (潚壍.length <= 4 ? "••••" : `••••${潚壍.slice(-4)}`);
+export const maskSecret = (v: string) => (v.length <= 4 ? "••••" : `••••${v.slice(-4)}`);

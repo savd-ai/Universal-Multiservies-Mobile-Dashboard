@@ -20,8 +20,8 @@ export class BlankGoogleAdsSource implements GoogleAdsSource {
     defaultAccountId(): string {
         return "";
     }
-    async account(阕壍: string): Promise<AccountInfo> {
-        throw new AppError("NOT_FOUND", `No Google Ads account is connected (${阕壍 || "none"})`);
+    async account(text: string): Promise<AccountInfo> {
+        throw new AppError("NOT_FOUND", `No Google Ads account is connected (${text || "none"})`);
     }
     async today(): Promise<CivilDate> {
         return accountYesterday("UTC");
@@ -32,7 +32,7 @@ export class BlankGoogleAdsSource implements GoogleAdsSource {
     async getDims(): Promise<EntityDims> {
         return emptyDims();
     }
-    async getTable(_挄壍: string, _至壍: GoogleTableId, _仢壍: DateRange): Promise<FactSlice> {
+    async getTable(_accountId: string, _table: GoogleTableId, _range: DateRange): Promise<FactSlice> {
         return { rows: [], grain: "daily" };
     }
     async getChangeEvents(): Promise<ChangeEvent[]> {

@@ -12,12 +12,12 @@ export function warehouseSchedulerGlobal(): WarehouseSchedulerGlobal | undefined
     return (globalThis as unknown as Record<string, WarehouseSchedulerGlobal | undefined>)[WAREHOUSE_SCHEDULER_KEY];
 }
 export function warehouseSchedulerInfo() {
-    const 痩壍 = warehouseSchedulerGlobal();
-    const 铘壍 = warehouseConfig();
+    const g = warehouseSchedulerGlobal();
+    const cfg = warehouseConfig();
     return {
-        enabled: 铘壍.syncEnabled,
-        running: !!痩壍,
-        intervalMinutes: 痩壍 ? Math.round(痩壍.intervalMs / 60000) : 铘壍.syncIntervalMinutes,
-        lastTickAt: 痩壍?.lastTickAt ?? null,
+        enabled: cfg.syncEnabled,
+        running: !!g,
+        intervalMinutes: g ? Math.round(g.intervalMs / 60000) : cfg.syncIntervalMinutes,
+        lastTickAt: g?.lastTickAt ?? null,
     };
 }

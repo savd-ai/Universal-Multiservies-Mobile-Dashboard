@@ -1,56 +1,56 @@
 import "server-only";
 export interface SseWriter {
-    send(岚壍: string, 箉壍: unknown): void;
+    send(event: string, data: unknown): void;
     close(): void;
     readonly closed: boolean;
 }
-export function sseResponse(驸壍: (杧壍: SseWriter, 虖壍: AbortSignal) => Promise<void>, 卅壍: AbortSignal, 爴壍 = 15000): Response {
-    const 鄣壍 = new TextEncoder();
-    let 帒壍 = false;
-    let 紁壍: ReturnType<typeof setInterval> | undefined;
-    const 鯰壍 = new ReadableStream<Uint8Array>({
-        start(棟壍) {
-            const 蟎壍: SseWriter = {
-                send(咽壍, 玬壍) {
-                    if (帒壍)
+export function sseResponse(run: (w: SseWriter, signal2: AbortSignal) => Promise<void>, signal: AbortSignal, heartbeatMs = 15000): Response {
+    const encoder = new TextEncoder();
+    let closed = false;
+    let heartbeat: ReturnType<typeof setInterval> | undefined;
+    const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+            const writer: SseWriter = {
+                send(event, data) {
+                    if (closed)
                         return;
-                    const 銛壍 = JSON.stringify(玬壍 ?? null);
-                    棟壍.enqueue(鄣壍.encode(`event: ${咽壍}\ndata: ${銛壍}\n\n`));
+                    const payload = JSON.stringify(data ?? null);
+                    controller.enqueue(encoder.encode(`event: ${event}\ndata: ${payload}\n\n`));
                 },
                 close() {
-                    if (帒壍)
+                    if (closed)
                         return;
-                    帒壍 = true;
-                    if (紁壍)
-                        clearInterval(紁壍);
+                    closed = true;
+                    if (heartbeat)
+                        clearInterval(heartbeat);
                     try {
-                        棟壍.close();
+                        controller.close();
                     }
                     catch {
                     }
                 },
                 get closed() {
-                    return 帒壍;
+                    return closed;
                 },
             };
-            紁壍 = setInterval(() => {
-                if (!帒壍)
-                    棟壍.enqueue(鄣壍.encode(`: ping\n\n`));
-            }, 爴壍);
-            卅壍.addEventListener("abort", () => 蟎壍.close(), { once: true });
-            驸壍(蟎壍, 卅壍)
-                .catch((徊壍: unknown) => {
-                蟎壍.send("error", { code: "INTERNAL", message: 徊壍 instanceof Error ? 徊壍.message : "Stream failed" });
+            heartbeat = setInterval(() => {
+                if (!closed)
+                    controller.enqueue(encoder.encode(`: ping\n\n`));
+            }, heartbeatMs);
+            signal.addEventListener("abort", () => writer.close(), { once: true });
+            run(writer, signal)
+                .catch((err: unknown) => {
+                writer.send("error", { code: "INTERNAL", message: err instanceof Error ? err.message : "Stream failed" });
             })
-                .finally(() => 蟎壍.close());
+                .finally(() => writer.close());
         },
         cancel() {
-            帒壍 = true;
-            if (紁壍)
-                clearInterval(紁壍);
+            closed = true;
+            if (heartbeat)
+                clearInterval(heartbeat);
         },
     });
-    return new Response(鯰壍, {
+    return new Response(stream, {
         headers: {
             "Content-Type": "text/event-stream; charset=utf-8",
             "Cache-Control": "no-store, no-transform",

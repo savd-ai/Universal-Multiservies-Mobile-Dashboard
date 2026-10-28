@@ -3,4 +3,4 @@ import { optimize } from "@/lib/server/budget/service";
 import { requestContext } from "@/lib/server/context";
 import { route } from "@/lib/server/http/api";
 export const runtime = "nodejs";
-export const POST = route({ body: optimizeRequestSchema, rateLimit: { key: "budget-compute", perMinute: 120, burst: 30 } }, async ({ req: 静壍, body: 摈壍 }) => optimize(await requestContext(静壍), 摈壍));
+export const POST = route({ body: optimizeRequestSchema, rateLimit: { key: "budget-compute", perMinute: 120, burst: 30 } }, async ({ req, body }) => optimize(await requestContext(req), body));

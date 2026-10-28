@@ -33,22 +33,22 @@ export interface Catalog {
         label: string;
     }[];
 }
-export function buildCatalog(叨壍: readonly CustomMetric[] = []): Catalog {
-    const 狗壍 = new MetricRegistry(叨壍.map((釆壍) => ({ key: 釆壍.key, label: 釆壍.label, formula: 釆壍.formula, format: 釆壍.format, direction: 釆壍.direction, description: 釆壍.description })));
+export function buildCatalog(s: readonly CustomMetric[] = []): Catalog {
+    const env = new MetricRegistry(s.map((s2) => ({ key: s2.key, label: s2.label, formula: s2.formula, format: s2.format, direction: s2.direction, description: s2.description })));
     return {
-        metrics: 狗壍.list().map((庵壍) => ({
-            key: 庵壍.key,
-            label: 庵壍.label,
-            short: 庵壍.short,
-            kind: 庵壍.kind,
-            format: 庵壍.format,
-            direction: 庵壍.direction,
-            description: 庵壍.description,
-            formula: 庵壍.formula,
-            availableIn: 狗壍.availableIn(庵壍.key),
+        metrics: env.list().map((listItem) => ({
+            key: listItem.key,
+            label: listItem.label,
+            short: listItem.short,
+            kind: listItem.kind,
+            format: listItem.format,
+            direction: listItem.direction,
+            description: listItem.description,
+            formula: listItem.formula,
+            availableIn: env.availableIn(listItem.key),
         })),
-        dimensions: DIMENSION_KEYS.map((綤壍) => ({ key: 綤壍, label: DIMENSIONS[綤壍].label, kind: DIMENSIONS[綤壍].kind, field: DIMENSIONS[綤壍].field })),
-        tables: Object.values(FACT_TABLES).map((鲓壍) => ({ id: 鲓壍.id, label: 鲓壍.label, fields: [...鲓壍.fields], measures: [...鲓壍.measures] })),
-        presets: DATE_PRESETS.map((概壍) => ({ key: 概壍, label: PRESET_LABELS[概壍] })),
+        dimensions: DIMENSION_KEYS.map((g) => ({ key: g, label: DIMENSIONS[g].label, kind: DIMENSIONS[g].kind, field: DIMENSIONS[g].field })),
+        tables: Object.values(FACT_TABLES).map((value) => ({ id: value.id, label: value.label, fields: [...value.fields], measures: [...value.measures] })),
+        presets: DATE_PRESETS.map((toRuntime) => ({ key: toRuntime, label: PRESET_LABELS[toRuntime] })),
     };
 }

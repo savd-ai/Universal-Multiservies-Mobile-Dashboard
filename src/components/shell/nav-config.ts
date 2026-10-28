@@ -78,9 +78,9 @@ export const NAV: NavEntry[] = [
         description: "A demo dashboard over generated sample Google Ads accounts. The numbers are not read from Google Ads.",
     },
 ];
-export function navIndex(婗壍: string): number {
-    return NAV.findIndex((祆壍) => 祆壍.key === 婗壍) + 1;
+export function navIndex(key: string): number {
+    return NAV.findIndex((n) => n.key === key) + 1;
 }
-export function navFor(頵壍: string): NavEntry | undefined {
-    return NAV.find((攤壍) => 頵壍 === 攤壍.href || 頵壍.startsWith(`${攤壍.href}/`));
+export function navFor(pathname: string): NavEntry | undefined {
+    return NAV.find((n) => pathname === n.href || pathname.startsWith(`${n.href}/`));
 }

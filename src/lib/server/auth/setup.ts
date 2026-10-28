@@ -18,36 +18,36 @@ export function setupTokenMatches(code: string | undefined): boolean {
     const token = authConfig().setupToken;
     return !!token && !!code && safeEqual(code.trim().toUpperCase(), token.trim().toUpperCase());
 }
-function 垉壍(): string {
-    const 癸壍 = authConfig().setupToken;
-    if (癸壍)
-        return 癸壍;
+function setupCode(): string {
+    const fromEnv = authConfig().setupToken;
+    if (fromEnv)
+        return fromEnv;
     return singleton("auth:setup-code", () => readableCode()).toString();
 }
 export async function announceSetup(): Promise<void> {
     if (!(await setupRequired()))
         return;
-    const 镧壍 = singleton("auth:setup-announced", () => ({ done: false }));
-    if (镧壍.done)
+    const flag = singleton("auth:setup-announced", () => ({ done: false }));
+    if (flag.done)
         return;
-    镧壍.done = true;
+    flag.done = true;
     // The first account is created at /register; with AUTH_SETUP_TOKEN set it must enter that token (never logged).
     log.warn(setupTokenConfigured()
         ? "No users yet. Open /register and enter AUTH_SETUP_TOKEN to create the first account; it becomes the agency admin."
         : "No users yet. Open /register to create the first account; it becomes the agency admin. Set AUTH_SETUP_TOKEN on any server others can reach.");
 }
-export async function completeSetup(扖壍: {
+export async function completeSetup(input: {
     code: string;
     email: string;
     name: string;
     password: string;
 }): Promise<UserRecord> {
-    const 腅壍 = singleton("auth:setup-lock", () => ({ tail: Promise.resolve() as Promise<unknown> }));
-    const 临壍 = 腅壍.tail.then(() => 洣壍(扖壍));
-    腅壍.tail = 临壍.catch(() => undefined);
-    return 临壍;
+    const lock = singleton("auth:setup-lock", () => ({ tail: Promise.resolve() as Promise<unknown> }));
+    const run = lock.tail.then(() => createFirstAdmin(input));
+    lock.tail = run.catch(() => undefined);
+    return run;
 }
-async function 洣壍(谒壍: {
+async function createFirstAdmin(input: {
     code: string;
     email: string;
     name: string;
@@ -55,20 +55,20 @@ async function 洣壍(谒壍: {
 }): Promise<UserRecord> {
     if (!(await setupRequired()))
         throw new AppError("CONFLICT", "Setup is already complete. Sign in instead.");
-    if (!safeEqual(谒壍.code.trim().toUpperCase(), 垉壍().trim().toUpperCase()))
+    if (!safeEqual(input.code.trim().toUpperCase(), setupCode().trim().toUpperCase()))
         throw new AppError("UNAUTHORIZED", "That setup code is not correct. Check the server log (or AUTH_SETUP_TOKEN).");
-    const 夁壍 = normalizeEmail(谒壍.email);
-    if (await findUserByEmail(夁壍))
+    const email = normalizeEmail(input.email);
+    if (await findUserByEmail(email))
         throw new AppError("CONFLICT", "A user with this email already exists");
-    const 矰壍 = new Date().toISOString();
-    const 雟壍 = await getGlobalStore().users.create({
-        email: 夁壍,
-        name: 谒壍.name,
+    const nowIso = new Date().toISOString();
+    const user = await getGlobalStore().users.create({
+        email,
+        name: input.name,
         role: "agency_admin",
         clientId: null,
         status: "active",
-        passwordHash: await hashPassword(谒壍.password),
-        passwordChangedAt: 矰壍,
+        passwordHash: await hashPassword(input.password),
+        passwordChangedAt: nowIso,
         mfa: null,
         mfaPending: null,
         failedLogins: 0,
@@ -77,6 +77,6 @@ async function 洣壍(谒壍: {
         lastAccountId: null,
         invitedBy: null,
     });
-    await audit({ actor: "user", action: "auth.setup", target: 雟壍.email, summary: `${雟壍.email} created the first agency admin`, actorId: 雟壍.id, actorEmail: 雟壍.email });
-    return 雟壍;
+    await audit({ actor: "user", action: "auth.setup", target: user.email, summary: `${user.email} created the first agency admin`, actorId: user.id, actorEmail: user.email });
+    return user;
 }

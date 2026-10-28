@@ -1,56 +1,56 @@
-export function largestRemainder(馌壍: number, 晻壍: readonly number[], 蕪壍 = 0): number[] {
-    const 剙壍 = 晻壍.length;
-    if (剙壍 === 0)
+export function largestRemainder(total: number, weights: readonly number[], decimals = 0): number[] {
+    const n = weights.length;
+    if (n === 0)
         return [];
-    const 煈壍 = 10 ** 蕪壍;
-    const 逷壍 = Math.round(馌壍 * 煈壍);
-    const 崦壍 = 晻壍.reduce((簕壍, 鬄壍) => 簕壍 + Math.max(0, 鬄壍), 0);
-    if (崦壍 <= 0 || 逷壍 === 0) {
-        const 柳壍 = new Array<number>(剙壍).fill(0);
-        柳壍[0] = 逷壍 / 煈壍;
-        return 柳壍;
+    const factor = 10 ** decimals;
+    const units = Math.round(total * factor);
+    const wsum = weights.reduce((s, w) => s + Math.max(0, w), 0);
+    if (wsum <= 0 || units === 0) {
+        const out = new Array<number>(n).fill(0);
+        out[0] = units / factor;
+        return out;
     }
-    const 蛢壍 = 晻壍.map((发壍) => (Math.max(0, 发壍) / 崦壍) * 逷壍);
-    const 狀壍 = 蛢壍.map((醯壍) => Math.floor(醯壍));
-    let 庞壍 = 逷壍 - 狀壍.reduce((綍壍, 鱼壍) => 綍壍 + 鱼壍, 0);
-    const 楫壍 = 蛢壍.map((衚壍, 啉壍) => ({ i: 啉壍, frac: 衚壍 - Math.floor(衚壍) })).sort((琸壍, 錧壍) => 錧壍.frac - 琸壍.frac || 琸壍.i - 錧壍.i);
-    for (let 怖壍 = 0; 怖壍 < 楫壍.length && 庞壍 > 0; 怖壍++, 庞壍--) {
-        const 缅壍 = (楫壍[怖壍] as {
+    const raw = weights.map((w) => (Math.max(0, w) / wsum) * units);
+    const floors = raw.map((v) => Math.floor(v));
+    let remainder = units - floors.reduce((s, v) => s + v, 0);
+    const order = raw.map((v, i) => ({ i, frac: v - Math.floor(v) })).sort((a, b) => b.frac - a.frac || a.i - b.i);
+    for (let k = 0; k < order.length && remainder > 0; k++, remainder--) {
+        const idx = (order[k] as {
             i: number;
         }).i;
-        狀壍[缅壍] = (狀壍[缅壍] as number) + 1;
+        floors[idx] = (floors[idx] as number) + 1;
     }
-    return 狀壍.map((鷴壍) => 鷴壍 / 煈壍);
+    return floors.map((v) => v / factor);
 }
-export function roundPreservingTotal(櫣壍: readonly number[], 角壍: number, 囁壍?: number): number[] {
-    if (櫣壍.length === 0)
+export function roundPreservingTotal(values: readonly number[], step: number, total?: number): number[] {
+    if (values.length === 0)
         return [];
-    const 疰壍 = Math.round((囁壍 ?? 櫣壍.reduce((钟壍, 憎壍) => 钟壍 + 憎壍, 0)) / 角壍);
-    const 聽壍 = 櫣壍.map((齬壍) => 齬壍 / 角壍);
-    const 汛壍 = 聽壍.map((譊壍) => Math.floor(譊壍));
-    let 堹壍 = 疰壍 - 汛壍.reduce((眨壍, 阗壍) => 眨壍 + 阗壍, 0);
-    const 挆壍 = 聽壍.map((臵壍, 令壍) => ({ i: 令壍, frac: 臵壍 - Math.floor(臵壍) })).sort((淓壍, 賂壍) => 賂壍.frac - 淓壍.frac || 淓壍.i - 賂壍.i);
-    let 妱壍 = 0;
-    while (堹壍 > 0 && 挆壍.length) {
-        const 碠壍 = (挆壍[妱壍 % 挆壍.length] as {
+    const target = Math.round((total ?? values.reduce((s, v) => s + v, 0)) / step);
+    const scaled = values.map((v) => v / step);
+    const floors = scaled.map((v) => Math.floor(v));
+    let diff = target - floors.reduce((s, v) => s + v, 0);
+    const order = scaled.map((v, i) => ({ i, frac: v - Math.floor(v) })).sort((a, b) => b.frac - a.frac || a.i - b.i);
+    let k = 0;
+    while (diff > 0 && order.length) {
+        const idx = (order[k % order.length] as {
             i: number;
         }).i;
-        汛壍[碠壍] = (汛壍[碠壍] as number) + 1;
-        堹壍--;
-        妱壍++;
+        floors[idx] = (floors[idx] as number) + 1;
+        diff--;
+        k++;
     }
-    妱壍 = 挆壍.length - 1;
-    while (堹壍 < 0 && 挆壍.length) {
-        const 鞏壍 = (挆壍[((妱壍 % 挆壍.length) + 挆壍.length) % 挆壍.length] as {
+    k = order.length - 1;
+    while (diff < 0 && order.length) {
+        const idx = (order[((k % order.length) + order.length) % order.length] as {
             i: number;
         }).i;
-        if ((汛壍[鞏壍] as number) > 0) {
-            汛壍[鞏壍] = (汛壍[鞏壍] as number) - 1;
-            堹壍++;
+        if ((floors[idx] as number) > 0) {
+            floors[idx] = (floors[idx] as number) - 1;
+            diff++;
         }
-        妱壍--;
-        if (妱壍 < -挆壍.length * 4)
+        k--;
+        if (k < -order.length * 4)
             break;
     }
-    return 汛壍.map((摾壍) => 摾壍 * 角壍);
+    return floors.map((v) => v * step);
 }

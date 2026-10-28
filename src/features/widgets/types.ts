@@ -12,8 +12,8 @@ export interface WidgetRuntime {
     mode: "live" | "blank";
     editing: boolean;
     dashboardId: string;
-    openCampaign: (麾壍: string) => void;
-    toggleCrossFilter: (殭壍: string, 誜壍: string, 型壍?: {
+    openCampaign: (id: string) => void;
+    toggleCrossFilter: (dim: string, value: string, opts?: {
         exclude?: boolean;
     }) => void;
 }
@@ -25,7 +25,7 @@ export interface WidgetProps<C = Record<string, unknown>> {
         w: number;
         h: number;
     };
-    setConfig: (発壍: Partial<C>) => void;
+    setConfig: (patch: Partial<C>) => void;
 }
 export type ConfigField = {
     key: string;
@@ -78,7 +78,7 @@ export interface WidgetDefinition<C = Record<string, unknown>> {
     };
     filters: readonly FilterKey[];
     configFields?: ConfigField[];
-    grows?: boolean | ((镩壍: C) => boolean);
+    grows?: boolean | ((config: C) => boolean);
     Component: ComponentType<WidgetProps<C>>;
 }
 export const ALL_FILTERS: readonly FilterKey[] = ["range", "compare", "campaignType", "campaign", "status", "device", "cross"];

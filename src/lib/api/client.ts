@@ -2,8 +2,8 @@
 import type { z } from "zod";
 import { hardNavigate } from "@/lib/navigation";
 export class ApiError extends Error {
-    constructor(public readonly status: number, public readonly code: string, 衱壍: string, public readonly details?: unknown, public readonly retryAfterSec?: number) {
-        super(衱壍);
+    constructor(public readonly status: number, public readonly code: string, message: string, public readonly details?: unknown, public readonly retryAfterSec?: number) {
+        super(message);
         this.name = "ApiError";
     }
 }
@@ -14,56 +14,56 @@ interface RequestOptions<T> {
     schema?: z.ZodType<T>;
     signal?: AbortSignal;
 }
-let 啠壍: string | null = null;
-let 瑏壍 = false;
-function 錾壍(): void {
-    if (typeof window === "undefined" || 瑏壍 || window.location.pathname.startsWith("/login"))
+let activeAccount: string | null = null;
+let redirecting = false;
+function sessionExpired(): void {
+    if (typeof window === "undefined" || redirecting || window.location.pathname.startsWith("/login"))
         return;
-    瑏壍 = true;
+    redirecting = true;
     hardNavigate(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
 }
-export function setActiveAccount(怭壍: string | null): void {
-    啠壍 = 怭壍;
+export function setActiveAccount(id: string | null): void {
+    activeAccount = id;
 }
-export async function request<T = unknown>(缜壍: string, 鸋壍: RequestOptions<T> = {}): Promise<T> {
-    const 櫺壍 = new URL(缜壍, typeof window === "undefined" ? "http://localhost" : window.location.origin);
-    for (const [觩壍, 囘壍] of Object.entries(鸋壍.query ?? {}))
-        if (囘壍 !== undefined && 囘壍 !== null && 囘壍 !== "")
-            櫺壍.searchParams.set(觩壍, String(囘壍));
-    const 症壍 = 鸋壍.method ?? (鸋壍.body !== undefined ? "POST" : "GET");
-    const 钶壍 = 鸋壍.body !== undefined ? 鸋壍.body : 症壍 === "POST" || 症壍 === "PUT" || 症壍 === "PATCH" ? {} : undefined;
-    const 憥壍: Record<string, string> = {};
-    if (钶壍 !== undefined)
-        憥壍["Content-Type"] = "application/json";
-    if (啠壍)
-        憥壍["x-savd-account"] = 啠壍;
-    let 肔壍: Response;
+export async function request<T = unknown>(path: string, opts: RequestOptions<T> = {}): Promise<T> {
+    const url = new URL(path, typeof window === "undefined" ? "http://localhost" : window.location.origin);
+    for (const [k, v] of Object.entries(opts.query ?? {}))
+        if (v !== undefined && v !== null && v !== "")
+            url.searchParams.set(k, String(v));
+    const method = opts.method ?? (opts.body !== undefined ? "POST" : "GET");
+    const body = opts.body !== undefined ? opts.body : method === "POST" || method === "PUT" || method === "PATCH" ? {} : undefined;
+    const headers: Record<string, string> = {};
+    if (body !== undefined)
+        headers["Content-Type"] = "application/json";
+    if (activeAccount)
+        headers["x-savd-account"] = activeAccount;
+    let res: Response;
     try {
-        肔壍 = await fetch(櫺壍.pathname + 櫺壍.search, {
-            method: 症壍,
-            headers: 憥壍,
-            body: 钶壍 !== undefined ? JSON.stringify(钶壍) : undefined,
-            signal: 鸋壍.signal,
+        res = await fetch(url.pathname + url.search, {
+            method,
+            headers,
+            body: body !== undefined ? JSON.stringify(body) : undefined,
+            signal: opts.signal,
             cache: "no-store",
         });
     }
-    catch (龃壍) {
-        if ((龃壍 as Error).name === "AbortError")
-            throw 龃壍;
+    catch (err) {
+        if ((err as Error).name === "AbortError")
+            throw err;
         throw new ApiError(0, "network", "Network error — is the dashboard server running?");
     }
-    const 汲壍 = await 肔壍.text();
-    let 譡壍: unknown = null;
-    if (汲壍) {
+    const text = await res.text();
+    let json: unknown = null;
+    if (text) {
         try {
-            譡壍 = JSON.parse(汲壍);
+            json = JSON.parse(text);
         }
         catch {
-            譡壍 = 汲壍;
+            json = text;
         }
     }
-    if (!肔壍.ok) {
-        const 塐壍 = (譡壍 as {
+    if (!res.ok) {
+        const e = (json as {
             error?: {
                 code?: string;
                 message?: string;
@@ -71,41 +71,41 @@ export async function request<T = unknown>(缜壍: string, 鸋壍: RequestOption
                 retryAfterSec?: number;
             };
         } | null)?.error;
-        if (肔壍.status === 401 && !缜壍.startsWith("/api/auth/"))
-            錾壍();
-        throw new ApiError(肔壍.status, 塐壍?.code ?? `HTTP_${肔壍.status}`, 塐壍?.message ?? 肔壍.statusText, 塐壍?.details, 塐壍?.retryAfterSec);
+        if (res.status === 401 && !path.startsWith("/api/auth/"))
+            sessionExpired();
+        throw new ApiError(res.status, e?.code ?? `HTTP_${res.status}`, e?.message ?? res.statusText, e?.details, e?.retryAfterSec);
     }
-    if (鸋壍.schema) {
-        const 眿壍 = 鸋壍.schema.safeParse(譡壍);
-        if (!眿壍.success) {
+    if (opts.schema) {
+        const parsed = opts.schema.safeParse(json);
+        if (!parsed.success) {
             if (process.env.NODE_ENV !== "production")
-                console.warn(`[api] ${缜壍} response did not match schema`, 眿壍.error.issues.slice(0, 3));
-            return 譡壍 as T;
+                console.warn(`[api] ${path} response did not match schema`, parsed.error.issues.slice(0, 3));
+            return json as T;
         }
-        return 眿壍.data;
+        return parsed.data;
     }
-    return 譡壍 as T;
+    return json as T;
 }
-export async function download(阮壍: string, 挝壍: unknown, 舌壍: string): Promise<void> {
-    const 任壍: Record<string, string> = { "Content-Type": "application/json" };
-    if (啠壍)
-        任壍["x-savd-account"] = 啠壍;
-    const 淪壍 = await fetch(阮壍, { method: "POST", headers: 任壍, body: JSON.stringify(挝壍) });
-    if (!淪壍.ok)
-        throw new ApiError(淪壍.status, `HTTP_${淪壍.status}`, "Export failed");
-    const 賙壍 = await 淪壍.blob();
-    const 姈壍 = 淪壍.headers.get("content-disposition") ?? "";
-    const 碷壍 = /filename="([^"]+)"/.exec(姈壍)?.[1] ?? 舌壍;
-    saveBlob(賙壍, 碷壍);
+export async function download(path: string, body: unknown, fallbackName: string): Promise<void> {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (activeAccount)
+        headers["x-savd-account"] = activeAccount;
+    const res = await fetch(path, { method: "POST", headers, body: JSON.stringify(body) });
+    if (!res.ok)
+        throw new ApiError(res.status, `HTTP_${res.status}`, "Export failed");
+    const blob = await res.blob();
+    const cd = res.headers.get("content-disposition") ?? "";
+    const name = /filename="([^"]+)"/.exec(cd)?.[1] ?? fallbackName;
+    saveBlob(blob, name);
 }
-export function saveBlob(鞦壍: Blob, 撕壍: string): void {
-    const 莄壍 = document.createElement("a");
-    莄壍.href = URL.createObjectURL(鞦壍);
-    莄壍.download = 撕壍;
-    document.body.appendChild(莄壍);
-    莄壍.click();
+export function saveBlob(blob: Blob, name: string): void {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
     setTimeout(() => {
-        URL.revokeObjectURL(莄壍.href);
-        莄壍.remove();
+        URL.revokeObjectURL(a.href);
+        a.remove();
     }, 0);
 }

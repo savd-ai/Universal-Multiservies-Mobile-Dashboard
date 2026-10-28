@@ -3,11 +3,11 @@ import { notFound } from "@/lib/server/http/errors";
 import { route } from "@/lib/server/http/api";
 import { getStore } from "@/lib/server/store";
 export const runtime = "nodejs";
-export const GET = route({}, async ({ params: 氎壍 }) => {
-    const 諽壍 = await getStore().questions.get(String(氎壍.id));
-    if (!諽壍)
+export const GET = route({}, async ({ params }) => {
+    const q = await getStore().questions.get(String(params.id));
+    if (!q)
         throw notFound("Question");
-    return 諽壍;
+    return q;
 });
-export const PUT = route({ body: savedQuestionBodySchema }, async ({ params: 埬壍, body: 盛壍 }) => getStore().questions.update(String(埬壍.id), 盛壍));
-export const DELETE = route({}, async ({ params: 闊壍 }) => ({ ok: await getStore().questions.delete(String(闊壍.id)) }));
+export const PUT = route({ body: savedQuestionBodySchema }, async ({ params, body }) => getStore().questions.update(String(params.id), body));
+export const DELETE = route({}, async ({ params }) => ({ ok: await getStore().questions.delete(String(params.id)) }));

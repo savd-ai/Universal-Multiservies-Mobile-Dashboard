@@ -7,31 +7,31 @@ import type { GoogleAdsSource, GoogleTableId } from "@/lib/server/datasource/typ
 import { buildDemoEstimates } from "./synthetic/estimates";
 import { generateDemoDataset, type DemoDataset } from "./synthetic/generator";
 import { DEMO_ACCOUNTS, DEMO_MANAGER } from "./synthetic/scenario";
-const 灠壍 = "2026-09-28";
-const 轏壍 = "America/New_York";
-const 尾壍 = "USD";
-const 笭壍 = "savd-demo-v1";
-const 騜壍 = new Map<string, DemoDataset>();
+const text = "2026-09-28";
+const text2 = "America/New_York";
+const text3 = "USD";
+const text4 = "savd-demo-v1";
+const map = new Map<string, DemoDataset>();
 export function fixtureAnchor(): CivilDate {
-    return 灠壍;
+    return text;
 }
-export function fixtureDataset(朋壍: string): DemoDataset {
-    const 藺壍 = DEMO_ACCOUNTS.find((勩壍) => 勩壍.id === 朋壍);
-    if (!藺壍)
-        throw new Error(`Fixture account ${朋壍} not found`);
-    let 燘壍 = 騜壍.get(朋壍);
-    if (!燘壍) {
-        燘壍 = generateDemoDataset({ ...藺壍, currency: 尾壍 }, { profile: "realistic", seed: 笭壍, anchor: 灠壍, scenarios: "extended", timezone: 轏壍 });
-        騜壍.set(朋壍, 燘壍);
+export function fixtureDataset(text5: string): DemoDataset {
+    const dEMO_ACCOUNTSItem = DEMO_ACCOUNTS.find((dEMO_ACCOUNTSItem2) => dEMO_ACCOUNTSItem2.id === text5);
+    if (!dEMO_ACCOUNTSItem)
+        throw new Error(`Fixture account ${text5} not found`);
+    let value = map.get(text5);
+    if (!value) {
+        value = generateDemoDataset({ ...dEMO_ACCOUNTSItem, currency: text3 }, { profile: "realistic", seed: text4, anchor: text, scenarios: "extended", timezone: text2 });
+        map.set(text5, value);
     }
-    return 燘壍;
+    return value;
 }
 export class FixtureGoogleAdsSource implements GoogleAdsSource {
     readonly mode: Mode = "live";
     readonly reason: BlankReason | null = null;
     readonly apiVersion = "fixture";
     async listAccounts(): Promise<AccountInfo[]> {
-        return DEMO_ACCOUNTS.map((郇壍) => ({ id: 郇壍.id, name: 郇壍.name, currency: 尾壍, timezone: 轏壍, isManager: false, parentId: DEMO_MANAGER.id, mode: "live" as const }));
+        return DEMO_ACCOUNTS.map((dEMO_ACCOUNTSItem) => ({ id: dEMO_ACCOUNTSItem.id, name: dEMO_ACCOUNTSItem.name, currency: text3, timezone: text2, isManager: false, parentId: DEMO_MANAGER.id, mode: "live" as const }));
     }
     async manager() {
         return DEMO_MANAGER;
@@ -39,39 +39,39 @@ export class FixtureGoogleAdsSource implements GoogleAdsSource {
     defaultAccountId(): string {
         return DEMO_ACCOUNTS[0]?.id ?? "";
     }
-    async account(嶶壍: string): Promise<AccountInfo> {
-        return fixtureDataset(嶶壍).account;
+    async account(text5: string): Promise<AccountInfo> {
+        return fixtureDataset(text5).account;
     }
-    async today(粥壍: string): Promise<CivilDate> {
-        return addDays(fixtureDataset(粥壍).anchor, 1);
+    async today(text5: string): Promise<CivilDate> {
+        return addDays(fixtureDataset(text5).anchor, 1);
     }
-    async dataThrough(鮔壍: string): Promise<CivilDate> {
-        return fixtureDataset(鮔壍).anchor;
+    async dataThrough(text5: string): Promise<CivilDate> {
+        return fixtureDataset(text5).anchor;
     }
-    async getDims(梃壍: string): Promise<EntityDims> {
-        return fixtureDataset(梃壍).dims;
+    async getDims(text5: string): Promise<EntityDims> {
+        return fixtureDataset(text5).dims;
     }
-    async getTable(蝲壍: string, 呡壍: GoogleTableId, 獐壍: DateRange): Promise<FactSlice> {
-        const 鈿壍 = fixtureDataset(蝲壍);
-        const 弮壍 = 鈿壍.coverage[呡壍];
-        const 縝壍 = maxDate(獐壍.start, 弮壍.start);
-        const 鴌壍 = minDate(獐壍.end, 弮壍.end);
-        const 槻壍 = (鈿壍.tables[呡壍] as unknown as {
+    async getTable(text5: string, googleTableId: GoogleTableId, dateRange: DateRange): Promise<FactSlice> {
+        const fixtureDataset2 = fixtureDataset(text5);
+        const coverageItem = fixtureDataset2.coverage[googleTableId];
+        const maxDate2 = maxDate(dateRange.start, coverageItem.start);
+        const minDate2 = minDate(dateRange.end, coverageItem.end);
+        const table = (fixtureDataset2.tables[googleTableId] as unknown as {
             date: string | null;
-        }[]).filter((裪壍) => 裪壍.date !== null && 裪壍.date >= 縝壍 && 裪壍.date <= 鴌壍) as unknown as Record<string, unknown>[];
-        return { rows: 槻壍, grain: "daily", coverage: 弮壍 };
+        }[]).filter((tableItem) => tableItem.date !== null && tableItem.date >= maxDate2 && tableItem.date <= minDate2) as unknown as Record<string, unknown>[];
+        return { rows: table, grain: "daily", coverage: coverageItem };
     }
-    async getChangeEvents(嗙壍: string, 瓈壍: DateRange): Promise<ChangeEvent[]> {
-        const 鎷壍 = fixtureDataset(嗙壍);
-        return 鎷壍.changeEvents.filter((悦壍) => 悦壍.date >= 瓈壍.start && 悦壍.date <= 瓈壍.end).sort((羕壍, 麄壍) => (羕壍.ts < 麄壍.ts ? 1 : -1));
+    async getChangeEvents(text5: string, dateRange: DateRange): Promise<ChangeEvent[]> {
+        const fixtureDataset2 = fixtureDataset(text5);
+        return fixtureDataset2.changeEvents.filter((changeEvent) => changeEvent.date >= dateRange.start && changeEvent.date <= dateRange.end).sort((a, b) => (a.ts < b.ts ? 1 : -1));
     }
-    async getGoogleEstimates(歳壍: string): Promise<GoogleEstimates> {
-        return buildDemoEstimates(fixtureDataset(歳壍), { seed: 笭壍 });
+    async getGoogleEstimates(text5: string): Promise<GoogleEstimates> {
+        return buildDemoEstimates(fixtureDataset(text5), { seed: text4 });
     }
-    async coverage(詢壍: string, 坑壍: GoogleTableId): Promise<DateRange | null> {
-        return fixtureDataset(詢壍).coverage[坑壍];
+    async coverage(text5: string, googleTableId: GoogleTableId): Promise<DateRange | null> {
+        return fixtureDataset(text5).coverage[googleTableId];
     }
     async invalidate(): Promise<void> {
-        騜壍.clear();
+        map.clear();
     }
 }

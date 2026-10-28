@@ -18,12 +18,12 @@ export interface QuestionConfig {
     query: WidgetQueryInput;
     viz: VizSettings;
 }
-const 廘壍: Record<string, React.ComponentType<VizProps>> = {
+const VIZ: Record<string, React.ComponentType<VizProps>> = {
     number: NumberViz,
     "kpi-strip": KpiStripViz,
     "trend-multiples": TrendMultiplesViz,
     line: LineViz,
-    area: (緇壍) => <LineViz {...緇壍} area/>,
+    area: (p) => <LineViz {...p} area/>,
     bar: BarViz,
     "stacked-bar": StackedBarViz,
     donut: DonutViz,
@@ -37,24 +37,24 @@ const 廘壍: Record<string, React.ComponentType<VizProps>> = {
     gauge: NumberViz,
     "progress-goal": NumberViz,
 };
-export function QuestionWidget({ instance: 鲶壍, config: 榥壍, rt: 袔壍 }: WidgetProps<QuestionConfig>) {
-    const 喃壍 = useCatalog();
-    const { spec: 瑲壍, ignored: 鍡壍 } = useMemo(() => resolveWidgetSpec(榥壍.query ?? { source: "google_ads", metrics: ["cost"], dimensions: [] }, 袔壍.filters, 喃壍.data, 鲶壍.filterOptOut), [榥壍.query, 袔壍.filters, 喃壍.data, 鲶壍.filterOptOut]);
-    useWidgetHints(鍡壍);
-    const 恐壍 = 鲶壍.title ?? "Question";
-    const [缿壍, 鸮壍] = useState(false);
-    const 欝壍 = useQuestionMenu(瑲壍, 恐壍, 榥壍.viz);
-    const 訌壍 = 榥壍.viz?.type ?? "table";
-    const 囻壍 = useMemo(() => (訌壍 === "table" || 訌壍 === "geo-table" || 訌壍 === "pivot" ? 欝壍 : [{ label: "View data", onSelect: () => 鸮壍(true) }, ...欝壍]), [欝壍, 訌壍]);
-    useWidgetMenu(囻壍);
-    if (!喃壍.data)
+export function QuestionWidget({ instance, config, rt }: WidgetProps<QuestionConfig>) {
+    const catalog = useCatalog();
+    const { spec, ignored } = useMemo(() => resolveWidgetSpec(config.query ?? { source: "google_ads", metrics: ["cost"], dimensions: [] }, rt.filters, catalog.data, instance.filterOptOut), [config.query, rt.filters, catalog.data, instance.filterOptOut]);
+    useWidgetHints(ignored);
+    const title = instance.title ?? "Question";
+    const [showData, setShowData] = useState(false);
+    const baseMenu = useQuestionMenu(spec, title, config.viz);
+    const vizType = config.viz?.type ?? "table";
+    const menu = useMemo(() => (vizType === "table" || vizType === "geo-table" || vizType === "pivot" ? baseMenu : [{ label: "View data", onSelect: () => setShowData(true) }, ...baseMenu]), [baseMenu, vizType]);
+    useWidgetMenu(menu);
+    if (!catalog.data)
         return <Skeleton height="100%" className="min-h-[80px] w-full"/>;
-    const 痪壍 = 廘壍[訌壍] ?? TableViz;
+    const Viz = VIZ[vizType] ?? TableViz;
     return (<>
-      <痪壍 spec={瑲壍} viz={榥壍.viz ?? { type: "table" }} rt={袔壍} catalog={喃壍.data} title={恐壍} widgetId={鲶壍.id}/>
-      <Modal open={缿壍} onOpenChange={鸮壍} eyebrow="View data" title={恐壍} width={980}>
+      <Viz spec={spec} viz={config.viz ?? { type: "table" }} rt={rt} catalog={catalog.data} title={title} widgetId={instance.id}/>
+      <Modal open={showData} onOpenChange={setShowData} eyebrow="View data" title={title} width={980}>
         <div className="flex h-[60vh] min-h-0 flex-col">
-          {缿壍 ? <TableViz spec={{ ...瑲壍, dimensions: 瑲壍.dimensions?.length ? 瑲壍.dimensions : [], limit: Math.min(瑲壍.limit ?? 500, 500) }} viz={{ type: "table" }} rt={袔壍} catalog={喃壍.data} title={恐壍} widgetId={`${鲶壍.id}-data`}/> : null}
+          {showData ? <TableViz spec={{ ...spec, dimensions: spec.dimensions?.length ? spec.dimensions : [], limit: Math.min(spec.limit ?? 500, 500) }} viz={{ type: "table" }} rt={rt} catalog={catalog.data} title={title} widgetId={`${instance.id}-data`}/> : null}
         </div>
       </Modal>
     </>);

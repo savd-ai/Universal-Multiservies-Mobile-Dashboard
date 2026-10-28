@@ -1,57 +1,57 @@
 "use client";
 import { useSyncExternalStore } from "react";
 export type ThemePref = "light" | "dark" | "system";
-const 喎壍 = "savd-gads-theme";
-function 瑽壍(鍬壍: () => void): () => void {
-    const 恛壍 = new MutationObserver(鍬壍);
-    恛壍.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    const 罊壍 = window.matchMedia("(prefers-color-scheme: dark)");
-    const 鸹壍 = () => {
-        if (欨壍() === "system")
+const KEY = "savd-gads-theme";
+function subscribe(cb: () => void): () => void {
+    const obs = new MutationObserver(cb);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onMq = () => {
+        if (readPref() === "system")
             applyTheme("system");
     };
-    罊壍.addEventListener("change", 鸹壍);
-    window.addEventListener("storage", 鍬壍);
+    mq.addEventListener("change", onMq);
+    window.addEventListener("storage", cb);
     return () => {
-        恛壍.disconnect();
-        罊壍.removeEventListener("change", 鸹壍);
-        window.removeEventListener("storage", 鍬壍);
+        obs.disconnect();
+        mq.removeEventListener("change", onMq);
+        window.removeEventListener("storage", cb);
     };
 }
-function 欨壍(): ThemePref {
+function readPref(): ThemePref {
     try {
-        const 託壍 = localStorage.getItem(喎壍);
-        return 託壍 === "dark" || 託壍 === "light" || 託壍 === "system" ? 託壍 : "light";
+        const v = localStorage.getItem(KEY);
+        return v === "dark" || v === "light" || v === "system" ? v : "light";
     }
     catch {
         return "light";
     }
 }
-export function resolvedTheme(圆壍: ThemePref): "light" | "dark" {
-    if (圆壍 === "system")
+export function resolvedTheme(pref: ThemePref): "light" | "dark" {
+    if (pref === "system")
         return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    return 圆壍;
+    return pref;
 }
-export function applyTheme(痵壍: ThemePref): void {
-    const 铤壍 = document.documentElement;
-    const 懓壍 = resolvedTheme(痵壍);
-    铤壍.classList.add("theme-switching");
-    铤壍.setAttribute("data-theme", 懓壍);
-    铤壍.style.colorScheme = 懓壍;
+export function applyTheme(pref: ThemePref): void {
+    const root = document.documentElement;
+    const t = resolvedTheme(pref);
+    root.classList.add("theme-switching");
+    root.setAttribute("data-theme", t);
+    root.style.colorScheme = t;
     try {
-        localStorage.setItem(喎壍, 痵壍);
+        localStorage.setItem(KEY, pref);
     }
     catch {
     }
-    window.setTimeout(() => 铤壍.classList.remove("theme-switching"), 260);
+    window.setTimeout(() => root.classList.remove("theme-switching"), 260);
 }
 export function useTheme(): {
     theme: "light" | "dark";
     pref: ThemePref;
-    setTheme: (胂壍: ThemePref) => void;
+    setTheme: (p: ThemePref) => void;
     toggle: () => void;
 } {
-    const 龱壍 = useSyncExternalStore(瑽壍, () => (document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light"), () => "light" as const);
-    const 沠壍 = useSyncExternalStore(瑽壍, 欨壍, () => "light" as const);
-    return { theme: 龱壍, pref: 沠壍, setTheme: applyTheme, toggle: () => applyTheme(龱壍 === "dark" ? "light" : "dark") };
+    const theme = useSyncExternalStore(subscribe, () => (document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light"), () => "light" as const);
+    const pref = useSyncExternalStore(subscribe, readPref, () => "light" as const);
+    return { theme, pref, setTheme: applyTheme, toggle: () => applyTheme(theme === "dark" ? "light" : "dark") };
 }

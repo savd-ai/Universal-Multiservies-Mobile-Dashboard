@@ -5,45 +5,45 @@ import { daysInMonth, formatMonth, formatRange, isCivilDate, parts } from "@/lib
 import { deltaSentiment, formatMetricValue, formatMoney } from "@/lib/domain/metrics/registry";
 import type { DateRangeSpec } from "@/lib/domain/query/spec";
 import type { MetricDirection, MetricFormat } from "@/lib/domain/types";
-export function campaignRangeQuery(坹壍: DateRangeSpec, 癨壍: CompareMode): CampaignRangeQuery {
-    if ("preset" in 坹壍)
-        return { range: 坹壍.preset, compare: 癨壍 };
-    return { start: 坹壍.start, end: 坹壍.end, compare: 癨壍 };
+export function campaignRangeQuery(dateRange: DateRangeSpec, compare: CompareMode): CampaignRangeQuery {
+    if ("preset" in dateRange)
+        return { range: dateRange.preset, compare };
+    return { start: dateRange.start, end: dateRange.end, compare };
 }
-const 镗壍: Record<string, string> = { "7d": "last 7 days", "30d": "last 30 days", "90d": "last 90 days", mtd: "month to date", qtd: "quarter to date", ytd: "year to date", last_month: "last month" };
-export function rangeShortLabel(扆壍: string, 脵壍: DateRange | null): string {
-    return 镗壍[扆壍] ?? (脵壍 ? formatRange(脵壍) : "selected range");
+const RANGE_SHORT: Record<string, string> = { "7d": "last 7 days", "30d": "last 30 days", "90d": "last 90 days", mtd: "month to date", qtd: "quarter to date", ytd: "year to date", last_month: "last month" };
+export function rangeShortLabel(rangeKey: string, range: DateRange | null): string {
+    return RANGE_SHORT[rangeKey] ?? (range ? formatRange(range) : "selected range");
 }
-export function compareLabel(两壍: CompareMode): string {
-    return 两壍 === "previous_year" ? "previous year" : 两壍 === "previous_period" ? "previous period" : "";
+export function compareLabel(compare: CompareMode): string {
+    return compare === "previous_year" ? "previous year" : compare === "previous_period" ? "previous period" : "";
 }
-export function rangeSearchOf(洓壍: {
+export function rangeSearchOf(s: {
     range: string | null;
     from: string | null;
     to: string | null;
     cmp: string | null;
 }): string {
-    const 谂壍 = new URLSearchParams();
-    if (洓壍.range && 洓壍.range !== "30d")
-        谂壍.set("range", 洓壍.range);
-    if (洓壍.range === "custom" && 洓壍.from && 洓壍.to) {
-        谂壍.set("from", 洓壍.from);
-        谂壍.set("to", 洓壍.to);
+    const p = new URLSearchParams();
+    if (s.range && s.range !== "30d")
+        p.set("range", s.range);
+    if (s.range === "custom" && s.from && s.to) {
+        p.set("from", s.from);
+        p.set("to", s.to);
     }
-    if (洓壍.cmp && 洓壍.cmp !== "prev")
-        谂壍.set("cmp", 洓壍.cmp);
-    const 壱壍 = 谂壍.toString();
-    return 壱壍 ? `?${壱壍}` : "";
+    if (s.cmp && s.cmp !== "prev")
+        p.set("cmp", s.cmp);
+    const str = p.toString();
+    return str ? `?${str}` : "";
 }
-export function pacingMonthOf(矠壍: string | undefined): {
+export function pacingMonthOf(dataThrough: string | undefined): {
     label: string;
     month: string;
     marker: number | undefined;
 } {
-    if (!矠壍 || !isCivilDate(矠壍))
+    if (!dataThrough || !isCivilDate(dataThrough))
         return { label: "This month", month: "this month", marker: undefined };
-    const 雏壍 = formatMonth(矠壍);
-    return { label: 雏壍, month: 雏壍.split(" ")[0] ?? 雏壍, marker: parts(矠壍).day / daysInMonth(矠壍) };
+    const label = formatMonth(dataThrough);
+    return { label, month: label.split(" ")[0] ?? label, marker: parts(dataThrough).day / daysInMonth(dataThrough) };
 }
 export const DETAIL_TABS = ["overview", "ad-groups", "keywords", "search-terms", "devices", "changes", "signals", "notes"] as const;
 export type DetailTab = (typeof DETAIL_TABS)[number];
@@ -52,7 +52,7 @@ export interface MoneyFmt {
     fx: number;
 }
 export const DEFAULT_MONEY: MoneyFmt = { currency: "USD", fx: 1 };
-export function moneyFmtOf(掾壍: {
+export function moneyFmtOf(status: {
     account: {
         currency: string;
     };
@@ -61,21 +61,21 @@ export function moneyFmtOf(掾壍: {
         fxRates: Record<string, number>;
     };
 } | undefined): MoneyFmt {
-    if (!掾壍)
+    if (!status)
         return DEFAULT_MONEY;
-    const 芭壍 = 掾壍.account.currency || "USD";
-    const 侜壍 = 掾壍.display.currency || 芭壍;
-    if (侜壍 === 芭壍)
-        return { currency: 侜壍, fx: 1 };
-    const 溋壍 = (赺壍: string) => (赺壍 === "USD" ? 1 : 掾壍.display.fxRates[赺壍]);
-    const 婩壍 = 溋壍(侜壍);
-    const 祘壍 = 溋壍(芭壍);
-    return 婩壍 && 祘壍 ? { currency: 侜壍, fx: 婩壍 / 祘壍 } : { currency: 芭壍, fx: 1 };
+    const account = status.account.currency || "USD";
+    const currency = status.display.currency || account;
+    if (currency === account)
+        return { currency, fx: 1 };
+    const rate = (c: string) => (c === "USD" ? 1 : status.display.fxRates[c]);
+    const to = rate(currency);
+    const value = rate(account);
+    return to && value ? { currency, fx: to / value } : { currency: account, fx: 1 };
 }
-export function money(顇壍: number | null | undefined, 收壍: MoneyFmt, 营壍?: number, 儔壍 = true): string {
-    if (顇壍 === null || 顇壍 === undefined || !Number.isFinite(顇壍))
+export function money(v: number | null | undefined, m: MoneyFmt, decimals?: number, compact = true): string {
+    if (v === null || v === undefined || !Number.isFinite(v))
         return "—";
-    return formatMoney(顇壍, { currency: 收壍.currency, fx: 收壍.fx, decimals: 营壍, compact: 儔壍 });
+    return formatMoney(v, { currency: m.currency, fx: m.fx, decimals, compact });
 }
 export type MetricKey = keyof CampaignMetrics;
 export interface MetricMeta {
@@ -96,21 +96,21 @@ export const METRIC_META: Record<MetricKey, MetricMeta> = {
     conv_value: { label: "Conv. value", format: "money", direction: "up_good" },
     cvr: { label: "Conv. rate", format: "percent", direction: "up_good" },
 };
-export function formatMetric(瀃壍: MetricKey, 軲壍: number | null | undefined, 寡壍: MoneyFmt, 竐壍: {
+export function formatMetric(key: MetricKey, v: number | null | undefined, m: MoneyFmt, opts: {
     compact?: boolean;
 } = {}): string {
-    const 馿壍 = METRIC_META[瀃壍];
-    if (馿壍.format === "money")
-        return money(軲壍, 寡壍, 馿壍.decimals, 竐壍.compact ?? true);
-    return formatMetricValue(馿壍.format, 軲壍, { compact: 竐壍.compact ?? true });
+    const meta = METRIC_META[key];
+    if (meta.format === "money")
+        return money(v, m, meta.decimals, opts.compact ?? true);
+    return formatMetricValue(meta.format, v, { compact: opts.compact ?? true });
 }
-export function pctChange(暮壍: number | null | undefined, 薝壍: number | null | undefined): number | null {
-    if (暮壍 === null || 暮壍 === undefined || 薝壍 === null || 薝壍 === undefined || !Number.isFinite(暮壍) || !Number.isFinite(薝壍) || 薝壍 === 0)
+export function pctChange(cur: number | null | undefined, prev: number | null | undefined): number | null {
+    if (cur === null || cur === undefined || prev === null || prev === undefined || !Number.isFinite(cur) || !Number.isFinite(prev) || prev === 0)
         return null;
-    return 暮壍 / 薝壍 - 1;
+    return cur / prev - 1;
 }
-export function metricSentiment(劌壍: MetricKey, 煻壍: number | null): "good" | "bad" | null {
-    return deltaSentiment(METRIC_META[劌壍].direction, 煻壍);
+export function metricSentiment(key: MetricKey, pct: number | null): "good" | "bad" | null {
+    return deltaSentiment(METRIC_META[key].direction, pct);
 }
 export type ColumnKey = "name" | "status" | "bidding" | "budget" | MetricKey | "trend";
 export interface ColumnSpec {
@@ -124,48 +124,48 @@ export interface ColumnSpec {
     locked?: boolean;
     metric?: MetricKey;
 }
-const 遪壍 = (嵙壍: MetricKey, 籈壍 = true): ColumnSpec => ({ key: 嵙壍, label: METRIC_META[嵙壍].label, track: "minmax(60px,1fr)", min: 60, align: "right", sortable: true, defaultOn: 籈壍, metric: 嵙壍 });
+const num = (key: MetricKey, defaultOn = true): ColumnSpec => ({ key, label: METRIC_META[key].label, track: "minmax(60px,1fr)", min: 60, align: "right", sortable: true, defaultOn, metric: key });
 export const CAMPAIGN_COLUMNS: ColumnSpec[] = [
     { key: "name", label: "Campaign", track: "minmax(var(--name-min,220px),2.2fr)", min: 220, align: "left", sortable: true, defaultOn: true, locked: true },
     { key: "status", label: "Status", track: "92px", min: 92, align: "left", sortable: true, defaultOn: true },
     { key: "bidding", label: "Bid strategy", track: "minmax(128px,1.2fr)", min: 128, align: "left", sortable: true, defaultOn: false },
     { key: "budget", label: "Budget/day", track: "minmax(60px,1fr)", min: 60, align: "right", sortable: true, defaultOn: true },
-    遪壍("cost"),
-    遪壍("impressions"),
-    遪壍("clicks"),
-    遪壍("ctr"),
-    遪壍("cpc"),
-    遪壍("conversions"),
-    遪壍("cvr", false),
-    遪壍("cpa"),
-    遪壍("conv_value", false),
-    遪壍("roas"),
+    num("cost"),
+    num("impressions"),
+    num("clicks"),
+    num("ctr"),
+    num("cpc"),
+    num("conversions"),
+    num("cvr", false),
+    num("cpa"),
+    num("conv_value", false),
+    num("roas"),
     { key: "trend", label: "Trend", track: "96px", min: 96, align: "right", sortable: false, defaultOn: true },
 ];
-export const DEFAULT_COLUMNS: ColumnKey[] = CAMPAIGN_COLUMNS.filter((鬷壍) => 鬷壍.defaultOn).map((栦壍) => 栦壍.key);
-const 蜕壍 = new Set<string>(CAMPAIGN_COLUMNS.map((各壍) => 各壍.key));
-export function parseColumnPref(狳壍: string | null): ColumnKey[] {
-    if (!狳壍)
+export const DEFAULT_COLUMNS: ColumnKey[] = CAMPAIGN_COLUMNS.filter((c) => c.defaultOn).map((c) => c.key);
+const COLUMN_KEYS = new Set<string>(CAMPAIGN_COLUMNS.map((c) => c.key));
+export function parseColumnPref(raw: string | null): ColumnKey[] {
+    if (!raw)
         return DEFAULT_COLUMNS;
     try {
-        const 釢壍: unknown = JSON.parse(狳壍);
-        if (!Array.isArray(釢壍))
+        const v: unknown = JSON.parse(raw);
+        if (!Array.isArray(v))
             return DEFAULT_COLUMNS;
-        const 廑壍 = new Set(釢壍.filter((緀壍): 緀壍 is string => typeof 緀壍 === "string" && 蜕壍.has(緀壍)));
-        廑壍.add("name");
-        return CAMPAIGN_COLUMNS.filter((鲯壍) => 廑壍.has(鲯壍.key)).map((榞壍) => 榞壍.key);
+        const keys = new Set(v.filter((k): k is string => typeof k === "string" && COLUMN_KEYS.has(k)));
+        keys.add("name");
+        return CAMPAIGN_COLUMNS.filter((c) => keys.has(c.key)).map((c) => c.key);
     }
     catch {
         return DEFAULT_COLUMNS;
     }
 }
-export function gridTemplate(袍壍: readonly ColumnSpec[], 啼壍: boolean): string {
-    return [啼壍 ? "16px" : null, ...袍壍.map((瑫壍) => 瑫壍.track)].filter(Boolean).join(" ");
+export function gridTemplate(columns: readonly ColumnSpec[], selectable: boolean): string {
+    return [selectable ? "16px" : null, ...columns.map((c) => c.track)].filter(Boolean).join(" ");
 }
-export function gridMinWidth(鍚壍: readonly ColumnSpec[], 恉壍: boolean): number {
-    const 缸壍 = 鍚壍.reduce((鸧壍, 欖壍) => 鸧壍 + 欖壍.min, 0) + (恉壍 ? 16 : 0);
-    const 訅壍 = (鍚壍.length + (恉壍 ? 1 : 0) - 1) * 10;
-    return 缸壍 + 訅壍 + 44;
+export function gridMinWidth(columns: readonly ColumnSpec[], selectable: boolean): number {
+    const tracks = columns.reduce((s, c) => s + c.min, 0) + (selectable ? 16 : 0);
+    const gaps = (columns.length + (selectable ? 1 : 0) - 1) * 10;
+    return tracks + gaps + 44;
 }
 export interface RowFilter {
     q?: string;
@@ -173,201 +173,201 @@ export interface RowFilter {
     statuses?: readonly string[];
     campaignIds?: readonly string[];
 }
-export function filterCampaigns<T extends Pick<CampaignListRow, "id" | "name" | "type" | "status">>(围壍: readonly T[], 痣壍: RowFilter): T[] {
-    const 铒壍 = (痣壍.q ?? "").trim().toLowerCase();
-    return 围壍.filter((懁壍) => (!铒壍 || 懁壍.name.toLowerCase().includes(铒壍) || 懁壍.id.toLowerCase() === 铒壍) &&
-        (!痣壍.types?.length || 痣壍.types.includes(懁壍.type)) &&
-        (!痣壍.statuses?.length || 痣壍.statuses.includes(懁壍.status)) &&
-        (!痣壍.campaignIds?.length || 痣壍.campaignIds.includes(懁壍.id)));
+export function filterCampaigns<T extends Pick<CampaignListRow, "id" | "name" | "type" | "status">>(rows: readonly T[], f: RowFilter): T[] {
+    const q = (f.q ?? "").trim().toLowerCase();
+    return rows.filter((r) => (!q || r.name.toLowerCase().includes(q) || r.id.toLowerCase() === q) &&
+        (!f.types?.length || f.types.includes(r.type)) &&
+        (!f.statuses?.length || f.statuses.includes(r.status)) &&
+        (!f.campaignIds?.length || f.campaignIds.includes(r.id)));
 }
 export type SortDir = "asc" | "desc";
-export const SORT_KEYS = CAMPAIGN_COLUMNS.filter((肰壍) => 肰壍.sortable).map((龟壍) => 龟壍.key) as Exclude<ColumnKey, "trend">[];
+export const SORT_KEYS = CAMPAIGN_COLUMNS.filter((c) => c.sortable).map((c) => c.key) as Exclude<ColumnKey, "trend">[];
 export type SortKey = (typeof SORT_KEYS)[number];
-export function sortValue(沎壍: CampaignListRow, 譽壍: SortKey): number | string | null {
-    switch (譽壍) {
+export function sortValue(r: CampaignListRow, key: SortKey): number | string | null {
+    switch (key) {
         case "name":
-            return 沎壍.name;
+            return r.name;
         case "status":
-            return 沎壍.status;
+            return r.status;
         case "bidding":
-            return 沎壍.biddingLabel;
+            return r.biddingLabel;
         case "budget":
-            return 沎壍.dailyBudget;
+            return r.dailyBudget;
         default:
-            return 沎壍.metrics[譽壍];
+            return r.metrics[key];
     }
 }
-export function sortCampaigns(塬壍: readonly CampaignListRow[], 睛壍: SortKey, 陊壍: SortDir): CampaignListRow[] {
-    const 挹壍 = 陊壍 === "asc" ? 1 : -1;
-    return [...塬壍].sort((舨壍, 众壍) => {
-        const 渆壍 = sortValue(舨壍, 睛壍);
-        const 賵壍 = sortValue(众壍, 睛壍);
-        const 姤壍 = 渆壍 === null || (typeof 渆壍 === "number" && !Number.isFinite(渆壍));
-        const 磓壍 = 賵壍 === null || (typeof 賵壍 === "number" && !Number.isFinite(賵壍));
-        if (姤壍 || 磓壍)
-            return 姤壍 === 磓壍 ? 舨壍.name.localeCompare(众壍.name) : 姤壍 ? 1 : -1;
-        const 韂壍 = typeof 渆壍 === "number" && typeof 賵壍 === "number" ? 渆壍 - 賵壍 : String(渆壍).localeCompare(String(賵壍));
-        return 韂壍 !== 0 ? 韂壍 * 挹壍 : 舨壍.name.localeCompare(众壍.name);
+export function sortCampaigns(rows: readonly CampaignListRow[], key: SortKey, dir: SortDir): CampaignListRow[] {
+    const sign = dir === "asc" ? 1 : -1;
+    return [...rows].sort((a, b) => {
+        const x = sortValue(a, key);
+        const y = sortValue(b, key);
+        const xMissing = x === null || (typeof x === "number" && !Number.isFinite(x));
+        const yMissing = y === null || (typeof y === "number" && !Number.isFinite(y));
+        if (xMissing || yMissing)
+            return xMissing === yMissing ? a.name.localeCompare(b.name) : xMissing ? 1 : -1;
+        const c = typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y));
+        return c !== 0 ? c * sign : a.name.localeCompare(b.name);
     });
 }
-export function nextSort(撱壍: {
+export function nextSort(cur: {
     key: SortKey;
     dir: SortDir;
-}, 莠壍: SortKey): {
+}, key: SortKey): {
     key: SortKey;
     dir: SortDir;
 } {
-    if (撱壍.key === 莠壍)
-        return { key: 莠壍, dir: 撱壍.dir === "desc" ? "asc" : "desc" };
-    return { key: 莠壍, dir: 莠壍 === "name" || 莠壍 === "status" || 莠壍 === "bidding" ? "asc" : "desc" };
+    if (cur.key === key)
+        return { key, dir: cur.dir === "desc" ? "asc" : "desc" };
+    return { key, dir: key === "name" || key === "status" || key === "bidding" ? "asc" : "desc" };
 }
 export const ZERO_METRICS: CampaignMetrics = { cost: 0, impressions: 0, clicks: 0, ctr: null, cpc: null, conversions: 0, cpa: null, roas: null, conv_value: 0, cvr: null };
 export interface CampaignTotals extends CampaignMetrics {
     dailyBudget: number;
     count: number;
 }
-export function totalsOf(傏壍: readonly CampaignMetrics[], 潾壍: readonly (number | null)[] = []): CampaignTotals {
-    const 蹭壍 = (孜壍: "cost" | "impressions" | "clicks" | "conversions" | "conv_value") => 傏壍.reduce((穋壍, 餺壍) => 穋壍 + (Number.isFinite(餺壍[孜壍]) ? 餺壍[孜壍] : 0), 0);
-    const 昩壍 = 蹭壍("cost");
-    const 蔘壍 = 蹭壍("impressions");
-    const 切壍 = 蹭壍("clicks");
-    const 烶壍 = 蹭壍("conversions");
-    const 迥壍 = 蹭壍("conv_value");
-    const 峔壍 = (篃壍: number, 骲壍: number) => (骲壍 > 0 ? 篃壍 / 骲壍 : null);
+export function totalsOf(list: readonly CampaignMetrics[], budgets: readonly (number | null)[] = []): CampaignTotals {
+    const sum = (k: "cost" | "impressions" | "clicks" | "conversions" | "conv_value") => list.reduce((s, m) => s + (Number.isFinite(m[k]) ? m[k] : 0), 0);
+    const cost = sum("cost");
+    const impressions = sum("impressions");
+    const clicks = sum("clicks");
+    const conversions = sum("conversions");
+    const conv_value = sum("conv_value");
+    const div = (a: number, b: number) => (b > 0 ? a / b : null);
     return {
-        cost: 昩壍,
-        impressions: 蔘壍,
-        clicks: 切壍,
-        ctr: 峔壍(切壍, 蔘壍),
-        cpc: 峔壍(昩壍, 切壍),
-        conversions: 烶壍,
-        cpa: 峔壍(昩壍, 烶壍),
-        roas: 峔壍(迥壍, 昩壍),
-        conv_value: 迥壍,
-        cvr: 峔壍(烶壍, 切壍),
-        dailyBudget: 潾壍.reduce<number>((枡壍, 蚐壍) => 枡壍 + (蚐壍 ?? 0), 0),
-        count: 傏壍.length,
+        cost,
+        impressions,
+        clicks,
+        ctr: div(clicks, impressions),
+        cpc: div(cost, clicks),
+        conversions,
+        cpa: div(cost, conversions),
+        roas: div(conv_value, cost),
+        conv_value,
+        cvr: div(conversions, clicks),
+        dailyBudget: budgets.reduce<number>((s, b) => s + (b ?? 0), 0),
+        count: list.length,
     };
 }
-export function csvCell(卿壍: string | number | null | undefined): string {
-    if (卿壍 === null || 卿壍 === undefined)
+export function csvCell(v: string | number | null | undefined): string {
+    if (v === null || v === undefined)
         return "";
-    if (typeof 卿壍 === "number")
-        return Number.isFinite(卿壍) ? String(卿壍) : "";
-    let 牮壍 = 卿壍;
-    if (/^[=+\-@\t\r]/.test(牮壍))
-        牮壍 = `'${牮壍}`;
-    return /[",\r\n]/.test(牮壍) || 牮壍 !== 牮壍.trim() ? `"${牮壍.replace(/"/g, '""')}"` : 牮壍;
+    if (typeof v === "number")
+        return Number.isFinite(v) ? String(v) : "";
+    let s = v;
+    if (/^[=+\-@\t\r]/.test(s))
+        s = `'${s}`;
+    return /[",\r\n]/.test(s) || s !== s.trim() ? `"${s.replace(/"/g, '""')}"` : s;
 }
-export function toCsv(酝壍: readonly string[], 幌壍: readonly (readonly (string | number | null | undefined)[])[]): string {
-    return [酝壍, ...幌壍].map((紻壍) => 紻壍.map(csvCell).join(",")).join("\r\n");
+export function toCsv(header: readonly string[], rows: readonly (readonly (string | number | null | undefined)[])[]): string {
+    return [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
 }
-const 鰪壍 = (椙壍: number | null | undefined, 蠈壍: number): number | null => (椙壍 === null || 椙壍 === undefined || !Number.isFinite(椙壍) ? null : Math.round(椙壍 * 10 ** 蠈壍) / 10 ** 蠈壍);
-export function campaignCsv(哷壍: readonly CampaignListRow[], 珦壍: readonly ColumnKey[], 鋕壍: MoneyFmt): string {
-    const 忄壍 = CAMPAIGN_COLUMNS.filter((纳壍) => 珦壍.includes(纳壍.key) && 纳壍.key !== "trend");
-    const 鶢壍 = 鋕壍.currency;
-    const 檑壍: string[] = [];
-    for (const 覀壍 of 忄壍) {
-        if (覀壍.key === "name")
-            檑壍.push("Campaign", "Campaign ID", "Type");
-        else if (覀壍.key === "budget")
-            檑壍.push(`Daily budget (${鶢壍})`);
-        else if (覀壍.metric && METRIC_META[覀壍.metric].format === "money")
-            檑壍.push(`${覀壍.metric === "cost" ? "Spend" : 覀壍.metric === "cpc" ? "Avg. CPC" : 覀壍.metric === "cpa" ? "CPA" : "Conv. value"} (${鶢壍})`);
-        else if (覀壍.metric && METRIC_META[覀壍.metric].format === "percent")
-            檑壍.push(`${覀壍.metric === "ctr" ? "CTR" : "Conv. rate"} (%)`);
+const round = (v: number | null | undefined, d: number): number | null => (v === null || v === undefined || !Number.isFinite(v) ? null : Math.round(v * 10 ** d) / 10 ** d);
+export function campaignCsv(rows: readonly CampaignListRow[], visible: readonly ColumnKey[], m: MoneyFmt): string {
+    const cols = CAMPAIGN_COLUMNS.filter((c) => visible.includes(c.key) && c.key !== "trend");
+    const cur = m.currency;
+    const header: string[] = [];
+    for (const c of cols) {
+        if (c.key === "name")
+            header.push("Campaign", "Campaign ID", "Type");
+        else if (c.key === "budget")
+            header.push(`Daily budget (${cur})`);
+        else if (c.metric && METRIC_META[c.metric].format === "money")
+            header.push(`${c.metric === "cost" ? "Spend" : c.metric === "cpc" ? "Avg. CPC" : c.metric === "cpa" ? "CPA" : "Conv. value"} (${cur})`);
+        else if (c.metric && METRIC_META[c.metric].format === "percent")
+            header.push(`${c.metric === "ctr" ? "CTR" : "Conv. rate"} (%)`);
         else
-            檑壍.push(覀壍.key === "impressions" ? "Impressions" : 覀壍.key === "conversions" ? "Conversions" : 覀壍.label);
+            header.push(c.key === "impressions" ? "Impressions" : c.key === "conversions" ? "Conversions" : c.label);
     }
-    const 噯壍 = 哷壍.map((畞壍) => {
-        const 鑍壍: (string | number | null)[] = [];
-        for (const 愼壍 of 忄壍) {
-            if (愼壍.key === "name")
-                鑍壍.push(畞壍.name, 畞壍.id, 畞壍.type);
-            else if (愼壍.key === "status")
-                鑍壍.push(畞壍.status);
-            else if (愼壍.key === "bidding")
-                鑍壍.push(畞壍.biddingLabel);
-            else if (愼壍.key === "budget")
-                鑍壍.push(鰪壍(畞壍.dailyBudget === null ? null : 畞壍.dailyBudget * 鋕壍.fx, 2));
-            else if (愼壍.metric) {
-                const 耫壍 = METRIC_META[愼壍.metric];
-                const 鼚壍 = 畞壍.metrics[愼壍.metric];
-                鑍壍.push(耫壍.format === "money" ? 鰪壍(鼚壍 === null ? null : 鼚壍 * 鋕壍.fx, 2) : 耫壍.format === "percent" ? 鰪壍(鼚壍 === null ? null : 鼚壍 * 100, 2) : 耫壍.format === "ratio" ? 鰪壍(鼚壍, 2) : 鰪壍(鼚壍, 2));
+    const body = rows.map((r) => {
+        const out: (string | number | null)[] = [];
+        for (const c of cols) {
+            if (c.key === "name")
+                out.push(r.name, r.id, r.type);
+            else if (c.key === "status")
+                out.push(r.status);
+            else if (c.key === "bidding")
+                out.push(r.biddingLabel);
+            else if (c.key === "budget")
+                out.push(round(r.dailyBudget === null ? null : r.dailyBudget * m.fx, 2));
+            else if (c.metric) {
+                const meta = METRIC_META[c.metric];
+                const v = r.metrics[c.metric];
+                out.push(meta.format === "money" ? round(v === null ? null : v * m.fx, 2) : meta.format === "percent" ? round(v === null ? null : v * 100, 2) : meta.format === "ratio" ? round(v, 2) : round(v, 2));
             }
         }
-        return 鑍壍;
+        return out;
     });
-    return `﻿${toCsv(檑壍, 噯壍)}`;
+    return `﻿${toCsv(header, body)}`;
 }
-export function accentHeadline(氉壍: string): string {
-    const 諸壍 = 氉壍.replace(/\*/g, "").replace(/\s+/g, " ").trim();
-    if (!諸壍)
+export function accentHeadline(name: string): string {
+    const clean = name.replace(/\*/g, "").replace(/\s+/g, " ").trim();
+    if (!clean)
         return "*Campaign*";
-    const 埧壍 = [...諸壍.matchAll(/\s*(?:—|–|\|)\s*|\s+-\s+|\s*:\s+/g)].at(-1);
-    const 盖壍 = 埧壍?.index ?? 0;
-    if (埧壍 && 盖壍 > 0) {
-        const 闅壍 = 盖壍 + 埧壍[0].length;
-        const 抴壍 = 諸壍.slice(闅壍).trim();
-        if (抴壍)
-            return `${諸壍.slice(0, 闅壍)}*${抴壍}*`;
+    const last = [...clean.matchAll(/\s*(?:—|–|\|)\s*|\s+-\s+|\s*:\s+/g)].at(-1);
+    const at = last?.index ?? 0;
+    if (last && at > 0) {
+        const cut = at + last[0].length;
+        const tail = clean.slice(cut).trim();
+        if (tail)
+            return `${clean.slice(0, cut)}*${tail}*`;
     }
-    const 膣壍 = 諸壍.lastIndexOf(" ");
-    return 膣壍 > 0 ? `${諸壍.slice(0, 膣壍 + 1)}*${諸壍.slice(膣壍 + 1)}*` : `*${諸壍}*`;
+    const i = clean.lastIndexOf(" ");
+    return i > 0 ? `${clean.slice(0, i + 1)}*${clean.slice(i + 1)}*` : `*${clean}*`;
 }
-export function keywordNotation(互壍: string, 涁壍: string): string {
-    const 豰壍 = 涁壍.toLowerCase();
-    if (豰壍 === "exact")
-        return `[${互壍}]`;
-    if (豰壍 === "phrase")
-        return `"${互壍}"`;
-    return 互壍;
+export function keywordNotation(text: string, matchType: string): string {
+    const t = matchType.toLowerCase();
+    if (t === "exact")
+        return `[${text}]`;
+    if (t === "phrase")
+        return `"${text}"`;
+    return text;
 }
-export function adjustBudget(奟壍: number, 硎壍: number): number {
-    return Math.max(0.01, Math.round(奟壍 * (1 + 硎壍 / 100) * 100) / 100);
+export function adjustBudget(daily: number, pct: number): number {
+    return Math.max(0.01, Math.round(daily * (1 + pct / 100) * 100) / 100);
 }
-export function formatPValue(霽壍: number): string {
-    if (!Number.isFinite(霽壍))
+export function formatPValue(p: number): string {
+    if (!Number.isFinite(p))
         return "—";
-    if (霽壍 < 0.001)
+    if (p < 0.001)
         return "< 0.001";
-    return 霽壍 < 0.01 ? 霽壍.toFixed(3) : 霽壍.toFixed(2);
+    return p < 0.01 ? p.toFixed(3) : p.toFixed(2);
 }
-export function formatP(搬壍: number): string {
-    const 茛壍 = formatPValue(搬壍);
-    return 茛壍.startsWith("<") ? `p ${茛壍}` : `p = ${茛壍}`;
+export function formatP(p: number): string {
+    const v = formatPValue(p);
+    return v.startsWith("<") ? `p ${v}` : `p = ${v}`;
 }
-const 倊壍: Record<ChangeImpactMetric["metric"], string> = { cost: "daily spend", conversions: "daily conversions", cpa: "CPA", ctr: "CTR" };
-const 滹壍: Record<ChangeImpactMetric["metric"], MetricDirection> = { cost: "neutral", conversions: "up_good", cpa: "down_good", ctr: "up_good" };
-const 跨壍 = (嫗壍: string) => 嫗壍.charAt(0).toUpperCase() + 嫗壍.slice(1);
-export function metricChangeText(秆壍: Pick<ChangeImpactMetric, "metric" | "deltaPct" | "p">, 颵壍 = true): string {
-    const 斤壍 = 倊壍[秆壍.metric];
-    const 蒓壍 = 秆壍.deltaPct;
-    const 冂壍 = 蒓壍 === null || !Number.isFinite(蒓壍) ? `${斤壍} could not be compared` : Math.abs(蒓壍) < 0.005 ? `${斤壍} was flat` : `${斤壍} ${蒓壍 > 0 ? "rose" : "fell"} ${Math.round(Math.abs(蒓壍) * 100)}%`;
-    return 颵壍 && 蒓壍 !== null ? `${冂壍} (${formatP(秆壍.p)})` : 冂壍;
+const IMPACT_NAMES: Record<ChangeImpactMetric["metric"], string> = { cost: "daily spend", conversions: "daily conversions", cpa: "CPA", ctr: "CTR" };
+const IMPACT_DIRECTION: Record<ChangeImpactMetric["metric"], MetricDirection> = { cost: "neutral", conversions: "up_good", cpa: "down_good", ctr: "up_good" };
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+export function metricChangeText(m: Pick<ChangeImpactMetric, "metric" | "deltaPct" | "p">, withP = true): string {
+    const name = IMPACT_NAMES[m.metric];
+    const d = m.deltaPct;
+    const body = d === null || !Number.isFinite(d) ? `${name} could not be compared` : Math.abs(d) < 0.005 ? `${name} was flat` : `${name} ${d > 0 ? "rose" : "fell"} ${Math.round(Math.abs(d) * 100)}%`;
+    return withP && d !== null ? `${body} (${formatP(m.p)})` : body;
 }
 export interface ImpactVerdict {
     text: string;
     tone: "good" | "bad" | "neutral";
     preliminary: boolean;
 }
-const 灱壍: ChangeImpactMetric["metric"][] = ["cpa", "conversions", "cost", "ctr"];
-export function impactVerdict(轠壍: Pick<ChangeImpactResult, "metrics" | "after">): ImpactVerdict {
-    const 屏壍 = 轠壍.after.days > 0 && 轠壍.after.days < 7;
-    if (轠壍.after.days === 0)
+const PRIORITY: ChangeImpactMetric["metric"][] = ["cpa", "conversions", "cost", "ctr"];
+export function impactVerdict(result: Pick<ChangeImpactResult, "metrics" | "after">): ImpactVerdict {
+    const preliminary = result.after.days > 0 && result.after.days < 7;
+    if (result.after.days === 0)
         return { text: "Too recent to measure — there is no complete day after this change yet.", tone: "neutral", preliminary: false };
-    const 笾壍 = 灱壍.map((騭壍) => 轠壍.metrics.find((朜壍) => 朜壍.metric === 騭壍)).filter((蘋壍): 蘋壍 is ChangeImpactMetric => !!蘋壍 && 蘋壍.significant && 蘋壍.deltaPct !== null);
-    const 勺壍 = 屏壍 ? ` Preliminary: only ${轠壍.after.days} day${轠壍.after.days === 1 ? "" : "s"} of data after it.` : "";
-    if (!笾壍.length) {
-        const 燩壍 = [...轠壍.metrics].filter((郘壍) => 郘壍.deltaPct !== null).sort((巇壍, 粶壍) => Math.abs(粶壍.deltaPct ?? 0) - Math.abs(巇壍.deltaPct ?? 0))[0];
-        const 鮥壍 = 燩壍 && Math.abs(燩壍.deltaPct ?? 0) >= 0.005 ? ` The largest move, ${metricChangeText(燩壍)}, is within normal day-to-day variation.` : "";
-        return { text: `No significant change in spend, conversions, CPA or CTR after this change.${鮥壍}${勺壍}`, tone: "neutral", preliminary: 屏壍 };
+    const sig = PRIORITY.map((k) => result.metrics.find((m) => m.metric === k)).filter((m): m is ChangeImpactMetric => !!m && m.significant && m.deltaPct !== null);
+    const suffix = preliminary ? ` Preliminary: only ${result.after.days} day${result.after.days === 1 ? "" : "s"} of data after it.` : "";
+    if (!sig.length) {
+        const moved = [...result.metrics].filter((m) => m.deltaPct !== null).sort((a, b) => Math.abs(b.deltaPct ?? 0) - Math.abs(a.deltaPct ?? 0))[0];
+        const detail = moved && Math.abs(moved.deltaPct ?? 0) >= 0.005 ? ` The largest move, ${metricChangeText(moved)}, is within normal day-to-day variation.` : "";
+        return { text: `No significant change in spend, conversions, CPA or CTR after this change.${detail}${suffix}`, tone: "neutral", preliminary };
     }
-    const 梔壍 = 笾壍.slice(0, 2);
-    const 螃壍 = 梔壍.length === 1
-        ? `${跨壍(metricChangeText(梔壍[0] as ChangeImpactMetric, false))} after this change (${formatP((梔壍[0] as ChangeImpactMetric).p)}).`
-        : `${跨壍(metricChangeText(梔壍[0] as ChangeImpactMetric))} and ${metricChangeText(梔壍[1] as ChangeImpactMetric)} after this change.`;
-    const 呲壍 = 梔壍[0] as ChangeImpactMetric;
-    const 獡壍 = deltaSentiment(滹壍[呲壍.metric], 呲壍.deltaPct);
-    return { text: `${螃壍}${勺壍}`, tone: 獡壍 === "good" ? "good" : 獡壍 === "bad" ? "bad" : "neutral", preliminary: 屏壍 };
+    const lead = sig.slice(0, 2);
+    const text = lead.length === 1
+        ? `${capitalize(metricChangeText(lead[0] as ChangeImpactMetric, false))} after this change (${formatP((lead[0] as ChangeImpactMetric).p)}).`
+        : `${capitalize(metricChangeText(lead[0] as ChangeImpactMetric))} and ${metricChangeText(lead[1] as ChangeImpactMetric)} after this change.`;
+    const first = lead[0] as ChangeImpactMetric;
+    const s = deltaSentiment(IMPACT_DIRECTION[first.metric], first.deltaPct);
+    return { text: `${text}${suffix}`, tone: s === "good" ? "good" : s === "bad" ? "bad" : "neutral", preliminary };
 }

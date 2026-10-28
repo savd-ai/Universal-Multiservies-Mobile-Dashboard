@@ -10,44 +10,44 @@ export type ApiPolicy = {
     kind: "permission";
     permission: Permission;
 };
-const 韩壍: ApiPolicy = { kind: "public" };
-const 擘壍 = (菇壍: Permission): ApiPolicy => ({ kind: "permission", permission: 菇壍 });
-const 傶壍 = ["GET", "HEAD"];
-const 澥壍 = ["POST", "PUT", "PATCH", "DELETE"];
-const 躔壍 = [...傶壍, ...澥壍];
-const 它壍: {
+const PUBLIC: ApiPolicy = { kind: "public" };
+const P = (permission: Permission): ApiPolicy => ({ kind: "permission", permission });
+const READ = ["GET", "HEAD"];
+const WRITE = ["POST", "PUT", "PATCH", "DELETE"];
+const ANY = [...READ, ...WRITE];
+const RULES: {
     methods: string[];
     path: RegExp;
     policy: ApiPolicy;
 }[] = [
-    { methods: 躔壍, path: /^\/api\/auth(\/|$)/, policy: 韩壍 },
-    { methods: 傶壍, path: /^\/api\/health$/, policy: 韩壍 },
-    { methods: 傶壍, path: /^\/api\/dev\/mock-platform\//, policy: 韩壍 },
-    { methods: 躔壍, path: /^\/api\/cron\//, policy: { kind: "cron" } },
-    { methods: 躔壍, path: /^\/api\/me(\/|$)/, policy: { kind: "session" } },
-    { methods: 躔壍, path: /^\/api\/admin\/users(\/|$)/, policy: 擘壍("users.manage") },
-    { methods: 躔壍, path: /^\/api\/admin\/(clients|directory)(\/|$)/, policy: 擘壍("clients.manage") },
-    { methods: 傶壍, path: /^\/api\/portfolio$/, policy: 擘壍("portfolio.read") },
-    { methods: 傶壍, path: /^\/api\/google-ads\/health$/, policy: 擘壍("system.manage") },
-    { methods: 躔壍, path: /^\/api\/warehouse(\/|$)/, policy: 擘壍("system.manage") },
-    { methods: 傶壍, path: /^\/api\/audit$/, policy: 擘壍("audit.read") },
-    { methods: 躔壍, path: /^\/api\/mobile\/device$/, policy: { kind: "session" } },
-    { methods: ["POST"], path: /^\/api\/mobile\/notifications\/ack$/, policy: 擘壍("accounts.read") },
-    { methods: 傶壍, path: /^\/api\/history\/status$/, policy: 擘壍("system.manage") },
-    { methods: ["POST"], path: /^\/api\/(query|query\/batch|query\/export|insights\/drivers|metrics\/custom\/validate|anomalies\/rules\/preview|budget\/optimize|budget\/scenarios|alerts\/digest\/preview)$/, policy: 擘壍("accounts.read") },
-    { methods: ["PUT"], path: /^\/api\/accounts\/active$/, policy: 擘壍("accounts.read") },
-    { methods: ["POST"], path: /^\/api\/google-ads\/refresh$/, policy: 擘壍("accounts.read") },
-    { methods: 澥壍, path: /^\/api\/actions(\/|$)/, policy: 擘壍("actions.simulate") },
-    { methods: 澥壍, path: /^\/api\/alerts(\/|$)/, policy: 擘壍("alerts.manage") },
-    { methods: 澥壍, path: /^\/api\/annotations(\/|$)/, policy: 擘壍("dashboards.edit") },
-    { methods: 澥壍, path: /^\/api\/anomalies\/(rules|settings)(\/|$)/, policy: 擘壍("rules.manage") },
-    { methods: 澥壍, path: /^\/api\/anomalies(\/|$)/, policy: 擘壍("anomalies.manage") },
-    { methods: 澥壍, path: /^\/api\/budget(\/|$)/, policy: 擘壍("budget.plan") },
-    { methods: 澥壍, path: /^\/api\/(dashboards|questions|metrics\/custom)(\/|$)/, policy: 擘壍("dashboards.edit") },
-    { methods: 澥壍, path: /^\/api\/settings$/, policy: 擘壍("settings.manage") },
-    { methods: 傶壍, path: /^\/api\//, policy: 擘壍("accounts.read") },
+    { methods: ANY, path: /^\/api\/auth(\/|$)/, policy: PUBLIC },
+    { methods: READ, path: /^\/api\/health$/, policy: PUBLIC },
+    { methods: READ, path: /^\/api\/dev\/mock-platform\//, policy: PUBLIC },
+    { methods: ANY, path: /^\/api\/cron\//, policy: { kind: "cron" } },
+    { methods: ANY, path: /^\/api\/me(\/|$)/, policy: { kind: "session" } },
+    { methods: ANY, path: /^\/api\/admin\/users(\/|$)/, policy: P("users.manage") },
+    { methods: ANY, path: /^\/api\/admin\/(clients|directory)(\/|$)/, policy: P("clients.manage") },
+    { methods: READ, path: /^\/api\/portfolio$/, policy: P("portfolio.read") },
+    { methods: READ, path: /^\/api\/google-ads\/health$/, policy: P("system.manage") },
+    { methods: ANY, path: /^\/api\/warehouse(\/|$)/, policy: P("system.manage") },
+    { methods: READ, path: /^\/api\/audit$/, policy: P("audit.read") },
+    { methods: ANY, path: /^\/api\/mobile\/device$/, policy: { kind: "session" } },
+    { methods: ["POST"], path: /^\/api\/mobile\/notifications\/ack$/, policy: P("accounts.read") },
+    { methods: READ, path: /^\/api\/history\/status$/, policy: P("system.manage") },
+    { methods: ["POST"], path: /^\/api\/(query|query\/batch|query\/export|insights\/drivers|metrics\/custom\/validate|anomalies\/rules\/preview|budget\/optimize|budget\/scenarios|alerts\/digest\/preview)$/, policy: P("accounts.read") },
+    { methods: ["PUT"], path: /^\/api\/accounts\/active$/, policy: P("accounts.read") },
+    { methods: ["POST"], path: /^\/api\/google-ads\/refresh$/, policy: P("accounts.read") },
+    { methods: WRITE, path: /^\/api\/actions(\/|$)/, policy: P("actions.simulate") },
+    { methods: WRITE, path: /^\/api\/alerts(\/|$)/, policy: P("alerts.manage") },
+    { methods: WRITE, path: /^\/api\/annotations(\/|$)/, policy: P("dashboards.edit") },
+    { methods: WRITE, path: /^\/api\/anomalies\/(rules|settings)(\/|$)/, policy: P("rules.manage") },
+    { methods: WRITE, path: /^\/api\/anomalies(\/|$)/, policy: P("anomalies.manage") },
+    { methods: WRITE, path: /^\/api\/budget(\/|$)/, policy: P("budget.plan") },
+    { methods: WRITE, path: /^\/api\/(dashboards|questions|metrics\/custom)(\/|$)/, policy: P("dashboards.edit") },
+    { methods: WRITE, path: /^\/api\/settings$/, policy: P("settings.manage") },
+    { methods: READ, path: /^\/api\//, policy: P("accounts.read") },
 ];
-export function policyFor(穲壍: string, 饡壍: string): ApiPolicy | null {
-    const 晐壍 = 穲壍.toUpperCase();
-    return 它壍.find((蔿壍) => 蔿壍.methods.includes(晐壍) && 蔿壍.path.test(饡壍))?.policy ?? null;
+export function policyFor(method: string, pathname: string): ApiPolicy | null {
+    const m = method.toUpperCase();
+    return RULES.find((r) => r.methods.includes(m) && r.path.test(pathname))?.policy ?? null;
 }

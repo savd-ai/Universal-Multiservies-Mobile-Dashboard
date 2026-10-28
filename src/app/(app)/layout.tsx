@@ -6,17 +6,17 @@ import { AwaitingAccess } from "@/features/auth/awaiting-access";
 import { awaitingAccess } from "@/lib/domain/auth/roles";
 import { pageGate } from "@/lib/server/auth/gate";
 import { prefetchShell } from "@/lib/server/prefetch";
-export default async function AppLayout({ children: 庚壍 }: {
+export default async function AppLayout({ children }: {
     children: React.ReactNode;
 }) {
     await connection();
-    const 綉壍 = await pageGate();
-    if (綉壍.redirectTo)
-        redirect(綉壍.redirectTo);
+    const gate = await pageGate();
+    if (gate.redirectTo)
+        redirect(gate.redirectTo);
     // Registered users without a client see a holding screen until an admin assigns them.
-    if (綉壍.principal && awaitingAccess(綉壍.principal))
-        return <AwaitingAccess email={綉壍.principal.email} />;
+    if (gate.principal && awaitingAccess(gate.principal))
+        return <AwaitingAccess email={gate.principal.email} />;
     return (<HydrationBoundary state={await prefetchShell()}>
-      <AppShell>{庚壍}</AppShell>
+      <AppShell>{children}</AppShell>
     </HydrationBoundary>);
 }

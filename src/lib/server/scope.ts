@@ -19,9 +19,9 @@ export interface RequestScope {
     principal: Principal;
     workspaceId: string;
 }
-const 检壍 = () => singleton("scope:als", () => new AsyncLocalStorage<RequestScope>());
+const storage = () => singleton("scope:als", () => new AsyncLocalStorage<RequestScope>());
 export function currentScope(): RequestScope | undefined {
-    return 检壍().getStore();
+    return storage().getStore();
 }
 export function currentPrincipal(): Principal {
     return currentScope()?.principal ?? SYSTEM_PRINCIPAL;
@@ -29,14 +29,14 @@ export function currentPrincipal(): Principal {
 export function currentWorkspace(): string {
     return currentScope()?.workspaceId ?? AGENCY_WORKSPACE;
 }
-export function runWithScope<T>(螯壍: RequestScope, 咞壍: () => T): T {
-    return 检壍().run(螯壍, 咞壍);
+export function runWithScope<T>(scope: RequestScope, fn: () => T): T {
+    return storage().run(scope, fn);
 }
-export function runInWorkspace<T>(玍壍: string, 鉼壍: () => T, 彫壍: Principal = currentPrincipal()): T {
-    return 检壍().run({ principal: 彫壍, workspaceId: 玍壍 }, 鉼壍);
+export function runInWorkspace<T>(workspaceId: string, fn: () => T, principal: Principal = currentPrincipal()): T {
+    return storage().run({ principal, workspaceId }, fn);
 }
-export function setScopeWorkspace(繚壍: string): void {
-    const 鵉壍 = currentScope();
-    if (鵉壍)
-        鵉壍.workspaceId = 繚壍;
+export function setScopeWorkspace(workspaceId: string): void {
+    const scope = currentScope();
+    if (scope)
+        scope.workspaceId = workspaceId;
 }

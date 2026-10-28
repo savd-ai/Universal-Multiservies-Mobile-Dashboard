@@ -19,17 +19,17 @@ export async function pageGate(): Promise<{
         await announceSetup();
         return { redirectTo: "/register", principal: null };
     }
-    const 藄壍 = await principalFromCookies();
-    const 劳壍 = await currentPath();
-    if (!藄壍)
-        return { redirectTo: `/login?next=${encodeURIComponent(劳壍)}`, principal: null };
-    if (藄壍.mfaSetupRequired && !劳壍.startsWith("/account"))
-        return { redirectTo: "/account?setup=2fa", principal: 藄壍 };
-    return { redirectTo: null, principal: 藄壍 };
+    const principal = await principalFromCookies();
+    const path = await currentPath();
+    if (!principal)
+        return { redirectTo: `/login?next=${encodeURIComponent(path)}`, principal: null };
+    if (principal.mfaSetupRequired && !path.startsWith("/account"))
+        return { redirectTo: "/account?setup=2fa", principal };
+    return { redirectTo: null, principal };
 }
-export async function pageAllows(熢壍: Permission): Promise<boolean> {
+export async function pageAllows(permission: Permission): Promise<boolean> {
     if (authConfig().mode === "off")
         return true;
-    const 邑壍 = await principalFromCookies();
-    return !!邑壍 && can(邑壍.role, 熢壍);
+    const principal = await principalFromCookies();
+    return !!principal && can(principal.role, permission);
 }

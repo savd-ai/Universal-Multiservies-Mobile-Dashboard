@@ -3,47 +3,47 @@ import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClie
 import type { AlertChannelBody, AlertChannelUpdate, AlertChannelView, AlertDelivery, AlertRoute, AlertRouteBody, AlertRunSummary, DeliveriesPage, DeliveryStatus, DigestPreview, } from "@/lib/domain/contracts/alerts";
 import { ApiError, request } from "./client";
 import { qk, useAccountId } from "./hooks";
-const 韔壍 = (擃壍: number, 莲壍: unknown) => !(莲壍 instanceof ApiError && 莲壍.status >= 400 && 莲壍.status < 500) && 擃壍 < 2;
+const noRetry4xx = (count: number, err: unknown) => !(err instanceof ApiError && err.status >= 400 && err.status < 500) && count < 2;
 export const alertKeys = {
     all: () => ["alerts"] as const,
     channels: () => ["alerts", "channels"] as const,
     routes: () => ["alerts", "routes"] as const,
-    deliveries: (傡壍: DeliveriesParams) => ["alerts", "deliveries", 傡壍] as const,
+    deliveries: (params: DeliveriesParams) => ["alerts", "deliveries", params] as const,
 };
 export function useAlertChannels() {
     return useQuery({
         queryKey: alertKeys.channels(),
-        queryFn: ({ signal: 澐壍 }) => request<AlertChannelView[]>("/api/alerts/channels", { signal: 澐壍 }),
+        queryFn: ({ signal }) => request<AlertChannelView[]>("/api/alerts/channels", { signal }),
         staleTime: 30000,
-        retry: 韔壍,
+        retry: noRetry4xx,
     });
 }
 export function useSaveAlertChannel() {
-    const 蹿壍 = useQueryClient();
+    const qc = useQueryClient();
     return useMutation({
-        mutationFn: (孮壍: {
+        mutationFn: (v: {
             id?: undefined;
             body: AlertChannelBody;
         } | {
             id: string;
             body: AlertChannelUpdate;
-        }) => 孮壍.id ? request<AlertChannelView>(`/api/alerts/channels/${encodeURIComponent(孮壍.id)}`, { method: "PUT", body: 孮壍.body }) : request<AlertChannelView>("/api/alerts/channels", { method: "POST", body: 孮壍.body }),
+        }) => v.id ? request<AlertChannelView>(`/api/alerts/channels/${encodeURIComponent(v.id)}`, { method: "PUT", body: v.body }) : request<AlertChannelView>("/api/alerts/channels", { method: "POST", body: v.body }),
         onSuccess: () => {
-            void 蹿壍.invalidateQueries({ queryKey: alertKeys.channels() });
-            void 蹿壍.invalidateQueries({ queryKey: alertKeys.routes() });
+            void qc.invalidateQueries({ queryKey: alertKeys.channels() });
+            void qc.invalidateQueries({ queryKey: alertKeys.routes() });
         },
     });
 }
 export function useDeleteAlertChannel() {
-    const 穝壍 = useQueryClient();
+    const qc = useQueryClient();
     return useMutation({
-        mutationFn: (饌壍: string) => request<{
+        mutationFn: (id: string) => request<{
             ok: true;
             updatedRoutes: string[];
-        }>(`/api/alerts/channels/${encodeURIComponent(饌壍)}`, { method: "DELETE" }),
+        }>(`/api/alerts/channels/${encodeURIComponent(id)}`, { method: "DELETE" }),
         onSettled: () => {
-            void 穝壍.invalidateQueries({ queryKey: alertKeys.channels() });
-            void 穝壍.invalidateQueries({ queryKey: alertKeys.routes() });
+            void qc.invalidateQueries({ queryKey: alertKeys.channels() });
+            void qc.invalidateQueries({ queryKey: alertKeys.routes() });
         },
     });
 }
@@ -55,41 +55,41 @@ export interface ChannelTestResult {
     channel: AlertChannelView;
 }
 export function useTestAlertChannel() {
-    const 昻壍 = useQueryClient();
+    const qc = useQueryClient();
     return useMutation({
-        mutationFn: (蔪壍: string) => request<ChannelTestResult>(`/api/alerts/channels/${encodeURIComponent(蔪壍)}/test`, { method: "POST", body: {} }),
-        onSuccess: (则壍) => {
-            昻壍.setQueryData<AlertChannelView[]>(alertKeys.channels(), (焈壍) => 焈壍?.map((迷壍) => (迷壍.id === 则壍.channel.id ? 则壍.channel : 迷壍)));
-            void 昻壍.invalidateQueries({ queryKey: ["alerts", "deliveries"] });
+        mutationFn: (id: string) => request<ChannelTestResult>(`/api/alerts/channels/${encodeURIComponent(id)}/test`, { method: "POST", body: {} }),
+        onSuccess: (res) => {
+            qc.setQueryData<AlertChannelView[]>(alertKeys.channels(), (list) => list?.map((c) => (c.id === res.channel.id ? res.channel : c)));
+            void qc.invalidateQueries({ queryKey: ["alerts", "deliveries"] });
         },
     });
 }
 export function useAlertRoutes() {
     return useQuery({
         queryKey: alertKeys.routes(),
-        queryFn: ({ signal: 峦壍 }) => request<AlertRoute[]>("/api/alerts/routes", { signal: 峦壍 }),
+        queryFn: ({ signal }) => request<AlertRoute[]>("/api/alerts/routes", { signal }),
         staleTime: 30000,
-        retry: 韔壍,
+        retry: noRetry4xx,
     });
 }
 export function useSaveAlertRoute() {
-    const 篕壍 = useQueryClient();
+    const qc = useQueryClient();
     return useMutation({
-        mutationFn: ({ id: 髄壍, body: 枳壍, version: 蚢壍 }: {
+        mutationFn: ({ id, body, version }: {
             id?: string;
             body: AlertRouteBody;
             version?: number;
-        }) => 髄壍 ? request<AlertRoute>(`/api/alerts/routes/${encodeURIComponent(髄壍)}`, { method: "PUT", body: { ...枳壍, version: 蚢壍 } }) : request<AlertRoute>("/api/alerts/routes", { method: "POST", body: 枳壍 }),
-        onSettled: () => void 篕壍.invalidateQueries({ queryKey: alertKeys.routes() }),
+        }) => id ? request<AlertRoute>(`/api/alerts/routes/${encodeURIComponent(id)}`, { method: "PUT", body: { ...body, version } }) : request<AlertRoute>("/api/alerts/routes", { method: "POST", body }),
+        onSettled: () => void qc.invalidateQueries({ queryKey: alertKeys.routes() }),
     });
 }
 export function useDeleteAlertRoute() {
-    const 厑壍 = useQueryClient();
+    const qc = useQueryClient();
     return useMutation({
-        mutationFn: (犀壍: string) => request<{
+        mutationFn: (id: string) => request<{
             ok: true;
-        }>(`/api/alerts/routes/${encodeURIComponent(犀壍)}`, { method: "DELETE" }),
-        onSettled: () => void 厑壍.invalidateQueries({ queryKey: alertKeys.routes() }),
+        }>(`/api/alerts/routes/${encodeURIComponent(id)}`, { method: "DELETE" }),
+        onSettled: () => void qc.invalidateQueries({ queryKey: alertKeys.routes() }),
     });
 }
 export interface DeliveriesParams {
@@ -97,47 +97,47 @@ export interface DeliveriesParams {
     channelId?: string;
     limit?: number;
 }
-export function useDeliveries(酯壍: DeliveriesParams = {}) {
+export function useDeliveries(params: DeliveriesParams = {}) {
     return useInfiniteQuery({
-        queryKey: alertKeys.deliveries(酯壍),
-        queryFn: ({ pageParam: 幞壍, signal: 絍壍 }) => request<DeliveriesPage>("/api/alerts/deliveries", { query: { status: 酯壍.status, channelId: 酯壍.channelId, limit: 酯壍.limit ?? 50, cursor: 幞壍 }, signal: 絍壍 }),
+        queryKey: alertKeys.deliveries(params),
+        queryFn: ({ pageParam, signal }) => request<DeliveriesPage>("/api/alerts/deliveries", { query: { status: params.status, channelId: params.channelId, limit: params.limit ?? 50, cursor: pageParam }, signal }),
         initialPageParam: undefined as string | undefined,
-        getNextPageParam: (鰼壍) => 鰼壍.nextCursor ?? undefined,
+        getNextPageParam: (last) => last.nextCursor ?? undefined,
         placeholderData: keepPreviousData,
         staleTime: 15000,
-        retry: 韔壍,
+        retry: noRetry4xx,
     });
 }
 export function useRetryDelivery() {
-    const 椫壍 = useQueryClient();
+    const qc = useQueryClient();
     return useMutation({
-        mutationFn: (蠚壍: string) => request<AlertDelivery>(`/api/alerts/deliveries/${encodeURIComponent(蠚壍)}/retry`, { method: "POST", body: {} }),
+        mutationFn: (id: string) => request<AlertDelivery>(`/api/alerts/deliveries/${encodeURIComponent(id)}/retry`, { method: "POST", body: {} }),
         onSettled: () => {
-            void 椫壍.invalidateQueries({ queryKey: ["alerts", "deliveries"] });
-            void 椫壍.invalidateQueries({ queryKey: alertKeys.channels() });
+            void qc.invalidateQueries({ queryKey: ["alerts", "deliveries"] });
+            void qc.invalidateQueries({ queryKey: alertKeys.channels() });
         },
     });
 }
 export function useRunAlerts() {
-    const 唉壍 = useQueryClient();
-    const 珸壍 = useAccountId();
+    const qc = useQueryClient();
+    const acct = useAccountId();
     return useMutation({
-        mutationFn: (鋧壍: {
+        mutationFn: (body: {
             dryRun?: boolean;
             force?: boolean;
-        }) => request<AlertRunSummary>("/api/alerts/run", { method: "POST", body: 鋧壍 }),
-        onSuccess: (忖壍) => {
-            if (忖壍.dryRun)
+        }) => request<AlertRunSummary>("/api/alerts/run", { method: "POST", body }),
+        onSuccess: (res) => {
+            if (res.dryRun)
                 return;
-            void 唉壍.invalidateQueries({ queryKey: ["alerts", "deliveries"] });
-            void 唉壍.invalidateQueries({ queryKey: alertKeys.channels() });
-            void 唉壍.invalidateQueries({ queryKey: ["acct", 珸壍, "anomalies"] });
-            void 唉壍.invalidateQueries({ queryKey: qk.status() });
+            void qc.invalidateQueries({ queryKey: ["alerts", "deliveries"] });
+            void qc.invalidateQueries({ queryKey: alertKeys.channels() });
+            void qc.invalidateQueries({ queryKey: ["acct", acct, "anomalies"] });
+            void qc.invalidateQueries({ queryKey: qk.status() });
         },
     });
 }
 export function useDigestPreview() {
     return useMutation({
-        mutationFn: (绅壍?: string) => request<DigestPreview>("/api/alerts/digest/preview", { method: "POST", body: 绅壍 ? { routeId: 绅壍 } : {} }),
+        mutationFn: (routeId?: string) => request<DigestPreview>("/api/alerts/digest/preview", { method: "POST", body: routeId ? { routeId } : {} }),
     });
 }

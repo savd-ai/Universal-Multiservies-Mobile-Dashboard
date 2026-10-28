@@ -1,22 +1,22 @@
 import "server-only";
 import { createHash, createHmac, randomBytes, randomInt, scrypt as scryptCb, timingSafeEqual, type ScryptOptions } from "node:crypto";
-const 偈壍 = { N: 32768, r: 8, p: 1, keyLen: 64 } as const;
-const 漷壍 = 128 * 偈壍.N * 偈壍.r * 2;
-function 踦壍(嬕壍: string, 稄壍: Buffer, 飳壍: number, 既壍: ScryptOptions): Promise<Buffer> {
-    return new Promise((蓑壍, 净壍) => scryptCb(嬕壍, 稄壍, 飳壍, 既壍, (炯壍, 辞壍) => (炯壍 ? 净壍(炯壍) : 蓑壍(辞壍))));
+const SCRYPT = { N: 32768, r: 8, p: 1, keyLen: 64 } as const;
+const MAXMEM = 128 * SCRYPT.N * SCRYPT.r * 2;
+function scrypt(password: string, salt: Buffer, keyLen: number, opts: ScryptOptions): Promise<Buffer> {
+    return new Promise((resolve, reject) => scryptCb(password, salt, keyLen, opts, (err, key) => (err ? reject(err) : resolve(key))));
 }
-export async function hashPassword(岍壍: string): Promise<string> {
-    const 筼壍 = randomBytes(16);
-    const 驫壍 = await 踦壍(岍壍.normalize("NFKC"), 筼壍, 偈壍.keyLen, { N: 偈壍.N, r: 偈壍.r, p: 偈壍.p, maxmem: 漷壍 });
-    return ["scrypt", 偈壍.N, 偈壍.r, 偈壍.p, 筼壍.toString("base64url"), 驫壍.toString("base64url")].join("$");
+export async function hashPassword(password: string): Promise<string> {
+    const salt = randomBytes(16);
+    const key = await scrypt(password.normalize("NFKC"), salt, SCRYPT.keyLen, { N: SCRYPT.N, r: SCRYPT.r, p: SCRYPT.p, maxmem: MAXMEM });
+    return ["scrypt", SCRYPT.N, SCRYPT.r, SCRYPT.p, salt.toString("base64url"), key.toString("base64url")].join("$");
 }
-export async function verifyPassword(杚壍: string, 虉壍: string | null): Promise<boolean> {
-    const 匸壍 = 虉壍?.split("$");
-    if (!匸壍 || 匸壍.length !== 6 || 匸壍[0] !== "scrypt") {
-        await hashPassword(杚壍);
+export async function verifyPassword(password: string, stored: string | null): Promise<boolean> {
+    const parts = stored?.split("$");
+    if (!parts || parts.length !== 6 || parts[0] !== "scrypt") {
+        await hashPassword(password);
         return false;
     }
-    const [, 爧壍, 鄖壍, 帅壍, 糴壍, 鯣壍] = 匸壍 as [
+    const [, n, r, p, saltB64, hashB64] = parts as [
         string,
         string,
         string,
@@ -24,90 +24,90 @@ export async function verifyPassword(杚壍: string, 虉壍: string | null): Pro
         string,
         string
     ];
-    const 棒壍 = Buffer.from(鯣壍, "base64url");
-    const 蟁壍 = Number(爧壍);
-    const 咰壍 = await 踦壍(杚壍.normalize("NFKC"), Buffer.from(糴壍, "base64url"), 棒壍.length, { N: 蟁壍, r: Number(鄖壍), p: Number(帅壍), maxmem: 128 * 蟁壍 * Number(鄖壍) * 2 });
-    return 咰壍.length === 棒壍.length && timingSafeEqual(咰壍, 棒壍);
+    const expected = Buffer.from(hashB64, "base64url");
+    const N = Number(n);
+    const key = await scrypt(password.normalize("NFKC"), Buffer.from(saltB64, "base64url"), expected.length, { N, r: Number(r), p: Number(p), maxmem: 128 * N * Number(r) * 2 });
+    return key.length === expected.length && timingSafeEqual(key, expected);
 }
-export function newToken(玟壍 = 32): string {
-    return randomBytes(玟壍).toString("base64url");
+export function newToken(bytes = 32): string {
+    return randomBytes(bytes).toString("base64url");
 }
-export function tokenHash(銎壍: string): string {
-    return createHash("sha256").update(銎壍).digest("hex");
+export function tokenHash(token: string): string {
+    return createHash("sha256").update(token).digest("hex");
 }
-export function safeEqual(彽壍: string, 繬壍: string): boolean {
-    const 鵛壍 = Buffer.from(createHash("sha256").update(彽壍).digest());
-    const 橊壍 = Buffer.from(createHash("sha256").update(繬壍).digest());
-    return timingSafeEqual(鵛壍, 橊壍);
+export function safeEqual(a: string, b: string): boolean {
+    const x = Buffer.from(createHash("sha256").update(a).digest());
+    const y = Buffer.from(createHash("sha256").update(b).digest());
+    return timingSafeEqual(x, y);
 }
-export function readableCode(褹壍 = 3, 嘨壍 = 4): string {
-    const 甗壍 = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    return Array.from({ length: 褹壍 }, () => Array.from({ length: 嘨壍 }, () => 甗壍[randomInt(甗壍.length)]).join("")).join("-");
+export function readableCode(groups = 3, size = 4): string {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    return Array.from({ length: groups }, () => Array.from({ length: size }, () => alphabet[randomInt(alphabet.length)]).join("")).join("-");
 }
-const 鐆壍 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-export function base32Encode(惵壍: Buffer): string {
-    let 翤壍 = 0;
-    let 黓壍 = 0;
-    let 毂壍 = "";
-    for (const 誱壍 of 惵壍) {
-        黓壍 = (黓壍 << 8) | 誱壍;
-        翤壍 += 8;
-        while (翤壍 >= 5) {
-            毂壍 += 鐆壍[(黓壍 >>> (翤壍 - 5)) & 31];
-            翤壍 -= 5;
+const B32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+export function base32Encode(buf: Buffer): string {
+    let bits = 0;
+    let value = 0;
+    let out = "";
+    for (const byte of buf) {
+        value = (value << 8) | byte;
+        bits += 8;
+        while (bits >= 5) {
+            out += B32[(value >>> (bits - 5)) & 31];
+            bits -= 5;
         }
     }
-    if (翤壍 > 0)
-        毂壍 += 鐆壍[(黓壍 << (5 - 翤壍)) & 31];
-    return 毂壍;
+    if (bits > 0)
+        out += B32[(value << (5 - bits)) & 31];
+    return out;
 }
-export function base32Decode(垠壍: string): Buffer {
-    const 皏壍 = 垠壍.replace(/[\s=-]/g, "").toUpperCase();
-    let 镾壍 = 0;
-    let 扭壍 = 0;
-    const 腜壍: number[] = [];
-    for (const 之壍 of 皏壍) {
-        const 洺壍 = 鐆壍.indexOf(之壍);
-        if (洺壍 < 0)
+export function base32Decode(text: string): Buffer {
+    const clean = text.replace(/[\s=-]/g, "").toUpperCase();
+    let bits = 0;
+    let value = 0;
+    const out: number[] = [];
+    for (const ch of clean) {
+        const idx = B32.indexOf(ch);
+        if (idx < 0)
             throw new Error("Invalid base32 secret");
-        扭壍 = (扭壍 << 5) | 洺壍;
-        镾壍 += 5;
-        if (镾壍 >= 8) {
-            腜壍.push((扭壍 >>> (镾壍 - 8)) & 255);
-            镾壍 -= 8;
+        value = (value << 5) | idx;
+        bits += 5;
+        if (bits >= 8) {
+            out.push((value >>> (bits - 8)) & 255);
+            bits -= 8;
         }
     }
-    return Buffer.from(腜壍);
+    return Buffer.from(out);
 }
 export function newTotpSecret(): string {
     return base32Encode(randomBytes(20));
 }
-export function hotp(谩壍: Buffer, 夘壍: number, 砇壍 = 6): string {
-    const 零壍 = Buffer.alloc(8);
-    零壍.writeBigUInt64BE(BigInt(夘壍));
-    const 揥壍 = createHmac("sha1", 谩壍).update(零壍).digest();
-    const 苔壍 = 揥壍[揥壍.length - 1]! & 0xf;
-    const 促壍 = ((揥壍[苔壍]! & 0x7f) << 24) | (揥壍[苔壍 + 1]! << 16) | (揥壍[苔壍 + 2]! << 8) | 揥壍[苔壍 + 3]!;
-    return String(促壍 % 10 ** 砇壍).padStart(砇壍, "0");
+export function hotp(secret: Buffer, counter: number, digits = 6): string {
+    const msg = Buffer.alloc(8);
+    msg.writeBigUInt64BE(BigInt(counter));
+    const h = createHmac("sha1", secret).update(msg).digest();
+    const offset = h[h.length - 1]! & 0xf;
+    const bin = ((h[offset]! & 0x7f) << 24) | (h[offset + 1]! << 16) | (h[offset + 2]! << 8) | h[offset + 3]!;
+    return String(bin % 10 ** digits).padStart(digits, "0");
 }
 export const TOTP_STEP_SECONDS = 30;
-export function verifyTotp(溲壍: string, 趡壍: string, 媐壍: number, 祿壍 = 1): number | null {
-    if (!/^\d{6}$/.test(趡壍))
+export function verifyTotp(secretBase32: string, code: string, nowMs: number, window = 1): number | null {
+    if (!/^\d{6}$/.test(code))
         return null;
-    const 顮壍 = base32Decode(溲壍);
-    const 敝壍 = Math.floor(媐壍 / 1000 / TOTP_STEP_SECONDS);
-    for (let 葌壍 = -祿壍; 葌壍 <= 祿壍; 葌壍++) {
-        if (safeEqual(hotp(顮壍, 敝壍 + 葌壍), 趡壍))
-            return 敝壍 + 葌壍;
+    const key = base32Decode(secretBase32);
+    const step = Math.floor(nowMs / 1000 / TOTP_STEP_SECONDS);
+    for (let w = -window; w <= window; w++) {
+        if (safeEqual(hotp(key, step + w), code))
+            return step + w;
     }
     return null;
 }
-export function otpauthUri(儻壍: string, 瀪壍: string, 輙壍 = "SAVD Ads Intelligence"): string {
-    const 專壍 = encodeURIComponent(`${輙壍}:${瀪壍}`);
-    return `otpauth://totp/${專壍}?secret=${儻壍}&issuer=${encodeURIComponent(輙壍)}&algorithm=SHA1&digits=6&period=${TOTP_STEP_SECONDS}`;
+export function otpauthUri(secretBase32: string, account: string, issuer = "SAVD Ads Intelligence"): string {
+    const label = encodeURIComponent(`${issuer}:${account}`);
+    return `otpauth://totp/${label}?secret=${secretBase32}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=${TOTP_STEP_SECONDS}`;
 }
-export function newRecoveryCodes(竷壍 = 8): string[] {
-    const 駦壍 = "abcdefghjkmnpqrstuvwxyz23456789";
-    const 曕壍 = () => Array.from({ length: 4 }, () => 駦壍[randomInt(駦壍.length)]).join("");
-    return Array.from({ length: 竷壍 }, () => `${曕壍()}-${曕壍()}`);
+export function newRecoveryCodes(count = 8): string[] {
+    const alphabet = "abcdefghjkmnpqrstuvwxyz23456789";
+    const part = () => Array.from({ length: 4 }, () => alphabet[randomInt(alphabet.length)]).join("");
+    return Array.from({ length: count }, () => `${part()}-${part()}`);
 }

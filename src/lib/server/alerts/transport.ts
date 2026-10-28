@@ -11,40 +11,40 @@ import { previewOf, storeDeliveryLog } from "./deliveries";
 import type { DispatchDeps } from "./dispatcher";
 import { sendDiscord, sendSlack, sendTeams, sendWebhook } from "./senders";
 import type { SendContext, SendResult } from "./send-types";
-const 槳壍: Record<AlertChannelPlugin, (裢壍: AlertMessage, 嗑壍: SendContext) => Promise<SendResult>> = {
+const findPlugin: Record<AlertChannelPlugin, (alertMessage: AlertMessage, sendContext: SendContext) => Promise<SendResult>> = {
     slack: sendSlack,
     teams: sendTeams,
     discord: sendDiscord,
     webhook: sendWebhook,
 };
-export async function sendViaChannel(瓀壍: AlertChannel, 鎯壍: AlertMessage, 悞壍: AccountInfo): Promise<SendResult> {
-    const 羍壍 = 槳壍[瓀壍.pluginId];
-    if (!羍壍)
-        return { ok: false, permanent: true, error: `No alert sender for "${瓀壍.pluginId}"` };
-    const 鹼壍 = resolveChannelConfig(瓀壍);
-    if (!鹼壍.url)
-        return { ok: false, permanent: true, error: 鹼壍.error ?? "No webhook URL configured" };
-    const 歫壍: Record<string, string> = { url: 鹼壍.url, includeLinks: String(鹼壍.includeLinks) };
-    if (鹼壍.signingSecret)
-        歫壍.signingSecret = 鹼壍.signingSecret;
-    if (鹼壍.mention)
-        歫壍.mention = 鹼壍.mention;
-    const 詚壍: SendContext = { config: 歫壍, env: {}, fetch: guardedFetch, account: 悞壍, mode: 悞壍.mode, now: clockNow() };
-    return 羍壍(鎯壍, 詚壍);
+export async function sendViaChannel(channel: AlertChannel, msg: AlertMessage, account: AccountInfo): Promise<SendResult> {
+    const plugin = findPlugin[channel.pluginId];
+    if (!plugin)
+        return { ok: false, permanent: true, error: `No alert sender for "${channel.pluginId}"` };
+    const cfg = resolveChannelConfig(channel);
+    if (!cfg.url)
+        return { ok: false, permanent: true, error: cfg.error ?? "No webhook URL configured" };
+    const config: Record<string, string> = { url: cfg.url, includeLinks: String(cfg.includeLinks) };
+    if (cfg.signingSecret)
+        config.signingSecret = cfg.signingSecret;
+    if (cfg.mention)
+        config.mention = cfg.mention;
+    const ctx: SendContext = { config, env: {}, fetch: guardedFetch, account, mode: account.mode, now: clockNow() };
+    return plugin(msg, ctx);
 }
-export function previewFor(坉壍: AlertChannel, 瘸壍: AlertMessage): string {
-    return previewOf(formatAlertPayload(坉壍.pluginId, 瘸壍, { mention: 坉壍.options.mention, includeLinks: 坉壍.options.includeLinks !== false }));
+export function previewFor(channel: AlertChannel, msg: AlertMessage): string {
+    return previewOf(formatAlertPayload(channel.pluginId, msg, { mention: channel.options.mention, includeLinks: channel.options.includeLinks !== false }));
 }
-export function defaultDispatchDeps(锧壍: AccountInfo): DispatchDeps {
+export function defaultDispatchDeps(account: AccountInfo): DispatchDeps {
     return {
         now: clockNow,
         log: storeDeliveryLog(),
-        send: (或壍, 脅壍) => sendViaChannel(或壍, 脅壍, 锧壍),
+        send: (channel, msg) => sendViaChannel(channel, msg, account),
         preview: previewFor,
         newId: () => randomUUID(),
     };
 }
-export function dashboardLink(鿴壍: string, 泣壍: string): string {
-    const 诒壍 = appConfig().baseUrl.replace(/\/+$/, "");
-    return `${诒壍}${鿴壍}?acct=${encodeURIComponent(泣壍)}`;
+export function dashboardLink(page: string, accountId: string): string {
+    const base = appConfig().baseUrl.replace(/\/+$/, "");
+    return `${base}${page}?acct=${encodeURIComponent(accountId)}`;
 }

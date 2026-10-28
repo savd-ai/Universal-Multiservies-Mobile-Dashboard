@@ -6,19 +6,19 @@ import { route } from "@/lib/server/http/api";
 import { invalidateQueryCache } from "@/lib/server/query/service";
 import { getStore } from "@/lib/server/store";
 export const runtime = "nodejs";
-export const PUT = route({ body: customMetricBodySchema }, async ({ params: 穐壍, body: 餿壍 }) => {
-    const 昮壍 = await metricRegistry();
-    const 蔝壍 = 昮壍.keys();
-    蔝壍.delete(String(穐壍.id));
-    const 刌壍 = checkFormula(餿壍.formula, 蔝壍);
-    if (!刌壍.ok)
-        throw new AppError("VALIDATION_ERROR", 刌壍.error?.message ?? "Invalid formula", 刌壍.error);
-    const 烻壍 = await getStore().customMetrics.update(String(穐壍.id), { ...餿壍, key: String(穐壍.id) });
+export const PUT = route({ body: customMetricBodySchema }, async ({ params, body }) => {
+    const registry = await metricRegistry();
+    const known = registry.keys();
+    known.delete(String(params.id));
+    const check = checkFormula(body.formula, known);
+    if (!check.ok)
+        throw new AppError("VALIDATION_ERROR", check.error?.message ?? "Invalid formula", check.error);
+    const updated = await getStore().customMetrics.update(String(params.id), { ...body, key: String(params.id) });
     invalidateQueryCache();
-    return 烻壍;
+    return updated;
 });
-export const DELETE = route({}, async ({ params: 迪壍 }) => {
-    const 峙壍 = await getStore().customMetrics.delete(String(迪壍.id));
+export const DELETE = route({}, async ({ params }) => {
+    const ok = await getStore().customMetrics.delete(String(params.id));
     invalidateQueryCache();
-    return { ok: 峙壍 };
+    return { ok };
 });

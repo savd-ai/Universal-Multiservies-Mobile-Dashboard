@@ -12,99 +12,99 @@ import { log } from "./log";
 import { runQuery } from "./query/service";
 import { currentPrincipal, runInWorkspace } from "./scope";
 import { getWorkspaceStore } from "./store";
-const 焢壍 = 3;
-const 逑壍 = 200;
-function 崀壍(篯壍: Record<string, number | null> | undefined): PortfolioKpis | null {
-    if (!篯壍)
+const CONCURRENCY = 3;
+const MAX_ACCOUNTS = 200;
+function kpisFrom(t: Record<string, number | null> | undefined): PortfolioKpis | null {
+    if (!t)
         return null;
-    const 髞壍 = (柍壍: string) => 篯壍[柍壍] ?? 0;
-    return ratioKpis({ cost: 髞壍("cost"), conversions: 髞壍("conversions"), convValue: 髞壍("conv_value"), clicks: 髞壍("clicks"), impressions: 髞壍("impressions") });
+    const n = (k: string) => t[k] ?? 0;
+    return ratioKpis({ cost: n("cost"), conversions: n("conversions"), convValue: n("conv_value"), clicks: n("clicks"), impressions: n("impressions") });
 }
-async function 蚼壍<T, R>(厫壍: readonly T[], 犚壍: number, 醉壍: (幸壍: T) => Promise<R>): Promise<R[]> {
-    const 絧壍: R[] = new Array(厫壍.length);
-    let 鱖壍 = 0;
-    const 楅壍 = Array.from({ length: Math.min(犚壍, 厫壍.length) }, async () => {
-        while (鱖壍 < 厫壍.length) {
-            const 蠴壍 = 鱖壍++;
-            絧壍[蠴壍] = await 醉壍(厫壍[蠴壍]!);
+async function pool<T, R>(items: readonly T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+    const out: R[] = new Array(items.length);
+    let next = 0;
+    const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+        while (next < items.length) {
+            const i = next++;
+            out[i] = await fn(items[i]!);
         }
     });
-    await Promise.all(楅壍);
-    return 絧壍;
+    await Promise.all(workers);
+    return out;
 }
-export async function buildPortfolio(唣壍: PortfolioQuery): Promise<PortfolioResponse> {
-    const 琒壍 = currentPrincipal();
-    const 錁壍 = await requestContext();
-    const 忰壍 = await listClientRecords();
-    const 统壍 = 錁壍.accounts.filter((鷎壍) => !鷎壍.isManager).slice(0, 逑壍);
-    const 檽壍: string[] = 錁壍.accounts.length > 逑壍 ? [`Showing the first ${逑壍} accounts.`] : [];
-    const 覬壍 = querySpecSchema.parse({ source: "google_ads", metrics: ["cost", "conversions", "conv_value", "clicks", "impressions"], dimensions: [], dateRange: { preset: 唣壍.range }, compare: 唣壍.compare });
-    let 嚛壍: PortfolioResponse["range"] = null;
-    let 疊壍: PortfolioResponse["compareRange"] = null;
-    const 鑹壍 = await 蚼壍(统壍, 焢壍, (慨壍: AccountInfo) => runInWorkspace(workspaceFor(琒壍, 忰壍, 慨壍.id), async (): Promise<PortfolioAccountRow> => {
-        const 聗壍 = clientForAccount(慨壍.id, 忰壍);
-        const 齆壍: PortfolioAccountRow = { accountId: 慨壍.id, name: 慨壍.name, currency: 慨壍.currency, clientId: 聗壍?.id ?? null, clientName: 聗壍?.name ?? null, mode: 慨壍.mode, kpis: null, previous: null, pacing: null, signals: { critical: 0, warning: 0, opportunity: 0 }, dataThrough: null, error: null };
+export async function buildPortfolio(query: PortfolioQuery): Promise<PortfolioResponse> {
+    const principal = currentPrincipal();
+    const base = await requestContext();
+    const clients = await listClientRecords();
+    const accounts = base.accounts.filter((a) => !a.isManager).slice(0, MAX_ACCOUNTS);
+    const warnings: string[] = base.accounts.length > MAX_ACCOUNTS ? [`Showing the first ${MAX_ACCOUNTS} accounts.`] : [];
+    const spec = querySpecSchema.parse({ source: "google_ads", metrics: ["cost", "conversions", "conv_value", "clicks", "impressions"], dimensions: [], dateRange: { preset: query.range }, compare: query.compare });
+    let range: PortfolioResponse["range"] = null;
+    let compareRange: PortfolioResponse["compareRange"] = null;
+    const rows = await pool(accounts, CONCURRENCY, (a: AccountInfo) => runInWorkspace(workspaceFor(principal, clients, a.id), async (): Promise<PortfolioAccountRow> => {
+        const owner = clientForAccount(a.id, clients);
+        const row: PortfolioAccountRow = { accountId: a.id, name: a.name, currency: a.currency, clientId: owner?.id ?? null, clientName: owner?.name ?? null, mode: a.mode, kpis: null, previous: null, pacing: null, signals: { critical: 0, warning: 0, opportunity: 0 }, dataThrough: null, error: null };
         try {
-            const 氵壍 = await requestContext(undefined, 慨壍.id);
-            齆壍.dataThrough = 氵壍.dataThrough;
-            const [謤壍, 堓壍, 眂壍] = await Promise.all([
-                runQuery(覬壍, 氵壍),
-                getPacingReport(氵壍).catch(() => null),
-                getAnomalyFeed(氵壍, { includeInactive: false }).catch(() => null),
+            const ctx = await requestContext(undefined, a.id);
+            row.dataThrough = ctx.dataThrough;
+            const [result, pacing, feed] = await Promise.all([
+                runQuery(spec, ctx),
+                getPacingReport(ctx).catch(() => null),
+                getAnomalyFeed(ctx, { includeInactive: false }).catch(() => null),
             ]);
-            嚛壍 ??= { start: 謤壍.meta.range.start, end: 謤壍.meta.range.end };
-            疊壍 ??= 謤壍.meta.compareRange ?? null;
-            齆壍.kpis = 崀壍(謤壍.totals);
-            齆壍.previous = 唣壍.compare === "none" ? null : 崀壍(謤壍.compareTotals);
-            if (堓壍)
-                齆壍.pacing = { monthLabel: 堓壍.monthLabel, projected: 堓壍.totals.projected, target: 堓壍.totals.monthlyTarget, ratio: 堓壍.totals.monthlyTarget > 0 ? 堓壍.totals.projected / 堓壍.totals.monthlyTarget : null, overpacing: 堓壍.totals.overpacingCount };
-            for (const 闱壍 of 眂壍?.signals ?? []) {
-                if (闱壍.status !== "open")
+            range ??= { start: result.meta.range.start, end: result.meta.range.end };
+            compareRange ??= result.meta.compareRange ?? null;
+            row.kpis = kpisFrom(result.totals);
+            row.previous = query.compare === "none" ? null : kpisFrom(result.compareTotals);
+            if (pacing)
+                row.pacing = { monthLabel: pacing.monthLabel, projected: pacing.totals.projected, target: pacing.totals.monthlyTarget, ratio: pacing.totals.monthlyTarget > 0 ? pacing.totals.projected / pacing.totals.monthlyTarget : null, overpacing: pacing.totals.overpacingCount };
+            for (const s of feed?.signals ?? []) {
+                if (s.status !== "open")
                     continue;
-                if (闱壍.polarity === "good")
-                    齆壍.signals.opportunity++;
-                else if (闱壍.severity === "critical")
-                    齆壍.signals.critical++;
-                else if (闱壍.severity === "warning")
-                    齆壍.signals.warning++;
+                if (s.polarity === "good")
+                    row.signals.opportunity++;
+                else if (s.severity === "critical")
+                    row.signals.critical++;
+                else if (s.severity === "warning")
+                    row.signals.warning++;
             }
         }
-        catch (拠壍) {
-            齆壍.error = 拠壍 instanceof Error ? 拠壍.message : String(拠壍);
-            log.warn("portfolio account failed", { accountId: 慨壍.id, error: 齆壍.error });
+        catch (err) {
+            row.error = err instanceof Error ? err.message : String(err);
+            log.warn("portfolio account failed", { accountId: a.id, error: row.error });
         }
-        return 齆壍;
+        return row;
     }));
-    const 臏壍 = await getWorkspaceStore(AGENCY_WORKSPACE).settings.get();
-    const 亾壍 = { ...appConfig().fxRates, ...臏壍.fxRates };
-    const 涭壍 = 臏壍.displayCurrency ?? appConfig().displayCurrency ?? 统壍[0]?.currency ?? "USD";
-    const 貜壍 = (妋壍: PortfolioAccountRow) => fxFactor(妋壍.currency, 涭壍, 亾壍);
-    const 硺壍 = 鑹壍.filter((革壍) => 革壍.kpis && 貜壍(革壍) === null).map((摘壍) => 摘壍.accountId);
-    if (硺壍.length)
-        檽壍.push(`No exchange rate from ${[...new Set(鑹壍.filter((荇壍) => 硺壍.includes(荇壍.accountId)).map((倶壍) => 倶壍.currency))].join(", ")} to ${涭壍}: those accounts are left out of the totals (add one under Data source → Display preferences).`);
-    const 漥壍 = [...new Set(鑹壍.map((踔壍) => 踔壍.clientId ?? AGENCY_WORKSPACE))];
-    const 嬃壍: PortfolioGroup[] = 漥壍.map((秲壍) => {
-        const 飡壍 = 鑹壍.filter((旐壍) => (旐壍.clientId ?? AGENCY_WORKSPACE) === 秲壍);
-        const 蒿壍 = 飡壍.reduce((冮壍, 炝壍) => ({ critical: 冮壍.critical + 炝壍.signals.critical, warning: 冮壍.warning + 炝壍.signals.warning, opportunity: 冮壍.opportunity + 炝壍.signals.opportunity }), { critical: 0, warning: 0, opportunity: 0 });
+    const agencySettings = await getWorkspaceStore(AGENCY_WORKSPACE).settings.get();
+    const rates = { ...appConfig().fxRates, ...agencySettings.fxRates };
+    const displayCurrency = agencySettings.displayCurrency ?? appConfig().displayCurrency ?? accounts[0]?.currency ?? "USD";
+    const factor = (r: PortfolioAccountRow) => fxFactor(r.currency, displayCurrency, rates);
+    const excludedFromTotals = rows.filter((r) => r.kpis && factor(r) === null).map((r) => r.accountId);
+    if (excludedFromTotals.length)
+        warnings.push(`No exchange rate from ${[...new Set(rows.filter((r) => excludedFromTotals.includes(r.accountId)).map((r) => r.currency))].join(", ")} to ${displayCurrency}: those accounts are left out of the totals (add one under Data source → Display preferences).`);
+    const groupIds = [...new Set(rows.map((r) => r.clientId ?? AGENCY_WORKSPACE))];
+    const groups: PortfolioGroup[] = groupIds.map((gid) => {
+        const members = rows.filter((r) => (r.clientId ?? AGENCY_WORKSPACE) === gid);
+        const signals = members.reduce((s, r) => ({ critical: s.critical + r.signals.critical, warning: s.warning + r.signals.warning, opportunity: s.opportunity + r.signals.opportunity }), { critical: 0, warning: 0, opportunity: 0 });
         return {
-            clientId: 秲壍 === AGENCY_WORKSPACE ? null : 秲壍,
-            name: 秲壍 === AGENCY_WORKSPACE ? "Not assigned to a client" : (飡壍[0]?.clientName ?? "Client"),
-            accountIds: 飡壍.map((辌壍) => 辌壍.accountId),
-            totals: sumKpis(飡壍.map((屻壍) => ({ kpis: 屻壍.kpis, factor: 貜壍(屻壍) }))),
-            previous: sumKpis(飡壍.map((筪壍) => ({ kpis: 筪壍.previous, factor: 貜壍(筪壍) }))),
-            signals: 蒿壍,
+            clientId: gid === AGENCY_WORKSPACE ? null : gid,
+            name: gid === AGENCY_WORKSPACE ? "Not assigned to a client" : (members[0]?.clientName ?? "Client"),
+            accountIds: members.map((r) => r.accountId),
+            totals: sumKpis(members.map((r) => ({ kpis: r.kpis, factor: factor(r) }))),
+            previous: sumKpis(members.map((r) => ({ kpis: r.previous, factor: factor(r) }))),
+            signals,
         };
     });
-    嬃壍.sort((驙壍, 杈壍) => (驙壍.clientId === null ? 1 : 杈壍.clientId === null ? -1 : 驙壍.name.localeCompare(杈壍.name)));
+    groups.sort((a, b) => (a.clientId === null ? 1 : b.clientId === null ? -1 : a.name.localeCompare(b.name)));
     return {
-        range: 嚛壍,
-        compareRange: 疊壍,
-        displayCurrency: 涭壍,
-        accounts: 鑹壍,
-        groups: 嬃壍,
-        totals: sumKpis(鑹壍.map((蘷壍) => ({ kpis: 蘷壍.kpis, factor: 貜壍(蘷壍) }))),
-        previous: sumKpis(鑹壍.map((匦壍) => ({ kpis: 匦壍.previous, factor: 貜壍(匦壍) }))),
-        excludedFromTotals: 硺壍,
-        warnings: 檽壍,
+        range,
+        compareRange,
+        displayCurrency,
+        accounts: rows,
+        groups,
+        totals: sumKpis(rows.map((r) => ({ kpis: r.kpis, factor: factor(r) }))),
+        previous: sumKpis(rows.map((r) => ({ kpis: r.previous, factor: factor(r) }))),
+        excludedFromTotals,
+        warnings,
     };
 }

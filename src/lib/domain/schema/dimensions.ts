@@ -37,10 +37,10 @@ export interface DimensionDef {
     kind: DimensionKind;
     field: string;
     derivedFromDate?: boolean;
-    resolve(浭壍: Record<string, unknown>, 豜壍: EntityDims): DimensionValue;
+    resolve(row: Record<string, unknown>, dims: EntityDims): DimensionValue;
 }
-const 奋壍 = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const 砺壍: Record<string, string> = {
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const COUNTRY_NAMES: Record<string, string> = {
     US: "United States",
     CA: "Canada",
     GB: "United Kingdom",
@@ -53,9 +53,9 @@ const 砺壍: Record<string, string> = {
     ZZ: "Other",
 };
 export const PLATFORM_LABELS: Record<string, string> = { google_ads: "Google Ads" };
-const 霩壍 = (搘壍: unknown): string => (搘壍 == null ? "" : String(搘壍));
-function 茇壍(俶壍: DimensionKey, 滥壍: string, 跔壍: string, 嫃壍: DimensionKind = "category"): DimensionDef {
-    return { key: 俶壍, label: 滥壍, kind: 嫃壍, field: 跔壍, resolve: (禲壍) => ({ id: 霩壍(禲壍[跔壍]), label: 霩壍(禲壍[跔壍]) || "—" }) };
+const str = (v: unknown): string => (v == null ? "" : String(v));
+function simple(key: DimensionKey, label: string, field: string, kind: DimensionKind = "category"): DimensionDef {
+    return { key, label, kind, field, resolve: (row) => ({ id: str(row[field]), label: str(row[field]) || "—" }) };
 }
 export const DIMENSIONS: Record<DimensionKey, DimensionDef> = {
     date: {
@@ -64,7 +64,7 @@ export const DIMENSIONS: Record<DimensionKey, DimensionDef> = {
         kind: "time",
         field: "date",
         derivedFromDate: true,
-        resolve: (颡壍) => ({ id: 霩壍(颡壍.date), label: 霩壍(颡壍.date) }),
+        resolve: (row) => ({ id: str(row.date), label: str(row.date) }),
     },
     week: {
         key: "week",
@@ -72,9 +72,9 @@ export const DIMENSIONS: Record<DimensionKey, DimensionDef> = {
         kind: "time",
         field: "date",
         derivedFromDate: true,
-        resolve: (斐壍) => {
-            const 葿壍 = isoWeek(霩壍(斐壍.date));
-            return { id: 葿壍, label: 葿壍 };
+        resolve: (row) => {
+            const w = isoWeek(str(row.date));
+            return { id: w, label: w };
         },
     },
     month: {
@@ -83,9 +83,9 @@ export const DIMENSIONS: Record<DimensionKey, DimensionDef> = {
         kind: "time",
         field: "date",
         derivedFromDate: true,
-        resolve: (兮壍) => {
-            const 灝壍 = monthKey(霩壍(兮壍.date));
-            return { id: 灝壍, label: 灝壍 };
+        resolve: (row) => {
+            const m = monthKey(str(row.date));
+            return { id: m, label: m };
         },
     },
     quarter: {
@@ -94,10 +94,10 @@ export const DIMENSIONS: Record<DimensionKey, DimensionDef> = {
         kind: "time",
         field: "date",
         derivedFromDate: true,
-        resolve: (轌壍) => {
-            const { y: 尻壍, m: 笪壍 } = parts(霩壍(轌壍.date));
-            const 騙壍 = `${尻壍}-Q${Math.floor((笪壍 - 1) / 3) + 1}`;
-            return { id: 騙壍, label: 騙壍 };
+        resolve: (row) => {
+            const { y, m } = parts(str(row.date));
+            const q = `${y}-Q${Math.floor((m - 1) / 3) + 1}`;
+            return { id: q, label: q };
         },
     },
     year: {
@@ -106,9 +106,9 @@ export const DIMENSIONS: Record<DimensionKey, DimensionDef> = {
         kind: "time",
         field: "date",
         derivedFromDate: true,
-        resolve: (月壍) => {
-            const 藷壍 = String(parts(霩壍(月壍.date)).y);
-            return { id: 藷壍, label: 藷壍 };
+        resolve: (row) => {
+            const y = String(parts(str(row.date)).y);
+            return { id: y, label: y };
         },
     },
     dow: {
@@ -117,10 +117,10 @@ export const DIMENSIONS: Record<DimensionKey, DimensionDef> = {
         kind: "time",
         field: "date",
         derivedFromDate: true,
-        resolve: (勦壍) => {
-            const 燕壍 = dow(霩壍(勦壍.date));
-            const 郄壍 = 燕壍 === 0 ? 7 : 燕壍;
-            return { id: String(郄壍), label: 奋壍[燕壍] ?? "", order: 郄壍 };
+        resolve: (row) => {
+            const w = dow(str(row.date));
+            const iso = w === 0 ? 7 : w;
+            return { id: String(iso), label: WEEKDAYS[w] ?? "", order: iso };
         },
     },
     hour: {
@@ -128,20 +128,20 @@ export const DIMENSIONS: Record<DimensionKey, DimensionDef> = {
         label: "Hour",
         kind: "time",
         field: "hour",
-        resolve: (嶳壍) => {
-            const 粢壍 = Number(嶳壍.hour);
-            return { id: String(粢壍), label: `${String(粢壍).padStart(2, "0")}:00`, order: 粢壍 };
+        resolve: (row) => {
+            const h = Number(row.hour);
+            return { id: String(h), label: `${String(h).padStart(2, "0")}:00`, order: h };
         },
     },
-    account: 茇壍("account", "Account", "account_id", "entity"),
+    account: simple("account", "Account", "account_id", "entity"),
     campaign: {
         key: "campaign",
         label: "Campaign",
         kind: "entity",
         field: "campaign_id",
-        resolve: (鮑壍, 梀壍) => {
-            const 蝯壍 = 霩壍(鮑壍.campaign_id);
-            return { id: 蝯壍, label: 梀壍.campaigns.get(蝯壍)?.name ?? 蝯壍 };
+        resolve: (row, dims) => {
+            const id = str(row.campaign_id);
+            return { id, label: dims.campaigns.get(id)?.name ?? id };
         },
     },
     campaign_type: {
@@ -149,9 +149,9 @@ export const DIMENSIONS: Record<DimensionKey, DimensionDef> = {
         label: "Campaign type",
         kind: "category",
         field: "campaign_id",
-        resolve: (呞壍, 獍壍) => {
-            const 鈼壍 = 獍壍.campaigns.get(霩壍(呞壍.campaign_id))?.type ?? "Other";
-            return { id: 鈼壍, label: 鈼壍 };
+        resolve: (row, dims) => {
+            const t = dims.campaigns.get(str(row.campaign_id))?.type ?? "Other";
+            return { id: t, label: t };
         },
     },
     campaign_status: {
@@ -159,9 +159,9 @@ export const DIMENSIONS: Record<DimensionKey, DimensionDef> = {
         label: "Status",
         kind: "category",
         field: "campaign_id",
-        resolve: (弫壍, 縚壍) => {
-            const 鴉壍 = 縚壍.campaigns.get(霩壍(弫壍.campaign_id))?.status ?? "Enabled";
-            return { id: 鴉壍, label: 鴉壍 };
+        resolve: (row, dims) => {
+            const s = dims.campaigns.get(str(row.campaign_id))?.status ?? "Enabled";
+            return { id: s, label: s };
         },
     },
     bidding_strategy: {
@@ -169,9 +169,9 @@ export const DIMENSIONS: Record<DimensionKey, DimensionDef> = {
         label: "Bid strategy",
         kind: "category",
         field: "campaign_id",
-        resolve: (槸壍, 裧壍) => {
-            const 嗖壍 = 裧壍.campaigns.get(霩壍(槸壍.campaign_id))?.bidding_strategy ?? "OTHER";
-            return { id: 嗖壍, label: humanizeEnum(嗖壍) };
+        resolve: (row, dims) => {
+            const b = dims.campaigns.get(str(row.campaign_id))?.bidding_strategy ?? "OTHER";
+            return { id: b, label: humanizeEnum(b) };
         },
     },
     ad_group: {
@@ -179,9 +179,9 @@ export const DIMENSIONS: Record<DimensionKey, DimensionDef> = {
         label: "Ad group",
         kind: "entity",
         field: "ad_group_id",
-        resolve: (瓅壍, 鎴壍) => {
-            const 患壍 = 霩壍(瓅壍.ad_group_id);
-            return { id: 患壍, label: 鎴壍.adGroups.get(患壍)?.name ?? 患壍 };
+        resolve: (row, dims) => {
+            const id = str(row.ad_group_id);
+            return { id, label: dims.adGroups.get(id)?.name ?? id };
         },
     },
     keyword: {
@@ -189,10 +189,10 @@ export const DIMENSIONS: Record<DimensionKey, DimensionDef> = {
         label: "Keyword",
         kind: "entity",
         field: "keyword_id",
-        resolve: (羒壍, 麁壍) => {
-            const 歰壍 = 霩壍(羒壍.keyword_id);
-            const 詟壍 = 麁壍.keywords.get(歰壍);
-            return { id: 歰壍, label: 詟壍 ? formatKeyword(詟壍.text, 詟壍.match_type) : 歰壍 };
+        resolve: (row, dims) => {
+            const id = str(row.keyword_id);
+            const k = dims.keywords.get(id);
+            return { id, label: k ? formatKeyword(k.text, k.match_type) : id };
         },
     },
     match_type: {
@@ -200,23 +200,23 @@ export const DIMENSIONS: Record<DimensionKey, DimensionDef> = {
         label: "Match type",
         kind: "category",
         field: "keyword_id",
-        resolve: (坎壍, 瘽壍) => {
-            const 锬壍 = 瘽壍.keywords.get(霩壍(坎壍.keyword_id))?.match_type ?? "Broad";
-            return { id: 锬壍, label: 锬壍 };
+        resolve: (row, dims) => {
+            const m = dims.keywords.get(str(row.keyword_id))?.match_type ?? "Broad";
+            return { id: m, label: m };
         },
     },
-    search_term: 茇壍("search_term", "Search term", "search_term", "entity"),
-    st_status: 茇壍("st_status", "Search term status", "st_status"),
-    st_match_type: 茇壍("st_match_type", "Search term match", "st_match_type"),
-    device: 茇壍("device", "Device", "device"),
+    search_term: simple("search_term", "Search term", "search_term", "entity"),
+    st_status: simple("st_status", "Search term status", "st_status"),
+    st_match_type: simple("st_match_type", "Search term match", "st_match_type"),
+    device: simple("device", "Device", "device"),
     country: {
         key: "country",
         label: "Country",
         kind: "category",
         field: "country",
-        resolve: (戛壍) => {
-            const 脊壍 = 霩壍(戛壍.country) || "ZZ";
-            return { id: 脊壍, label: 砺壍[脊壍] ?? 脊壍 };
+        resolve: (row) => {
+            const c = str(row.country) || "ZZ";
+            return { id: c, label: COUNTRY_NAMES[c] ?? c };
         },
     },
     platform: {
@@ -224,30 +224,30 @@ export const DIMENSIONS: Record<DimensionKey, DimensionDef> = {
         label: "Platform",
         kind: "category",
         field: "platform",
-        resolve: (鿹壍) => {
-            const 注壍 = 霩壍(鿹壍.platform);
-            return { id: 注壍, label: PLATFORM_LABELS[注壍] ?? 注壍 };
+        resolve: (row) => {
+            const p = str(row.platform);
+            return { id: p, label: PLATFORM_LABELS[p] ?? p };
         },
     },
-    platform_campaign: 茇壍("platform_campaign", "Platform campaign", "platform_campaign", "entity"),
+    platform_campaign: simple("platform_campaign", "Platform campaign", "platform_campaign", "entity"),
 };
-export function isTimeDimension(诗壍: DimensionKey): boolean {
-    return DIMENSIONS[诗壍].kind === "time";
+export function isTimeDimension(key: DimensionKey): boolean {
+    return DIMENSIONS[key].kind === "time";
 }
-export function formatKeyword(壆壍: string, 瞵壍: string): string {
-    if (瞵壍 === "Exact")
-        return `[${壆壍}]`;
-    if (瞵壍 === "Phrase")
-        return `"${壆壍}"`;
-    return 壆壍;
+export function formatKeyword(text: string, match: string): string {
+    if (match === "Exact")
+        return `[${text}]`;
+    if (match === "Phrase")
+        return `"${text}"`;
+    return text;
 }
-export function humanizeEnum(隤壍: string): string {
-    const 掓壍: Record<string, string> = { CPA: "CPA", ROAS: "ROAS", CPC: "CPC", CPM: "CPM" };
-    return 隤壍
+export function humanizeEnum(v: string): string {
+    const special: Record<string, string> = { CPA: "CPA", ROAS: "ROAS", CPC: "CPC", CPM: "CPM" };
+    return v
         .split("_")
-        .map((节壍, 佱壍) => 掓壍[节壍] ?? (佱壍 === 0 ? 节壍.charAt(0) + 节壍.slice(1).toLowerCase() : 节壍.toLowerCase()))
+        .map((w, i) => special[w] ?? (i === 0 ? w.charAt(0) + w.slice(1).toLowerCase() : w.toLowerCase()))
         .join(" ");
 }
-export function registerPlatformLabel(湠壍: string, 赏壍: string): void {
-    PLATFORM_LABELS[湠壍] = 赏壍;
+export function registerPlatformLabel(id: string, label: string): void {
+    PLATFORM_LABELS[id] = label;
 }

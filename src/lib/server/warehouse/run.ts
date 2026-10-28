@@ -5,7 +5,7 @@ import { googleAdsConfig, warehouseConfig } from "../env/config";
 import { getWarehouse, warehouseAvailability } from "./index";
 import { unwrapSource } from "./source";
 import { startSync } from "./sync";
-export function startWarehouseSync(喂壍: RequestContext, 瑱壍: {
+export function startWarehouseSync(ctx: RequestContext, o: {
     trigger: SyncTrigger;
     scope: "account" | "all";
     backfillDays?: number;
@@ -13,24 +13,24 @@ export function startWarehouseSync(喂壍: RequestContext, 瑱壍: {
     response: WarehouseSyncResponse;
     done: Promise<WarehouseRun> | null;
 } {
-    const 鍠壍 = 喂壍.source.mode;
-    const 恏壍 = getWarehouse(鍠壍);
-    if (!恏壍)
-        return { response: { started: false, run: null, reason: warehouseAvailability(鍠壍).reason ?? "The warehouse is turned off." }, done: null };
-    const 缾壍 = warehouseConfig();
-    const 鸭壍 = 瑱壍.scope === "all" ? 喂壍.accounts.filter((欜壍) => !欜壍.isManager).map((訋壍) => 訋壍.id) : [喂壍.accountId];
-    const 固壍 = startSync({
-        source: unwrapSource(喂壍.source),
-        warehouse: 恏壍,
-        accountIds: 鸭壍,
-        trigger: 瑱壍.trigger,
-        scope: 瑱壍.scope,
-        backfillDays: 瑱壍.backfillDays ?? 缾壍.backfillDays,
-        maxRequests: 缾壍.maxRequests,
+    const mode = ctx.source.mode;
+    const w = getWarehouse(mode);
+    if (!w)
+        return { response: { started: false, run: null, reason: warehouseAvailability(mode).reason ?? "The warehouse is turned off." }, done: null };
+    const cfg = warehouseConfig();
+    const accountIds = o.scope === "all" ? ctx.accounts.filter((a) => !a.isManager).map((a) => a.id) : [ctx.accountId];
+    const res = startSync({
+        source: unwrapSource(ctx.source),
+        warehouse: w,
+        accountIds,
+        trigger: o.trigger,
+        scope: o.scope,
+        backfillDays: o.backfillDays ?? cfg.backfillDays,
+        maxRequests: cfg.maxRequests,
         restatementDays: googleAdsConfig().restatementDays,
-        retentionDays: 缾壍.retentionDays,
+        retentionDays: cfg.retentionDays,
     });
-    if (!固壍.started)
-        return { response: { started: false, run: null, reason: 固壍.reason }, done: null };
-    return { response: { started: true, run: 固壍.run }, done: 固壍.done };
+    if (!res.started)
+        return { response: { started: false, run: null, reason: res.reason }, done: null };
+    return { response: { started: true, run: res.run }, done: res.done };
 }

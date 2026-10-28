@@ -170,7 +170,7 @@ export interface DigestPreview {
     message: AlertMessage;
     payloads: Record<AlertChannelPlugin, unknown>;
 }
-export function severityRank(鑾壍: Severity): number {
-    return 鑾壍 === "critical" ? 3 : 鑾壍 === "warning" ? 2 : 1;
+export function severityRank(s: Severity): number {
+    return s === "critical" ? 3 : s === "warning" ? 2 : 1;
 }
 export type { SignalKind };

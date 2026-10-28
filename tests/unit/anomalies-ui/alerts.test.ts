@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { AlertRoute } from "@/lib/domain/contracts/alerts";
 import { deliverySignals, describeDays, describeQuietHours, describeRenotify, isSecretsDisabled, parseSignalId, routeBodyFromDraft, routeDraftFrom, routeSummary, severityFromDedupeKeys, } from "@/features/anomalies/helpers/alerts";
 import { formatDateTime, hoursLabel, relativeTime } from "@/features/anomalies/helpers/time";
-const 幟壍 = (絎壍: Partial<AlertRoute> = {}): AlertRoute => ({
+const route = (p: Partial<AlertRoute> = {}): AlertRoute => ({
     id: "rt-1",
     name: "Ops",
     enabled: true,
@@ -13,13 +13,13 @@ const 幟壍 = (絎壍: Partial<AlertRoute> = {}): AlertRoute => ({
     version: 1,
     createdAt: "2026-09-01T00:00:00.000Z",
     updatedAt: "2026-09-01T00:00:00.000Z",
-    ...絎壍,
+    ...p,
 });
-const 鰽壍 = [
+const channels = [
     { id: "ch-1", name: "Ops webhook", enabled: true },
     { id: "env-slack", name: "Slack (.env)", enabled: true },
 ];
-const 椬壍 = new Map([
+const campaignNames = new Map([
     ["c3", "PMax — Full Catalog"],
     ["c8", "Search — Competitor Terms"],
 ]);
@@ -45,7 +45,7 @@ describe("quiet hours", () => {
 });
 describe("route summary", () => {
     it("lists channels, filters, quiet hours and digest", () => {
-        const 蠛壍 = routeSummary(幟壍({
+        const s = routeSummary(route({
             minSeverity: "critical",
             kinds: ["tracking_break", "pacing"],
             metrics: ["cpa", "spend"],
@@ -55,8 +55,8 @@ describe("route summary", () => {
             digest: { enabled: true, time: "08:00", tz: "Europe/Berlin" },
             renotifyAfterHours: 48,
             includeResolved: true,
-        }), { channels: 鰽壍, campaignNames: 椬壍 });
-        expect(蠛壍).toEqual({
+        }), { channels, campaignNames });
+        expect(s).toEqual({
             channels: "Ops webhook, Slack (.env)",
             severity: "Critical only",
             filters: ["Tracking break, Month pacing", "CPA, Spend", "2 campaigns", "Search, PMax"],
@@ -67,9 +67,9 @@ describe("route summary", () => {
         });
     });
     it("handles the implicit default and deleted channels", () => {
-        expect(routeSummary(幟壍({ implicit: true, channelIds: [] }), { channels: 鰽壍, campaignNames: 椬壍 }).channels).toBe("Every enabled channel");
-        expect(routeSummary(幟壍({ implicit: true, channelIds: [] }), { channels: [], campaignNames: 椬壍 }).channels).toBe("No channels yet");
-        expect(routeSummary(幟壍({ channelIds: ["gone"], campaignIds: ["c3"] }), { channels: 鰽壍, campaignNames: 椬壍 })).toMatchObject({ channels: "gone (deleted)", filters: ["PMax — Full Catalog"], severity: "Warning and above", quiet: null, digest: null });
+        expect(routeSummary(route({ implicit: true, channelIds: [] }), { channels, campaignNames }).channels).toBe("Every enabled channel");
+        expect(routeSummary(route({ implicit: true, channelIds: [] }), { channels: [], campaignNames }).channels).toBe("No channels yet");
+        expect(routeSummary(route({ channelIds: ["gone"], campaignIds: ["c3"] }), { channels, campaignNames })).toMatchObject({ channels: "gone (deleted)", filters: ["PMax — Full Catalog"], severity: "Warning and above", quiet: null, digest: null });
     });
 });
 describe("delivery log", () => {
@@ -83,11 +83,11 @@ describe("delivery log", () => {
         expect(parseSignalId("nope")).toBeNull();
     });
     it("labels what a delivery was about", () => {
-        const 唊壍 = new Map([["c3:cpa:zscore:2026-09-28", { title: "CPA up 71%", severity: "critical" as const, entity: { id: "c3", name: "PMax — Full Catalog" } }]]);
-        expect(deliverySignals({ kind: "signals", signalIds: ["c3:cpa:zscore:2026-09-28", "c8:cpa:zscore:2026-09-28"] }, 唊壍, 椬壍)).toEqual({ label: "CPA up 71% +1 more", campaign: "PMax — Full Catalog", severity: "critical", count: 2 });
-        expect(deliverySignals({ kind: "signals", signalIds: ["c8:conversions:zscore:2026-09-20"], dedupeKeys: ["r:ch:c8|conv:warning"] }, 唊壍, 椬壍)).toEqual({ label: "Conversions signal", campaign: "Search — Competitor Terms", severity: "warning", count: 1 });
-        expect(deliverySignals({ kind: "resolved", signalIds: ["c3:cpa:zscore:2026-09-28"] }, 唊壍, 椬壍).label).toBe("Resolved: CPA up 71%");
-        expect(deliverySignals({ kind: "test", signalIds: [] }, 唊壍, 椬壍)).toEqual({ label: "Test message", campaign: null, severity: null, count: 0 });
+        const live = new Map([["c3:cpa:zscore:2026-09-28", { title: "CPA up 71%", severity: "critical" as const, entity: { id: "c3", name: "PMax — Full Catalog" } }]]);
+        expect(deliverySignals({ kind: "signals", signalIds: ["c3:cpa:zscore:2026-09-28", "c8:cpa:zscore:2026-09-28"] }, live, campaignNames)).toEqual({ label: "CPA up 71% +1 more", campaign: "PMax — Full Catalog", severity: "critical", count: 2 });
+        expect(deliverySignals({ kind: "signals", signalIds: ["c8:conversions:zscore:2026-09-20"], dedupeKeys: ["r:ch:c8|conv:warning"] }, live, campaignNames)).toEqual({ label: "Conversions signal", campaign: "Search — Competitor Terms", severity: "warning", count: 1 });
+        expect(deliverySignals({ kind: "resolved", signalIds: ["c3:cpa:zscore:2026-09-28"] }, live, campaignNames).label).toBe("Resolved: CPA up 71%");
+        expect(deliverySignals({ kind: "test", signalIds: [] }, live, campaignNames)).toEqual({ label: "Test message", campaign: null, severity: null, count: 0 });
     });
     it("recognises the secrets-disabled error", () => {
         expect(isSecretsDisabled({ code: "SECRETS_DISABLED" })).toBe(true);
@@ -96,16 +96,16 @@ describe("delivery log", () => {
     });
 });
 describe("time copy", () => {
-    const 珹壍 = Date.parse("2026-09-29T12:00:00.000Z");
+    const now = Date.parse("2026-09-29T12:00:00.000Z");
     it("formats relative times", () => {
-        expect(relativeTime("2026-09-29T11:59:40.000Z", 珹壍)).toBe("just now");
-        expect(relativeTime("2026-09-29T11:55:00.000Z", 珹壍)).toBe("5 min ago");
-        expect(relativeTime("2026-09-29T09:00:00.000Z", 珹壍)).toBe("3 h ago");
-        expect(relativeTime("2026-09-27T12:00:00.000Z", 珹壍)).toBe("2 d ago");
-        expect(relativeTime("2026-09-29T16:00:00.000Z", 珹壍)).toBe("in 4 h");
-        expect(relativeTime("2026-09-26 16:40:00", 珹壍)).toBe("3 d ago");
+        expect(relativeTime("2026-09-29T11:59:40.000Z", now)).toBe("just now");
+        expect(relativeTime("2026-09-29T11:55:00.000Z", now)).toBe("5 min ago");
+        expect(relativeTime("2026-09-29T09:00:00.000Z", now)).toBe("3 h ago");
+        expect(relativeTime("2026-09-27T12:00:00.000Z", now)).toBe("2 d ago");
+        expect(relativeTime("2026-09-29T16:00:00.000Z", now)).toBe("in 4 h");
+        expect(relativeTime("2026-09-26 16:40:00", now)).toBe("3 d ago");
         expect(relativeTime("2026-09-29T11:00:00.000Z", null)).toBe("");
-        expect(relativeTime(undefined, 珹壍)).toBe("");
+        expect(relativeTime(undefined, now)).toBe("");
     });
     it("formats absolute times in a zone", () => {
         expect(formatDateTime("2026-09-29T12:19:45.597Z", "UTC")).toBe("Sep 29, 12:19 PM");
@@ -121,27 +121,27 @@ describe("time copy", () => {
 });
 describe("route editor draft", () => {
     it("prefills a blank route and builds a minimal body", () => {
-        const 鋨壍 = routeDraftFrom(undefined, { tz: "America/New_York", channelIds: ["env-slack"] });
-        expect(鋨壍).toMatchObject({ name: "", channelIds: ["env-slack"], minSeverity: "warning", quiet: false, quietTz: "America/New_York", digestTime: "08:00", renotifyAfterHours: 24 });
-        expect(routeBodyFromDraft(鋨壍)).toEqual({ ok: false, error: "Give the route a name." });
-        expect(routeBodyFromDraft({ ...鋨壍, name: "Ops" })).toEqual({ ok: true, body: { name: "Ops", enabled: true, channelIds: ["env-slack"], minSeverity: "warning", includeResolved: false, renotifyAfterHours: 24 } });
+        const d = routeDraftFrom(undefined, { tz: "America/New_York", channelIds: ["env-slack"] });
+        expect(d).toMatchObject({ name: "", channelIds: ["env-slack"], minSeverity: "warning", quiet: false, quietTz: "America/New_York", digestTime: "08:00", renotifyAfterHours: 24 });
+        expect(routeBodyFromDraft(d)).toEqual({ ok: false, error: "Give the route a name." });
+        expect(routeBodyFromDraft({ ...d, name: "Ops" })).toEqual({ ok: true, body: { name: "Ops", enabled: true, channelIds: ["env-slack"], minSeverity: "warning", includeResolved: false, renotifyAfterHours: 24 } });
     });
     it("turns the implicit default into a new route", () => {
-        const 志壍 = routeDraftFrom(幟壍({ id: "default", implicit: true, channelIds: [] }), { tz: "UTC", channelIds: ["ch-1"] });
-        expect(志壍.id).toBeUndefined();
-        expect(志壍.channelIds).toEqual(["ch-1"]);
+        const d = routeDraftFrom(route({ id: "default", implicit: true, channelIds: [] }), { tz: "UTC", channelIds: ["ch-1"] });
+        expect(d.id).toBeUndefined();
+        expect(d.channelIds).toEqual(["ch-1"]);
     });
     it("round-trips quiet hours, filters and digest", () => {
-        const 细壍 = 幟壍({
+        const r = route({
             kinds: ["pacing"],
             campaignTypes: ["Search"],
             quietHours: { start: "22:00", end: "07:00", tz: "Europe/Berlin", days: [5, 1], behavior: "suppress", criticalBypass: false },
             digest: { enabled: true, time: "09:30", tz: "Europe/Berlin" },
         });
-        const 鶵壍 = routeDraftFrom(细壍, { tz: "UTC", channelIds: [] });
-        expect(鶵壍).toMatchObject({ id: "rt-1", version: 1, quiet: true, quietDays: [5, 1], digest: true, digestTime: "09:30" });
-        const 檤壍 = routeBodyFromDraft(鶵壍, true);
-        expect(檤壍.ok && 檤壍.body).toEqual({
+        const d = routeDraftFrom(r, { tz: "UTC", channelIds: [] });
+        expect(d).toMatchObject({ id: "rt-1", version: 1, quiet: true, quietDays: [5, 1], digest: true, digestTime: "09:30" });
+        const out = routeBodyFromDraft(d, true);
+        expect(out.ok && out.body).toEqual({
             name: "Ops",
             enabled: true,
             channelIds: ["ch-1", "env-slack"],
@@ -153,14 +153,14 @@ describe("route editor draft", () => {
             renotifyAfterHours: 24,
             digest: { enabled: true, time: "09:30", tz: "Europe/Berlin" },
         });
-        const 覓壍 = routeBodyFromDraft({ ...鶵壍, digest: false }, true);
-        expect(覓壍.ok && 覓壍.body.digest).toEqual({ enabled: false, time: "09:30", tz: "Europe/Berlin" });
+        const off = routeBodyFromDraft({ ...d, digest: false }, true);
+        expect(off.ok && off.body.digest).toEqual({ enabled: false, time: "09:30", tz: "Europe/Berlin" });
     });
     it("validates channels, times and the re-notify window", () => {
-        const 嚂壍 = { ...routeDraftFrom(undefined, { tz: "UTC", channelIds: ["ch-1"] }), name: "x" };
-        expect(routeBodyFromDraft({ ...嚂壍, channelIds: [] })).toEqual({ ok: false, error: "Pick at least one channel." });
-        expect(routeBodyFromDraft({ ...嚂壍, quiet: true, quietStart: "25:00" })).toEqual({ ok: false, error: "Quiet hours need a start and end time (HH:MM)." });
-        expect(routeBodyFromDraft({ ...嚂壍, renotifyAfterHours: 0 })).toEqual({ ok: false, error: "Re-notify after 1–336 hours." });
-        expect(routeBodyFromDraft({ ...嚂壍, digest: true, digestTime: "8am" })).toEqual({ ok: false, error: "The digest needs a time (HH:MM)." });
+        const d = { ...routeDraftFrom(undefined, { tz: "UTC", channelIds: ["ch-1"] }), name: "x" };
+        expect(routeBodyFromDraft({ ...d, channelIds: [] })).toEqual({ ok: false, error: "Pick at least one channel." });
+        expect(routeBodyFromDraft({ ...d, quiet: true, quietStart: "25:00" })).toEqual({ ok: false, error: "Quiet hours need a start and end time (HH:MM)." });
+        expect(routeBodyFromDraft({ ...d, renotifyAfterHours: 0 })).toEqual({ ok: false, error: "Re-notify after 1–336 hours." });
+        expect(routeBodyFromDraft({ ...d, digest: true, digestTime: "8am" })).toEqual({ ok: false, error: "The digest needs a time (HH:MM)." });
     });
 });

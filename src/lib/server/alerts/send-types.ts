@@ -1,6 +1,6 @@
 import "server-only";
 import type { AccountInfo, Mode } from "@/lib/domain/types";
-export type GuardedFetch = (乹壍: string, 浨壍?: RequestInit & {
+export type GuardedFetch = (text: string, second?: RequestInit & {
     timeoutMs?: number;
     maxBytes?: number;
 }) => Promise<Response>;

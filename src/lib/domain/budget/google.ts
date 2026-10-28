@@ -8,105 +8,105 @@ import { B_MAX, B_MIN, curveOutcome } from "./curves";
 export const STALE_AFTER_DAYS = 14;
 export const RANGE_TOLERANCE = 0.05;
 export const AGREEMENT_BAND = 0.1;
-const 綱壍 = 0.05;
-const 鲠壍 = 1;
-const 榏壍 = ["cost", "clicks", "impressions", "conversions", "convValue"] as const;
+const SIM_B_MIN = 0.05;
+const SIM_B_MAX = 1;
+const SIM_METRICS = ["cost", "clicks", "impressions", "conversions", "convValue"] as const;
 export const SIMULATION_LABELS: Record<SimulationType, string> = { BUDGET: "Budget", TARGET_CPA: "Target CPA", TARGET_ROAS: "Target ROAS" };
-export const outcomeOf = (衾壍: Pick<SimulationDayPoint, "conversions" | "convValue">, 啭壍: ResponseCurve["objective"]): number => (啭壍 === "conversions" ? 衾壍.conversions : 衾壍.convValue);
-export function simulationDays(瑜壍: Pick<CampaignSimulation, "start" | "end">): number {
-    const 鍋壍 = diffDays(瑜壍.start, 瑜壍.end) + 1;
-    return Number.isFinite(鍋壍) && 鍋壍 > 0 ? 鍋壍 : 1;
+export const outcomeOf = (p: Pick<SimulationDayPoint, "conversions" | "convValue">, objective: ResponseCurve["objective"]): number => (objective === "conversions" ? p.conversions : p.convValue);
+export function simulationDays(sim: Pick<CampaignSimulation, "start" | "end">): number {
+    const d = diffDays(sim.start, sim.end) + 1;
+    return Number.isFinite(d) && d > 0 ? d : 1;
 }
-export function perDayPoints(怺壍: Pick<CampaignSimulation, "start" | "end" | "points">): SimulationDayPoint[] {
-    const 缩壍 = simulationDays(怺壍);
-    const 鸘壍 = new Set<number>();
-    const 欇壍: SimulationDayPoint[] = [];
-    for (const 觶壍 of [...怺壍.points].sort((囥壍, 痔壍) => 囥壍.value - 痔壍.value)) {
-        if (!Number.isFinite(觶壍.value) || 觶壍.value <= 0 || 鸘壍.has(觶壍.value))
+export function perDayPoints(sim: Pick<CampaignSimulation, "start" | "end" | "points">): SimulationDayPoint[] {
+    const days = simulationDays(sim);
+    const seen = new Set<number>();
+    const out: SimulationDayPoint[] = [];
+    for (const p of [...sim.points].sort((a, b) => a.value - b.value)) {
+        if (!Number.isFinite(p.value) || p.value <= 0 || seen.has(p.value))
             continue;
-        鸘壍.add(觶壍.value);
-        欇壍.push({ value: 觶壍.value, cost: 觶壍.cost / 缩壍, clicks: 觶壍.clicks / 缩壍, impressions: 觶壍.impressions / 缩壍, conversions: 觶壍.conversions / 缩壍, convValue: 觶壍.convValue / 缩壍, requiredBudget: 觶壍.requiredBudget });
+        seen.add(p.value);
+        out.push({ value: p.value, cost: p.cost / days, clicks: p.clicks / days, impressions: p.impressions / days, conversions: p.conversions / days, convValue: p.convValue / days, requiredBudget: p.requiredBudget });
     }
-    return 欇壍;
+    return out;
 }
-export function simulatedRange(铃壍: readonly SimulationDayPoint[]): [
+export function simulatedRange(points: readonly SimulationDayPoint[]): [
     number,
     number
 ] | null {
-    const 憲壍 = 铃壍[0];
-    const 股壍 = 铃壍[铃壍.length - 1];
-    return 憲壍 && 股壍 ? [憲壍.value, 股壍.value] : null;
+    const first = points[0];
+    const last = points[points.length - 1];
+    return first && last ? [first.value, last.value] : null;
 }
-export function interpolatePoints(龐壍: readonly SimulationDayPoint[], 汿壍: number, 譮壍 = RANGE_TOLERANCE): SimulationDayPoint | null {
-    const 塝壍 = simulatedRange(龐壍);
-    if (!塝壍 || !Number.isFinite(汿壍) || 汿壍 <= 0)
+export function interpolatePoints(points: readonly SimulationDayPoint[], value: number, tolerance = RANGE_TOLERANCE): SimulationDayPoint | null {
+    const range = simulatedRange(points);
+    if (!range || !Number.isFinite(value) || value <= 0)
         return null;
-    if (汿壍 < 塝壍[0] * (1 - 譮壍) - 1e-9 || 汿壍 > 塝壍[1] * (1 + 譮壍) + 1e-9)
+    if (value < range[0] * (1 - tolerance) - 1e-9 || value > range[1] * (1 + tolerance) + 1e-9)
         return null;
-    if (龐壍.length === 1)
-        return { ...(龐壍[0] as SimulationDayPoint), value: 汿壍 };
-    let 睌壍 = 0;
-    while (睌壍 < 龐壍.length - 2 && 汿壍 > (龐壍[睌壍 + 1] as SimulationDayPoint).value)
-        睌壍++;
-    const 阻壍 = 龐壍[睌壍] as SimulationDayPoint;
-    const 挪壍 = 龐壍[睌壍 + 1] as SimulationDayPoint;
-    const 舙壍 = (汿壍 - 阻壍.value) / (挪壍.value - 阻壍.value);
-    const 伈壍 = (混壍: number, 賦壍: number) => Math.max(0, 混壍 + (賦壍 - 混壍) * 舙壍);
-    const 姕壍 = { value: 汿壍, requiredBudget: 阻壍.requiredBudget !== null && 挪壍.requiredBudget !== null ? 伈壍(阻壍.requiredBudget, 挪壍.requiredBudget) : null } as SimulationDayPoint;
-    for (const 磄壍 of 榏壍)
-        姕壍[磄壍] = 伈壍(阻壍[磄壍], 挪壍[磄壍]);
-    return 姕壍;
+    if (points.length === 1)
+        return { ...(points[0] as SimulationDayPoint), value };
+    let i = 0;
+    while (i < points.length - 2 && value > (points[i + 1] as SimulationDayPoint).value)
+        i++;
+    const a = points[i] as SimulationDayPoint;
+    const b = points[i + 1] as SimulationDayPoint;
+    const t = (value - a.value) / (b.value - a.value);
+    const lerp = (x: number, y: number) => Math.max(0, x + (y - x) * t);
+    const out = { value, requiredBudget: a.requiredBudget !== null && b.requiredBudget !== null ? lerp(a.requiredBudget, b.requiredBudget) : null } as SimulationDayPoint;
+    for (const m of SIM_METRICS)
+        out[m] = lerp(a[m], b[m]);
+    return out;
 }
-export function interpolateSimulation(鞳壍: CampaignSimulation, 撢壍: number, 莑壍 = RANGE_TOLERANCE): SimulationDayPoint | null {
-    return interpolatePoints(perDayPoints(鞳壍), 撢壍, 莑壍);
+export function interpolateSimulation(sim: CampaignSimulation, value: number, tolerance = RANGE_TOLERANCE): SimulationDayPoint | null {
+    return interpolatePoints(perDayPoints(sim), value, tolerance);
 }
-export function fitSimulationCurve(傀壍: string, 潯壍: ResponseCurve["objective"], 蹞壍: CampaignSimulation): ResponseCurve | null {
-    const 孍壍 = perDayPoints(蹞壍).filter((稼壍) => 稼壍.cost > 0 && outcomeOf(稼壍, 潯壍) > 0);
-    const 餫壍 = 孍壍.length;
-    if (餫壍 < 2)
+export function fitSimulationCurve(campaignId: string, objective: ResponseCurve["objective"], sim: CampaignSimulation): ResponseCurve | null {
+    const pts = perDayPoints(sim).filter((p) => p.cost > 0 && outcomeOf(p, objective) > 0);
+    const n = pts.length;
+    if (n < 2)
         return null;
-    const 昚壍 = 孍壍.map((蔉壍) => 蔉壍.cost);
-    const 凸壍 = Math.min(...昚壍);
-    const 烧壍 = Math.max(...昚壍);
-    const 迖壍 = 烧壍 / 凸壍;
-    if (迖壍 < 1.02)
+    const costs = pts.map((p) => p.cost);
+    const lo = Math.min(...costs);
+    const hi = Math.max(...costs);
+    const spread = hi / lo;
+    if (spread < 1.02)
         return null;
-    const 峅壍 = 孍壍.map((箴壍) => Math.log(箴壍.cost));
-    const 骣壍 = 孍壍.map((枒壍) => Math.log(outcomeOf(枒壍, 潯壍)));
-    const 蚁壍 = ols(峅壍, 骣壍);
-    const 印壍 = clamp(蚁壍.slope, 綱壍, 鲠壍);
-    const 牟壍 = Math.exp(mean(骣壍.map((酎壍, 帽壍) => 酎壍 - 印壍 * (峅壍[帽壍] as number))));
-    const 紬壍 = clamp(蚁壍.r2, 0, 1);
-    const 鰛壍: ResponseCurve["confidence"] = 紬壍 >= 0.9 && 餫壍 >= 5 && 迖壍 >= 1.25 ? "high" : 紬壍 >= 0.6 && 餫壍 >= 3 && 迖壍 >= 1.1 ? "medium" : "low";
-    return { campaignId: 傀壍, objective: 潯壍, a: 牟壍, b: 印壍, bRaw: round(蚁壍.slope, 4), r2: round(紬壍, 4), n: 餫壍, spendRange: [round(凸壍, 2), round(烧壍, 2)], confidence: 鰛壍, source: "google_simulator" };
+    const lx = pts.map((p) => Math.log(p.cost));
+    const ly = pts.map((p) => Math.log(outcomeOf(p, objective)));
+    const fit = ols(lx, ly);
+    const b = clamp(fit.slope, SIM_B_MIN, SIM_B_MAX);
+    const a = Math.exp(mean(ly.map((v, i) => v - b * (lx[i] as number))));
+    const r2 = clamp(fit.r2, 0, 1);
+    const confidence: ResponseCurve["confidence"] = r2 >= 0.9 && n >= 5 && spread >= 1.25 ? "high" : r2 >= 0.6 && n >= 3 && spread >= 1.1 ? "medium" : "low";
+    return { campaignId, objective, a, b, bRaw: round(fit.slope, 4), r2: round(r2, 4), n, spendRange: [round(lo, 2), round(hi, 2)], confidence, source: "google_simulator" };
 }
-const 椊壍: Record<SimulationModification, number> = { UNIFORM: 0, DEFAULT: 1, SCALING: 2, UNKNOWN: 3 };
-export function pickSimulation(蟹壍: readonly CampaignSimulation[], 哨壍: string, 珗壍: SimulationType): CampaignSimulation | null {
-    let 鋆壍: CampaignSimulation | null = null;
-    for (const 徵壍 of 蟹壍) {
-        if (徵壍.campaignId !== 哨壍 || 徵壍.type !== 珗壍 || !徵壍.points.length)
+const MODIFICATION_RANK: Record<SimulationModification, number> = { UNIFORM: 0, DEFAULT: 1, SCALING: 2, UNKNOWN: 3 };
+export function pickSimulation(sims: readonly CampaignSimulation[], campaignId: string, simulationType: SimulationType): CampaignSimulation | null {
+    let best: CampaignSimulation | null = null;
+    for (const s of sims) {
+        if (s.campaignId !== campaignId || s.type !== simulationType || !s.points.length)
             continue;
-        if (!鋆壍 || 徵壍.end > 鋆壍.end || (徵壍.end === 鋆壍.end && 椊壍[徵壍.modification] < 椊壍[鋆壍.modification]))
-            鋆壍 = 徵壍;
+        if (!best || s.end > best.end || (s.end === best.end && MODIFICATION_RANK[s.modification] < MODIFICATION_RANK[best.modification]))
+            best = s;
     }
-    return 鋆壍;
+    return best;
 }
-export function absoluteSimulation(纤壍: CampaignSimulation, 鶓壍: number | null): CampaignSimulation | null {
-    if (!纤壍.relative)
-        return 纤壍;
-    if (鶓壍 === null || !(鶓壍 > 0))
+export function absoluteSimulation(sim: CampaignSimulation, current: number | null): CampaignSimulation | null {
+    if (!sim.relative)
+        return sim;
+    if (current === null || !(current > 0))
         return null;
-    const { relative: _檂壍, ...襱壍 } = 纤壍;
-    return { ...襱壍, points: 纤壍.points.map((噠壍) => ({ ...噠壍, value: round(噠壍.value * 鶓壍, 4) })) };
+    const { relative: _relative, ...rest } = sim;
+    return { ...rest, points: sim.points.map((p) => ({ ...p, value: round(p.value * current, 4) })) };
 }
-export const isStaleSimulation = (畏壍: Pick<CampaignSimulation, "end">, 鐾壍: CivilDate): boolean => diffDays(畏壍.end, 鐾壍) > STALE_AFTER_DAYS;
+export const isStaleSimulation = (sim: Pick<CampaignSimulation, "end">, dataThrough: CivilDate): boolean => diffDays(sim.end, dataThrough) > STALE_AFTER_DAYS;
 export type SimulatorGap = "shared" | "missing" | "stale";
-export function budgetSimulatorGap(愭壍: CampaignType | "Shared", 耜壍: CampaignSimulation | null, 鼋壍: CivilDate, 毺壍 = false): SimulatorGap | null {
-    if (毺壍 || 愭壍 === "Shared")
+export function budgetSimulatorGap(value: CampaignType | "Shared", simulation: CampaignSimulation | null, dataThrough: CivilDate, shared = false): SimulatorGap | null {
+    if (shared || value === "Shared")
         return "shared";
-    if (!耜壍 || 耜壍.type !== "BUDGET" || 耜壍.relative || !perDayPoints(耜壍).length)
+    if (!simulation || simulation.type !== "BUDGET" || simulation.relative || !perDayPoints(simulation).length)
         return "missing";
-    if (isStaleSimulation(耜壍, 鼋壍))
+    if (isStaleSimulation(simulation, dataThrough))
         return "stale";
     return null;
 }
@@ -122,69 +122,69 @@ export interface BudgetEstimateInput {
     objective: ResponseCurve["objective"];
     currency?: string;
 }
-export function chooseBudgetEstimate(諩壍: BudgetEstimateInput): BudgetEstimateDecision {
-    const { campaign: 埘壍, modelCurve: 盇壍, proposedDaily: 閶壍, dataThrough: 报壍, objective: 膔壍 } = 諩壍;
-    const 亃壍 = 諩壍.simulation?.type === "BUDGET" && !諩壍.simulation.relative ? 諩壍.simulation : null;
-    const 浲壍 = (象壍: number) => formatMoney(象壍, { currency: 諩壍.currency ?? "USD", compact: false, decimals: 0 });
-    const 奐壍 = Number.isFinite(閶壍) && 閶壍 > 0;
-    const 砿壍 = 亃壍 && 奐壍 ? interpolateSimulation(亃壍, 閶壍) : null;
-    const 霮壍 = 砿壍 ? outcomeOf(砿壍, 膔壍) : null;
-    const 搝壍 = 盇壍 && 奐壍 ? curveOutcome(盇壍, 閶壍) : null;
-    const 茌壍 = 搝壍 !== null && 霮壍 !== null && 霮壍 > 0 ? round(搝壍 / 霮壍 - 1, 4) : null;
-    const 俻壍 = budgetSimulatorGap(埘壍.type, 亃壍, 报壍, !!埘壍.budget_shared);
-    let 滪壍: EstimateSource = "model";
-    let 跙壍: string;
-    if (!奐壍)
-        跙壍 = "There is no daily budget to evaluate.";
-    else if (俻壍 === "shared")
-        跙壍 = 亃壍
+export function chooseBudgetEstimate(input: BudgetEstimateInput): BudgetEstimateDecision {
+    const { campaign, modelCurve, proposedDaily, dataThrough, objective } = input;
+    const simulation = input.simulation?.type === "BUDGET" && !input.simulation.relative ? input.simulation : null;
+    const money = (v: number) => formatMoney(v, { currency: input.currency ?? "USD", compact: false, decimals: 0 });
+    const valid = Number.isFinite(proposedDaily) && proposedDaily > 0;
+    const google = simulation && valid ? interpolateSimulation(simulation, proposedDaily) : null;
+    const googleOutcome = google ? outcomeOf(google, objective) : null;
+    const model = modelCurve && valid ? curveOutcome(modelCurve, proposedDaily) : null;
+    const disagreementPct = model !== null && googleOutcome !== null && googleOutcome > 0 ? round(model / googleOutcome - 1, 4) : null;
+    const gap = budgetSimulatorGap(campaign.type, simulation, dataThrough, !!campaign.budget_shared);
+    let lead: EstimateSource = "model";
+    let reason: string;
+    if (!valid)
+        reason = "There is no daily budget to evaluate.";
+    else if (gap === "shared")
+        reason = simulation
             ? "This campaign shares its budget with other campaigns. Google simulated it as if the budget were its own, so those points don't describe the shared budget — plan the shared budget as a whole."
             : "This campaign shares its budget with other campaigns — plan the shared budget as a whole.";
-    else if (俻壍 === "missing" || !亃壍)
-        跙壍 = "Google returned no budget simulation for this campaign, so our model leads.";
-    else if (俻壍 === "stale")
-        跙壍 = `Google's budget simulation ended ${formatShort(亃壍.end)}, more than ${STALE_AFTER_DAYS} days before the latest data, so our model leads.`;
-    else if (!砿壍) {
-        const [嫈壍, 禷壍] = simulatedRange(perDayPoints(亃壍)) as [
+    else if (gap === "missing" || !simulation)
+        reason = "Google returned no budget simulation for this campaign, so our model leads.";
+    else if (gap === "stale")
+        reason = `Google's budget simulation ended ${formatShort(simulation.end)}, more than ${STALE_AFTER_DAYS} days before the latest data, so our model leads.`;
+    else if (!google) {
+        const [lo, hi] = simulatedRange(perDayPoints(simulation)) as [
             number,
             number
         ];
-        跙壍 = `${浲壍(閶壍)}/day is outside the budgets Google simulated (${浲壍(嫈壍)}–${浲壍(禷壍)}/day), so our model leads.`;
+        reason = `${money(proposedDaily)}/day is outside the budgets Google simulated (${money(lo)}–${money(hi)}/day), so our model leads.`;
     }
     else {
-        滪壍 = "google_simulator";
-        跙壍 = `Google's budget simulator covers ${浲壍(閶壍)}/day (${formatShort(亃壍.start)} – ${formatShort(亃壍.end)}), so it leads; our model is a second opinion.`;
+        lead = "google_simulator";
+        reason = `Google's budget simulator covers ${money(proposedDaily)}/day (${formatShort(simulation.start)} – ${formatShort(simulation.end)}), so it leads; our model is a second opinion.`;
     }
-    if (滪壍 === "model" && 奐壍 && 搝壍 === null && 俻壍 !== "shared")
-        跙壍 += " Our model has no response curve for it either.";
-    return { lead: 滪壍, reason: 跙壍, objective: 膔壍, proposedDaily: 閶壍, google: 砿壍, googleOutcome: 霮壍, model: 搝壍, disagreementPct: 茌壍 };
+    if (lead === "model" && valid && model === null && gap !== "shared")
+        reason += " Our model has no response curve for it either.";
+    return { lead, reason, objective, proposedDaily, google, googleOutcome, model, disagreementPct };
 }
-export function agreementLine(颦壍: number | null, 斕壍 = AGREEMENT_BAND): string | null {
-    if (颦壍 === null || !Number.isFinite(颦壍))
+export function agreementLine(disagreementPct: number | null, band = AGREEMENT_BAND): string | null {
+    if (disagreementPct === null || !Number.isFinite(disagreementPct))
         return null;
-    if (Math.abs(颦壍) <= 斕壍 + 1e-9)
-        return `Google and our model agree within ${Math.round(斕壍 * 100)}%`;
-    const 蒄壍 = Math.round(Math.abs(颦壍) * 100);
-    return 颦壍 > 0 ? `Our model is ${蒄壍}% more optimistic than Google` : `Our model is ${蒄壍}% more conservative than Google`;
+    if (Math.abs(disagreementPct) <= band + 1e-9)
+        return `Google and our model agree within ${Math.round(band * 100)}%`;
+    const pct = Math.round(Math.abs(disagreementPct) * 100);
+    return disagreementPct > 0 ? `Our model is ${pct}% more optimistic than Google` : `Our model is ${pct}% more conservative than Google`;
 }
 export interface SimulatorCurveUnit {
     unitId: string;
     campaignIds: readonly string[];
     type: CampaignType | "Shared";
 }
-export function simulatorCurves(关壍: readonly SimulatorCurveUnit[], 灢壍: readonly CampaignSimulation[], 轑壍: ResponseCurve["objective"], 局壍: CivilDate): Map<string, ResponseCurve> {
-    const 笯壍 = new Map<string, ResponseCurve>();
-    for (const 騞壍 of 关壍) {
-        if (騞壍.type === "Shared" || 騞壍.campaignIds.length !== 1)
+export function simulatorCurves(units: readonly SimulatorCurveUnit[], simulations: readonly CampaignSimulation[], objective: ResponseCurve["objective"], dataThrough: CivilDate): Map<string, ResponseCurve> {
+    const out = new Map<string, ResponseCurve>();
+    for (const u of units) {
+        if (u.type === "Shared" || u.campaignIds.length !== 1)
             continue;
-        const 服壍 = pickSimulation(灢壍, 騞壍.campaignIds[0] as string, "BUDGET");
-        if (!服壍 || budgetSimulatorGap(騞壍.type, 服壍, 局壍) !== null)
+        const sim = pickSimulation(simulations, u.campaignIds[0] as string, "BUDGET");
+        if (!sim || budgetSimulatorGap(u.type, sim, dataThrough) !== null)
             continue;
-        const 藼壍 = fitSimulationCurve(騞壍.unitId, 轑壍, 服壍);
-        if (藼壍)
-            笯壍.set(騞壍.unitId, 藼壍);
+        const curve = fitSimulationCurve(u.unitId, objective, sim);
+        if (curve)
+            out.set(u.unitId, curve);
     }
-    return 笯壍;
+    return out;
 }
 export const CALIBRATION_MIN_UNITS = 2;
 export const CALIBRATION_RANGE: readonly [
@@ -199,32 +199,32 @@ export interface CurveBlend {
     calibration: number | null;
     basis: number;
 }
-export function calibrateCurve(勫壍: ResponseCurve, 燚壍: number): ResponseCurve {
-    const [郉壍, 嶸壍] = 勫壍.spendRange;
-    if (!(郉壍 > 0 && 嶸壍 > 0) || !(勫壍.a > 0) || !Number.isFinite(燚壍) || 燚壍 <= 0)
-        return 勫壍;
-    const 粧壍 = Math.sqrt(郉壍 * 嶸壍);
-    const 鮖壍 = clamp(勫壍.b * 燚壍, B_MIN, B_MAX);
-    return { ...勫壍, a: 勫壍.a * 粧壍 ** (勫壍.b - 鮖壍), b: 鮖壍, calibration: round(燚壍, 4) };
+export function calibrateCurve(curve: ResponseCurve, factor: number): ResponseCurve {
+    const [lo, hi] = curve.spendRange;
+    if (!(lo > 0 && hi > 0) || !(curve.a > 0) || !Number.isFinite(factor) || factor <= 0)
+        return curve;
+    const typical = Math.sqrt(lo * hi);
+    const b = clamp(curve.b * factor, B_MIN, B_MAX);
+    return { ...curve, a: curve.a * typical ** (curve.b - b), b, calibration: round(factor, 4) };
 }
-export function blendCurves(梅壍: ReadonlyMap<string, ResponseCurve>, 蝴壍: ReadonlyMap<string, ResponseCurve>): CurveBlend {
-    const 呣壍: number[] = [];
-    for (const [獒壍, 鉁壍] of 蝴壍) {
-        const 弰壍 = 梅壍.get(獒壍);
-        if (弰壍 && 弰壍.b > 0 && 鉁壍.b > 0)
-            呣壍.push(鉁壍.b / 弰壍.b);
+export function blendCurves(model: ReadonlyMap<string, ResponseCurve>, google: ReadonlyMap<string, ResponseCurve>): CurveBlend {
+    const ratios: number[] = [];
+    for (const [unitId, g] of google) {
+        const m = model.get(unitId);
+        if (m && m.b > 0 && g.b > 0)
+            ratios.push(g.b / m.b);
     }
-    const 縟壍 = 呣壍.length;
-    const 鴎壍 = [...梅壍.keys()].filter((槽壍) => !蝴壍.has(槽壍));
-    if (!蝴壍.size || (鴎壍.length && 縟壍 < CALIBRATION_MIN_UNITS))
-        return { curves: new Map(梅壍), google: 0, model: 梅壍.size, available: 蝴壍.size, calibration: null, basis: 縟壍 };
-    const 裬壍 = 鴎壍.length ? round(clamp(median(呣壍), CALIBRATION_RANGE[0], CALIBRATION_RANGE[1]), 4) : null;
-    const 嗛壍 = new Map<string, ResponseCurve>(蝴壍);
-    for (const 瓊壍 of 鴎壍) {
-        const 鎹壍 = 梅壍.get(瓊壍) as ResponseCurve;
-        嗛壍.set(瓊壍, 裬壍 === null ? 鎹壍 : calibrateCurve(鎹壍, 裬壍));
+    const basis = ratios.length;
+    const modelOnly = [...model.keys()].filter((id) => !google.has(id));
+    if (!google.size || (modelOnly.length && basis < CALIBRATION_MIN_UNITS))
+        return { curves: new Map(model), google: 0, model: model.size, available: google.size, calibration: null, basis };
+    const calibration = modelOnly.length ? round(clamp(median(ratios), CALIBRATION_RANGE[0], CALIBRATION_RANGE[1]), 4) : null;
+    const curves = new Map<string, ResponseCurve>(google);
+    for (const unitId of modelOnly) {
+        const m = model.get(unitId) as ResponseCurve;
+        curves.set(unitId, calibration === null ? m : calibrateCurve(m, calibration));
     }
-    return { curves: 嗛壍, google: 蝴壍.size, model: 鴎壍.length, available: 蝴壍.size, calibration: 裬壍, basis: 縟壍 };
+    return { curves, google: google.size, model: modelOnly.length, available: google.size, calibration, basis };
 }
 export const ESTIMATE_POLICY: readonly EstimatePolicyRow[] = [
     {

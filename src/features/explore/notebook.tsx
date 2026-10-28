@@ -10,7 +10,7 @@ import { DateStep, FiltersStep, firstFilterDim, HavingStep, SortStep } from "./s
 import { effectiveViz, VizStep } from "./step-viz";
 import { StepCard } from "./ui";
 import { VIZ_META } from "./viz-suggest";
-const 豼壍: Record<StepKey, {
+const TITLES: Record<StepKey, {
     title: string;
     hint: string;
 }> = {
@@ -23,73 +23,73 @@ const 豼壍: Record<StepKey, {
     date: { title: "Date range", hint: "Period and comparison" },
     viz: { title: "Visualization", hint: "How to show it" },
 };
-const 奫壍: Record<OptionalStep, string> = { groupBy: "Group by", filters: "Filter", having: "Having", sort: "Sort & limit" };
-export function Notebook({ nb: 硚壍 }: {
+const ADD_LABEL: Record<OptionalStep, string> = { groupBy: "Group by", filters: "Filter", having: "Having", sort: "Sort & limit" };
+export function Notebook({ nb }: {
     nb: NotebookCtx;
 }) {
-    const { spec: 靉壍, dispatch: 搸壍 } = 硚壍;
-    const [茧壍, 倖壍] = useState<ReadonlySet<StepKey>>(() => new Set());
-    const [漅壍, 跴壍] = useState<ReadonlySet<OptionalStep>>(() => new Set());
-    const 嫣壍 = (秒壍: OptionalStep) => stepHasContent(秒壍, 靉壍) || 漅壍.has(秒壍);
-    const 飁壍 = (新壍: StepKey) => 倖壍((蒟壍) => {
-        const 冎壍 = new Set(蒟壍);
-        if (冎壍.has(新壍))
-            冎壍.delete(新壍);
+    const { spec, dispatch } = nb;
+    const [collapsed, setCollapsed] = useState<ReadonlySet<StepKey>>(() => new Set());
+    const [opened, setOpened] = useState<ReadonlySet<OptionalStep>>(() => new Set());
+    const visible = (s: OptionalStep) => stepHasContent(s, spec) || opened.has(s);
+    const toggle = (k: StepKey) => setCollapsed((prev) => {
+        const next = new Set(prev);
+        if (next.has(k))
+            next.delete(k);
         else
-            冎壍.add(新壍);
-        return 冎壍;
+            next.add(k);
+        return next;
     });
-    const 災壍 = (转壍: OptionalStep) => {
-        跴壍((屛壍) => new Set(屛壍).add(转壍));
-        倖壍((筊壍) => {
-            const 騹壍 = new Set(筊壍);
-            騹壍.delete(转壍);
-            return 騹壍;
+    const open = (s: OptionalStep) => {
+        setOpened((prev) => new Set(prev).add(s));
+        setCollapsed((prev) => {
+            const next = new Set(prev);
+            next.delete(s);
+            return next;
         });
-        if (转壍 === "filters" && !靉壍.filters.length)
-            搸壍({ type: "addFilter", filter: { dim: firstFilterDim(硚壍), op: "in", value: [] } });
-        if (转壍 === "having" && !靉壍.having.length)
-            搸壍({ type: "addHaving", having: { metric: 靉壍.metrics[0] ?? "cost", op: "gt", value: 0 } });
+        if (s === "filters" && !spec.filters.length)
+            dispatch({ type: "addFilter", filter: { dim: firstFilterDim(nb), op: "in", value: [] } });
+        if (s === "having" && !spec.having.length)
+            dispatch({ type: "addHaving", having: { metric: spec.metrics[0] ?? "cost", op: "gt", value: 0 } });
     };
-    const 木壍 = (蘗壍: OptionalStep) => {
-        搸壍({ type: "clearStep", step: 蘗壍 });
-        跴壍((匆壍) => {
-            const 燵壍 = new Set(匆壍);
-            燵壍.delete(蘗壍);
-            return 燵壍;
+    const remove = (s: OptionalStep) => {
+        dispatch({ type: "clearStep", step: s });
+        setOpened((prev) => {
+            const next = new Set(prev);
+            next.delete(s);
+            return next;
         });
     };
-    const 郤壍 = effectiveViz(硚壍);
-    const 巓壍 = { catalog: 硚壍.catalog, today: 硚壍.today, currency: 硚壍.currency, vizLabel: `${VIZ_META[郤壍.type as ExploreVizType]?.label ?? 郤壍.type}${硚壍.state.viz ? "" : " · auto"}` };
-    const 糂壍 = OPTIONAL_STEPS.filter(嫣壍);
-    const 鮱壍 = OPTIONAL_STEPS.filter((梠壍) => !嫣壍(梠壍));
-    const 螏壍: StepKey[] = ["data", "metrics", ...糂壍, "date", "viz"];
-    const 呾壍: Record<StepKey, React.ReactNode> = {
-        data: <DataStep nb={硚壍}/>,
-        metrics: <MetricsStep nb={硚壍}/>,
-        groupBy: <GroupByStep nb={硚壍}/>,
-        filters: <FiltersStep nb={硚壍}/>,
-        having: <HavingStep nb={硚壍}/>,
-        sort: <SortStep nb={硚壍}/>,
-        date: <DateStep nb={硚壍}/>,
-        viz: <VizStep nb={硚壍}/>,
+    const viz = effectiveViz(nb);
+    const ctx = { catalog: nb.catalog, today: nb.today, currency: nb.currency, vizLabel: `${VIZ_META[viz.type as ExploreVizType]?.label ?? viz.type}${nb.state.viz ? "" : " · auto"}` };
+    const optional = OPTIONAL_STEPS.filter(visible);
+    const hidden = OPTIONAL_STEPS.filter((s) => !visible(s));
+    const order: StepKey[] = ["data", "metrics", ...optional, "date", "viz"];
+    const body: Record<StepKey, React.ReactNode> = {
+        data: <DataStep nb={nb}/>,
+        metrics: <MetricsStep nb={nb}/>,
+        groupBy: <GroupByStep nb={nb}/>,
+        filters: <FiltersStep nb={nb}/>,
+        having: <HavingStep nb={nb}/>,
+        sort: <SortStep nb={nb}/>,
+        date: <DateStep nb={nb}/>,
+        viz: <VizStep nb={nb}/>,
     };
-    const 獭壍 = !!靉壍.dateRange || 靉壍.compare !== "none";
+    const dateCustomized = !!spec.dateRange || spec.compare !== "none";
     return (<div className="flex min-w-0 flex-col gap-3" role="group" aria-label="Question notebook">
-      {螏壍.map((鉜壍, 彋壍) => {
-            const 縺壍 = (OPTIONAL_STEPS as readonly string[]).includes(鉜壍) ? (鉜壍 as OptionalStep) : undefined;
-            const 鴩壍 = 豼壍[鉜壍];
-            return (<div key={鉜壍} className="flex flex-col gap-3">
-            {鉜壍 === "date" && 鮱壍.length ? (<div className="flex flex-wrap items-center gap-2 px-1 py-1" role="group" aria-label="Add a step">
+      {order.map((k, i) => {
+            const optionalStep = (OPTIONAL_STEPS as readonly string[]).includes(k) ? (k as OptionalStep) : undefined;
+            const t = TITLES[k];
+            return (<div key={k} className="flex flex-col gap-3">
+            {k === "date" && hidden.length ? (<div className="flex flex-wrap items-center gap-2 px-1 py-1" role="group" aria-label="Add a step">
                 <span className="label-mono mr-1">Add</span>
-                {鮱壍.map((樘壍) => (<button key={樘壍} type="button" onClick={() => 災壍(樘壍)} className="rounded-pill border border-dashed border-teal/30 px-3.5 py-1.5 text-xs text-accent transition-colors hover:border-teal/60 hover:bg-teal/4">
-                    + {奫壍[樘壍]}
+                {hidden.map((s) => (<button key={s} type="button" onClick={() => open(s)} className="rounded-pill border border-dashed border-teal/30 px-3.5 py-1.5 text-xs text-accent transition-colors hover:border-teal/60 hover:bg-teal/4">
+                    + {ADD_LABEL[s]}
                   </button>))}
               </div>) : null}
-            <StepCard num={彋壍 + 1} title={鴩壍.title} hint={鴩壍.hint} summary={stepSummary(鉜壍, 靉壍, 巓壍)} collapsed={茧壍.has(鉜壍)} onToggle={() => 飁壍(鉜壍)} onRemove={縺壍 ? () => 木壍(縺壍) : undefined} removeLabel={`Remove the ${鴩壍.title} step`} tone={鉜壍 === "metrics" && !靉壍.metrics.length ? "warn" : "default"} aside={鉜壍 === "date" && 獭壍 ? (<Button variant="link" className="text-xs" onClick={() => 搸壍({ type: "clearStep", step: "date" })}>
+            <StepCard num={i + 1} title={t.title} hint={t.hint} summary={stepSummary(k, spec, ctx)} collapsed={collapsed.has(k)} onToggle={() => toggle(k)} onRemove={optionalStep ? () => remove(optionalStep) : undefined} removeLabel={`Remove the ${t.title} step`} tone={k === "metrics" && !spec.metrics.length ? "warn" : "default"} aside={k === "date" && dateCustomized ? (<Button variant="link" className="text-xs" onClick={() => dispatch({ type: "clearStep", step: "date" })}>
                     Reset
                   </Button>) : undefined}>
-              {呾壍[鉜壍]}
+              {body[k]}
             </StepCard>
           </div>);
         })}

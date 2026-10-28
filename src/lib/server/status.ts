@@ -9,33 +9,33 @@ import { envFilePresent, envKeyStatuses, missingLiveKeys } from "./env/status";
 import { currentPrincipal } from "./scope";
 import { getStore } from "./store";
 import { storeInfo } from "./store/store";
-export async function buildStatus(樸壍: RequestContext): Promise<StatusResponse> {
-    const 褧壍 = getStore();
-    const [嘖壍, 甅壍, 鏴壍] = await Promise.all([樸壍.source.manager(), 褧壍.scheduler.get(), 褧壍.settings.get()]);
-    const 惣壍 = storeInfo();
-    const 習壍 = appConfig();
-    const 黁壍 = 樸壍.resolved.health;
-    const 殰壍 = can(currentPrincipal().role, "system.manage");
+export async function buildStatus(ctx: RequestContext): Promise<StatusResponse> {
+    const store = getStore();
+    const [manager, scheduler, settings] = await Promise.all([ctx.source.manager(), store.scheduler.get(), store.settings.get()]);
+    const info = storeInfo();
+    const cfg = appConfig();
+    const health = ctx.resolved.health;
+    const system = can(currentPrincipal().role, "system.manage");
     return {
-        mode: 樸壍.source.mode,
-        reason: 樸壍.source.reason,
-        reasonText: describeBlankReason(樸壍.source.reason),
-        account: 樸壍.account,
-        accounts: 樸壍.accounts,
-        manager: 嘖壍,
-        today: 樸壍.today,
-        dataThrough: 樸壍.dataThrough,
+        mode: ctx.source.mode,
+        reason: ctx.source.reason,
+        reasonText: describeBlankReason(ctx.source.reason),
+        account: ctx.account,
+        accounts: ctx.accounts,
+        manager,
+        today: ctx.today,
+        dataThrough: ctx.dataThrough,
         googleAds: {
             apiVersion: googleAdsConfig().apiVersion,
-            envFile: 殰壍 ? envFilePresent() : false,
-            missingKeys: 殰壍 ? missingLiveKeys() : [],
-            health: 黁壍 ? { ok: 黁壍.ok, checkedAt: 黁壍.checkedAt, latencyMs: 黁壍.latencyMs, errorCode: 黁壍.errorCode } : null,
+            envFile: system ? envFilePresent() : false,
+            missingKeys: system ? missingLiveKeys() : [],
+            health: health ? { ok: health.ok, checkedAt: health.checkedAt, latencyMs: health.latencyMs, errorCode: health.errorCode } : null,
         },
-        store: { driver: 惣壍.driver, writable: 惣壍.writable, fallbackReason: 惣壍.fallbackReason },
-        scheduler: { enabled: env.bool("ALERTS_SCHEDULER_ENABLED"), intervalMinutes: env.int("ALERTS_INTERVAL_MINUTES", 60, 5, 1440), lastRunAt: 甅壍.lastRunAt },
-        security: { basicAuth: !!習壍.basicAuth, encryption: secretsEnabled(), readOnly: true },
-        display: { currency: 鏴壍.displayCurrency ?? 習壍.displayCurrency ?? 樸壍.account.currency, fxRates: { ...習壍.fxRates, ...鏴壍.fxRates } },
-        env: 殰壍 ? envKeyStatuses() : [],
+        store: { driver: info.driver, writable: info.writable, fallbackReason: info.fallbackReason },
+        scheduler: { enabled: env.bool("ALERTS_SCHEDULER_ENABLED"), intervalMinutes: env.int("ALERTS_INTERVAL_MINUTES", 60, 5, 1440), lastRunAt: scheduler.lastRunAt },
+        security: { basicAuth: !!cfg.basicAuth, encryption: secretsEnabled(), readOnly: true },
+        display: { currency: settings.displayCurrency ?? cfg.displayCurrency ?? ctx.account.currency, fxRates: { ...cfg.fxRates, ...settings.fxRates } },
+        env: system ? envKeyStatuses() : [],
         generatedAt: new Date().toISOString(),
     };
 }

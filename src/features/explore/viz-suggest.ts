@@ -24,60 +24,60 @@ export const VIZ_META: Record<ExploreVizType, {
     "trend-multiples": { label: "Trend multiples", blurb: "Two metrics, one day axis" },
 };
 export const VIZ_ORDER: ExploreVizType[] = ["table", "line", "area", "bar", "stacked-bar", "donut", "number", "kpi-strip", "heatmap", "funnel", "scatter", "treemap", "trend-multiples"];
-const 宅壍 = new Set(["date", "week", "month", "quarter", "year"]);
-const 穴壍 = new Set(["dow", "hour"]);
-const 饣壍 = new Set(["device", "platform", "campaign_type", "campaign_status", "match_type", "st_match_type", "st_status", "bidding_strategy"]);
-const 晒壍 = new Set(["cost", "impressions", "clicks", "conversions", "conv_value"]);
-const 蕁壍 = ["impressions", "clicks", "conversions"];
-export function isAdditive(到壍: string | undefined, 焟壍?: Catalog): boolean {
-    if (!到壍)
+const CALENDAR = new Set(["date", "week", "month", "quarter", "year"]);
+const CYCLE = new Set(["dow", "hour"]);
+const FEW_VALUES = new Set(["device", "platform", "campaign_type", "campaign_status", "match_type", "st_match_type", "st_status", "bidding_strategy"]);
+const BASE_KEYS = new Set(["cost", "impressions", "clicks", "conversions", "conv_value"]);
+const FUNNEL_STEPS = ["impressions", "clicks", "conversions"];
+export function isAdditive(key: string | undefined, catalog?: Catalog): boolean {
+    if (!key)
         return false;
-    const 逎壍 = 焟壍?.metrics.find((峽壍) => 峽壍.key === 到壍);
-    return 逎壍 ? 逎壍.kind === "base" : 晒壍.has(到壍);
+    const m = catalog?.metrics.find((x) => x.key === key);
+    return m ? m.kind === "base" : BASE_KEYS.has(key);
 }
-function 篬壍(髛壍: readonly string[]): boolean {
-    if (髛壍.length < 2)
+function isFunnel(metrics: readonly string[]): boolean {
+    if (metrics.length < 2)
         return false;
-    let 柊壍 = -1;
-    for (const 蚹壍 of 髛壍) {
-        const 厨壍 = 蕁壍.indexOf(蚹壍);
-        if (厨壍 <= 柊壍)
+    let at = -1;
+    for (const m of metrics) {
+        const i = FUNNEL_STEPS.indexOf(m);
+        if (i <= at)
             return false;
-        柊壍 = 厨壍;
+        at = i;
     }
     return true;
 }
-export function suggestViz(犗壍: Shape, 醆壍?: Catalog): VizSettings {
-    const 幵壍 = 犗壍.dimensions;
-    const 絤壍 = 犗壍.metrics;
-    const 鱓壍 = isAdditive(絤壍[0], 醆壍);
-    if (!幵壍.length) {
-        if (絤壍.length <= 1)
+export function suggestViz(spec: Shape, catalog?: Catalog): VizSettings {
+    const dims = spec.dimensions;
+    const metrics = spec.metrics;
+    const additive = isAdditive(metrics[0], catalog);
+    if (!dims.length) {
+        if (metrics.length <= 1)
             return { type: "number" };
-        if (絤壍.length >= 3 && 篬壍(絤壍))
+        if (metrics.length >= 3 && isFunnel(metrics))
             return { type: "funnel" };
         return { type: "kpi-strip" };
     }
-    if (幵壍.length === 1) {
-        const 楂壍 = 幵壍[0] as string;
-        if (宅壍.has(楂壍))
-            return 楂壍 === "date" && 絤壍.length >= 2 && 絤壍.length <= 3 ? { type: "trend-multiples" } : { type: "line" };
-        if (穴壍.has(楂壍))
+    if (dims.length === 1) {
+        const d = dims[0] as string;
+        if (CALENDAR.has(d))
+            return d === "date" && metrics.length >= 2 && metrics.length <= 3 ? { type: "trend-multiples" } : { type: "line" };
+        if (CYCLE.has(d))
             return { type: "bar", horizontal: false };
-        if (絤壍.length >= 3)
+        if (metrics.length >= 3)
             return { type: "table" };
-        if (絤壍.length === 1 && 鱓壍 && 饣壍.has(楂壍))
+        if (metrics.length === 1 && additive && FEW_VALUES.has(d))
             return { type: "donut" };
         return { type: "bar" };
     }
-    if (幵壍.length === 2) {
-        if (幵壍.every((蠱壍) => 穴壍.has(蠱壍)))
+    if (dims.length === 2) {
+        if (dims.every((d) => CYCLE.has(d)))
             return { type: "heatmap" };
-        const 唠壍 = 幵壍.find((琏壍) => 宅壍.has(琏壍));
-        const 鋾壍 = 幵壍.find((忭壍) => 忭壍 !== 唠壍) as string;
-        if (唠壍)
-            return 鱓壍 && 絤壍.length === 1 && !宅壍.has(鋾壍) ? { type: "stacked-bar" } : { type: "line" };
-        if (鱓壍 && 絤壍.length === 1 && 幵壍.every((络壍) => 饣壍.has(络壍)))
+        const time = dims.find((d) => CALENDAR.has(d));
+        const other = dims.find((d) => d !== time) as string;
+        if (time)
+            return additive && metrics.length === 1 && !CALENDAR.has(other) ? { type: "stacked-bar" } : { type: "line" };
+        if (additive && metrics.length === 1 && dims.every((d) => FEW_VALUES.has(d)))
             return { type: "stacked-bar" };
     }
     return { type: "table" };
@@ -86,34 +86,34 @@ export interface VizFit {
     ok: boolean;
     hint?: string;
 }
-export function vizFit(鷋壍: ExploreVizType, 檺壍: Shape): VizFit {
-    const 覩壍 = 檺壍.dimensions;
-    const 嚘壍 = 檺壍.metrics.length;
-    const 疇壍 = 覩壍.some((鑶壍) => 宅壍.has(鑶壍));
-    switch (鷋壍) {
+export function vizFit(exploreVizType: ExploreVizType, spec: Shape): VizFit {
+    const dims = spec.dimensions;
+    const n = spec.metrics.length;
+    const hasCalendar = dims.some((d) => CALENDAR.has(d));
+    switch (exploreVizType) {
         case "table":
             return { ok: true };
         case "number":
-            return 覩壍.length ? { ok: true, hint: "Shows the total of the first metric; breakdowns are ignored." } : { ok: true };
+            return dims.length ? { ok: true, hint: "Shows the total of the first metric; breakdowns are ignored." } : { ok: true };
         case "kpi-strip":
-            return 覩壍.length ? { ok: true, hint: "Shows totals with daily sparklines; breakdowns are ignored." } : { ok: true };
+            return dims.length ? { ok: true, hint: "Shows totals with daily sparklines; breakdowns are ignored." } : { ok: true };
         case "line":
         case "area":
-            return 疇壍 ? { ok: true } : { ok: false, hint: "Needs a date, week, month, quarter or year breakdown." };
+            return hasCalendar ? { ok: true } : { ok: false, hint: "Needs a date, week, month, quarter or year breakdown." };
         case "bar":
-            return 覩壍.length ? { ok: true } : { ok: false, hint: "Needs a breakdown to compare." };
+            return dims.length ? { ok: true } : { ok: false, hint: "Needs a breakdown to compare." };
         case "stacked-bar":
-            return 覩壍.length === 2 ? { ok: true } : { ok: false, hint: "Needs two breakdowns, e.g. date × platform." };
+            return dims.length === 2 ? { ok: true } : { ok: false, hint: "Needs two breakdowns, e.g. date × platform." };
         case "donut":
         case "treemap":
-            return 覩壍.length >= 1 && !宅壍.has(覩壍[0] as string) ? { ok: true } : { ok: false, hint: "Needs one category breakdown (not time)." };
+            return dims.length >= 1 && !CALENDAR.has(dims[0] as string) ? { ok: true } : { ok: false, hint: "Needs one category breakdown (not time)." };
         case "heatmap":
-            return 覩壍.length === 2 ? { ok: true } : { ok: false, hint: "Needs two breakdowns, e.g. day of week × hour." };
+            return dims.length === 2 ? { ok: true } : { ok: false, hint: "Needs two breakdowns, e.g. day of week × hour." };
         case "funnel":
-            return 嚘壍 >= 2 ? { ok: true, hint: 覩壍.length ? "Uses totals; breakdowns are ignored." : undefined } : { ok: false, hint: "Needs two or more metrics, e.g. impressions → clicks → conversions." };
+            return n >= 2 ? { ok: true, hint: dims.length ? "Uses totals; breakdowns are ignored." : undefined } : { ok: false, hint: "Needs two or more metrics, e.g. impressions → clicks → conversions." };
         case "scatter":
-            return 覩壍.length >= 1 && 嚘壍 >= 2 ? { ok: true } : { ok: false, hint: "Needs a breakdown and two metrics (x and y; a third sizes the bubbles)." };
+            return dims.length >= 1 && n >= 2 ? { ok: true } : { ok: false, hint: "Needs a breakdown and two metrics (x and y; a third sizes the bubbles)." };
         case "trend-multiples":
-            return 嚘壍 >= 2 ? { ok: true, hint: 覩壍.some((慥壍) => 慥壍 !== "date") ? "Always plots by day." : undefined } : { ok: false, hint: "Needs two metrics; plots them by day." };
+            return n >= 2 ? { ok: true, hint: dims.some((d) => d !== "date") ? "Always plots by day." : undefined } : { ok: false, hint: "Needs two metrics; plots them by day." };
     }
 }

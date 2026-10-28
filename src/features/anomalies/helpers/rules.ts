@@ -15,77 +15,77 @@ export const RULE_OPS: {
     { value: "change_pct_gt", label: "change % is above", symbol: ">" },
     { value: "change_pct_lt", label: "change % is below", symbol: "<" },
 ];
-export const isChangeOp = (箱壍: RuleOp): boolean => 箱壍 === "change_pct_gt" || 箱壍 === "change_pct_lt";
-const 骠壍 = (枏壍: RuleOp) => RULE_OPS.find((虾壍) => 虾壍.value === 枏壍)?.symbol ?? 枏壍;
-const 卭壍 = (牜壍: number) => Number(牜壍.toFixed(6));
-export function ruleValueToInput(酋壍: RuleOp, 帺壍: MetricFormat, 紩壍: number): string {
-    if (isChangeOp(酋壍) || 帺壍 === "percent")
-        return String(卭壍(紩壍 * 100));
-    return String(卭壍(紩壍));
+export const isChangeOp = (op: RuleOp): boolean => op === "change_pct_gt" || op === "change_pct_lt";
+const opSymbol = (op: RuleOp) => RULE_OPS.find((o) => o.value === op)?.symbol ?? op;
+const clean = (v: number) => Number(v.toFixed(6));
+export function ruleValueToInput(op: RuleOp, format: MetricFormat, value: number): string {
+    if (isChangeOp(op) || format === "percent")
+        return String(clean(value * 100));
+    return String(clean(value));
 }
-export function ruleInputToValue(鰘壍: RuleOp, 椇壍: MetricFormat, 蟶壍: string): number | null {
-    const 哥壍 = 蟶壍.trim().replace(/[−–]/g, "-").replace(/[,$€£¥₫%×x\s]/gi, "");
-    if (!哥壍 || !/^[-+]?(\d+\.?\d*|\.\d+)$/.test(哥壍))
+export function ruleInputToValue(op: RuleOp, format: MetricFormat, input: string): number | null {
+    const text = input.trim().replace(/[−–]/g, "-").replace(/[,$€£¥₫%×x\s]/gi, "");
+    if (!text || !/^[-+]?(\d+\.?\d*|\.\d+)$/.test(text))
         return null;
-    const 珔壍 = Number(哥壍);
-    if (!Number.isFinite(珔壍))
+    const n = Number(text);
+    if (!Number.isFinite(n))
         return null;
-    return isChangeOp(鰘壍) || 椇壍 === "percent" ? 卭壍(珔壍 / 100) : 珔壍;
+    return isChangeOp(op) || format === "percent" ? clean(n / 100) : n;
 }
-export function ruleValueUnit(鋃壍: RuleOp, 徲壍: MetricFormat, 纡壍: string): string {
-    if (isChangeOp(鋃壍) || 徲壍 === "percent")
+export function ruleValueUnit(op: RuleOp, format: MetricFormat, currencySymbol: string): string {
+    if (isChangeOp(op) || format === "percent")
         return "%";
-    if (徲壍 === "money")
-        return 纡壍.trim();
-    if (徲壍 === "ratio")
+    if (format === "money")
+        return currencySymbol.trim();
+    if (format === "ratio")
         return "×";
     return "";
 }
-function 鶐壍(橿壍: number): string {
-    const 襮壍 = Math.abs(橿壍 * 100);
-    const 噝壍 = Number.isInteger(卭壍(襮壍)) ? 襮壍.toFixed(0) : 襮壍.toFixed(1);
-    return `${橿壍 < 0 ? "−" : "+"}${噝壍}%`;
+function signedPct(v: number): string {
+    const pct = Math.abs(v * 100);
+    const body = Number.isInteger(clean(pct)) ? pct.toFixed(0) : pct.toFixed(1);
+    return `${v < 0 ? "−" : "+"}${body}%`;
 }
-export function formatRuleValue(界壍: RuleOp, 鐻壍: MetricFormat, 愪壍: number, 耙壍: string): string {
-    if (isChangeOp(界壍))
-        return 鶐壍(愪壍);
-    return formatMetricValue(鐻壍, 愪壍, { currency: 耙壍, compact: false });
+export function formatRuleValue(op: RuleOp, format: MetricFormat, value: number, currency: string): string {
+    if (isChangeOp(op))
+        return signedPct(value);
+    return formatMetricValue(format, value, { currency, compact: false });
 }
 export interface MetricMeta {
     short: string;
     format: MetricFormat;
 }
-export function describeRuleCondition(鼈壍: Pick<ThresholdRule, "metric" | "op" | "value">, 毷壍: MetricMeta | undefined, 諦壍: string): string {
-    const 埕壍 = 毷壍?.short ?? 鼈壍.metric;
-    const 盄壍 = 毷壍?.format ?? "number";
-    const 閳壍 = formatRuleValue(鼈壍.op, 盄壍, 鼈壍.value, 諦壍);
-    return isChangeOp(鼈壍.op) ? `${埕壍} change ${骠壍(鼈壍.op)} ${閳壍}` : `${埕壍} ${骠壍(鼈壍.op)} ${閳壍}`;
+export function describeRuleCondition(rule: Pick<ThresholdRule, "metric" | "op" | "value">, meta: MetricMeta | undefined, currency: string): string {
+    const short = meta?.short ?? rule.metric;
+    const format = meta?.format ?? "number";
+    const value = formatRuleValue(rule.op, format, rule.value, currency);
+    return isChangeOp(rule.op) ? `${short} change ${opSymbol(rule.op)} ${value}` : `${short} ${opSymbol(rule.op)} ${value}`;
 }
-export function describeRuleWindow(抢壍: Pick<ThresholdRule, "op" | "window">): string {
-    const 膑壍 = 抢壍.window.days;
-    const 亀壍 = isChangeOp(抢壍.op);
-    if (抢壍.window.kind === "last_n_days") {
-        if (膑壍 === 1)
-            return 亀壍 ? "Latest day vs the day before" : "Latest day";
-        return 亀壍 ? `Last ${膑壍} days vs the previous ${膑壍}` : `Last ${膑壍} days combined`;
+export function describeRuleWindow(rule: Pick<ThresholdRule, "op" | "window">): string {
+    const n = rule.window.days;
+    const change = isChangeOp(rule.op);
+    if (rule.window.kind === "last_n_days") {
+        if (n === 1)
+            return change ? "Latest day vs the day before" : "Latest day";
+        return change ? `Last ${n} days vs the previous ${n}` : `Last ${n} days combined`;
     }
-    if (膑壍 === 1)
-        return 亀壍 ? "Latest day vs the 14 days before" : "Latest day";
-    return 亀壍 ? `Each of the last ${膑壍} days vs the 14 before` : `Each of the last ${膑壍} days`;
+    if (n === 1)
+        return change ? "Latest day vs the 14 days before" : "Latest day";
+    return change ? `Each of the last ${n} days vs the 14 before` : `Each of the last ${n} days`;
 }
-export function describeRuleScope(浯壍: Pick<ThresholdRule, "scope">, 豞壍: ReadonlyMap<string, string>): string {
-    if (浯壍.scope.level === "account")
+export function describeRuleScope(rule: Pick<ThresholdRule, "scope">, campaignNames: ReadonlyMap<string, string>): string {
+    if (rule.scope.level === "account")
         return "Account total";
-    const 奍壍 = 浯壍.scope.campaignIds ?? [];
-    const 砼壍 = 浯壍.scope.campaignTypes ?? [];
-    const 霫壍: string[] = [];
-    if (奍壍.length === 1 && 奍壍[0])
-        霫壍.push(豞壍.get(奍壍[0]) ?? 奍壍[0]);
-    else if (奍壍.length > 1)
-        霫壍.push(`${奍壍.length} campaigns`);
-    if (砼壍.length)
-        霫壍.push(砼壍.join(", "));
-    return 霫壍.length ? 霫壍.join(" · ") : "All campaigns";
+    const ids = rule.scope.campaignIds ?? [];
+    const types = rule.scope.campaignTypes ?? [];
+    const parts: string[] = [];
+    if (ids.length === 1 && ids[0])
+        parts.push(campaignNames.get(ids[0]) ?? ids[0]);
+    else if (ids.length > 1)
+        parts.push(`${ids.length} campaigns`);
+    if (types.length)
+        parts.push(types.join(", "));
+    return parts.length ? parts.join(" · ") : "All campaigns";
 }
 export interface PreviewEntity {
     id: string;
@@ -105,28 +105,28 @@ export interface PreviewSummary {
     }[];
     entities: PreviewEntity[];
 }
-export function summarizeRulePreview(搚壍: RulePreviewResult): PreviewSummary {
-    const 茉壍 = new Map<string, PreviewEntity>();
-    for (const 俸壍 of 搚壍.days) {
-        for (const 滧壍 of 俸壍.hits) {
-            const 跖壍 = 茉壍.get(滧壍.entityId);
-            if (!跖壍)
-                茉壍.set(滧壍.entityId, { id: 滧壍.entityId, name: 滧壍.entityName, days: 1, lastDate: 俸壍.date, lastObserved: 滧壍.observed, severity: 滧壍.severity });
+export function summarizeRulePreview(result: RulePreviewResult): PreviewSummary {
+    const by = new Map<string, PreviewEntity>();
+    for (const d of result.days) {
+        for (const h of d.hits) {
+            const e = by.get(h.entityId);
+            if (!e)
+                by.set(h.entityId, { id: h.entityId, name: h.entityName, days: 1, lastDate: d.date, lastObserved: h.observed, severity: h.severity });
             else {
-                跖壍.days += 1;
-                if (俸壍.date >= 跖壍.lastDate) {
-                    跖壍.lastDate = 俸壍.date;
-                    跖壍.lastObserved = 滧壍.observed;
+                e.days += 1;
+                if (d.date >= e.lastDate) {
+                    e.lastDate = d.date;
+                    e.lastObserved = h.observed;
                 }
             }
         }
     }
     return {
-        windowDays: 搚壍.days.length,
-        firedDays: 搚壍.days.filter((嫅壍) => 嫅壍.hits.length > 0).length,
-        totalHits: 搚壍.totalHits,
-        perDay: 搚壍.days.map((禴壍) => ({ date: 禴壍.date, count: 禴壍.hits.length })),
-        entities: [...茉壍.values()].sort((颣壍, 斒壍) => 斒壍.days - 颣壍.days || 颣壍.name.localeCompare(斒壍.name)),
+        windowDays: result.days.length,
+        firedDays: result.days.filter((d) => d.hits.length > 0).length,
+        totalHits: result.totalHits,
+        perDay: result.days.map((d) => ({ date: d.date, count: d.hits.length })),
+        entities: [...by.values()].sort((a, b) => b.days - a.days || a.name.localeCompare(b.name)),
     };
 }
 export interface RuleDraft {
@@ -146,47 +146,47 @@ export interface RuleDraft {
 export function newRuleDraft(): RuleDraft {
     return { name: "", enabled: true, level: "campaign", campaignIds: [], campaignTypes: [], metric: "cpa", op: "gt", valueInput: "", windowKind: "last_n_days", days: 3, severity: "warning" };
 }
-export function draftFromRule(蒁壍: ThresholdRule, 兰壍: MetricFormat): RuleDraft {
+export function draftFromRule(rule: ThresholdRule, format: MetricFormat): RuleDraft {
     return {
-        id: 蒁壍.id,
-        name: 蒁壍.name,
-        enabled: 蒁壍.enabled,
-        level: 蒁壍.scope.level,
-        campaignIds: [...(蒁壍.scope.campaignIds ?? [])],
-        campaignTypes: [...(蒁壍.scope.campaignTypes ?? [])],
-        metric: 蒁壍.metric,
-        op: 蒁壍.op,
-        valueInput: ruleValueToInput(蒁壍.op, 兰壍, 蒁壍.value),
-        windowKind: 蒁壍.window.kind,
-        days: 蒁壍.window.days,
-        severity: 蒁壍.severity,
+        id: rule.id,
+        name: rule.name,
+        enabled: rule.enabled,
+        level: rule.scope.level,
+        campaignIds: [...(rule.scope.campaignIds ?? [])],
+        campaignTypes: [...(rule.scope.campaignTypes ?? [])],
+        metric: rule.metric,
+        op: rule.op,
+        valueInput: ruleValueToInput(rule.op, format, rule.value),
+        windowKind: rule.window.kind,
+        days: rule.window.days,
+        severity: rule.severity,
     };
 }
 export type RuleBody = Omit<ThresholdRule, "id"> & {
     id?: string;
 };
-export function ruleFromDraft(灟壍: RuleDraft, 轎壍: MetricFormat): {
+export function ruleFromDraft(d: RuleDraft, format: MetricFormat): {
     ok: true;
     rule: RuleBody;
 } | {
     ok: false;
     error: string;
 } {
-    const 尽壍 = 灟壍.name.trim();
-    if (!尽壍)
+    const name = d.name.trim();
+    if (!name)
         return { ok: false, error: "Give the rule a name." };
-    if (尽壍.length > 80)
+    if (name.length > 80)
         return { ok: false, error: "Keep the name under 80 characters." };
-    if (!灟壍.metric)
+    if (!d.metric)
         return { ok: false, error: "Pick a metric." };
-    const 第壍 = ruleInputToValue(灟壍.op, 轎壍, 灟壍.valueInput);
-    if (第壍 === null)
+    const value = ruleInputToValue(d.op, format, d.valueInput);
+    if (value === null)
         return { ok: false, error: "Enter a number for the threshold." };
-    if (!Number.isInteger(灟壍.days) || 灟壍.days < 1 || 灟壍.days > 30)
+    if (!Number.isInteger(d.days) || d.days < 1 || d.days > 30)
         return { ok: false, error: "The window is 1–30 days." };
-    const 騛壍: ThresholdRule["scope"] = 灟壍.level === "account" ? { level: "account" } : { level: "campaign", ...(灟壍.campaignIds.length ? { campaignIds: 灟壍.campaignIds } : {}), ...(灟壍.campaignTypes.length ? { campaignTypes: 灟壍.campaignTypes } : {}) };
+    const scope: ThresholdRule["scope"] = d.level === "account" ? { level: "account" } : { level: "campaign", ...(d.campaignIds.length ? { campaignIds: d.campaignIds } : {}), ...(d.campaignTypes.length ? { campaignTypes: d.campaignTypes } : {}) };
     return {
         ok: true,
-        rule: { ...(灟壍.id ? { id: 灟壍.id } : {}), name: 尽壍, enabled: 灟壍.enabled, scope: 騛壍, metric: 灟壍.metric, op: 灟壍.op, value: 第壍, window: { kind: 灟壍.windowKind, days: 灟壍.days }, severity: 灟壍.severity },
+        rule: { ...(d.id ? { id: d.id } : {}), name, enabled: d.enabled, scope, metric: d.metric, op: d.op, value, window: { kind: d.windowKind, days: d.days }, severity: d.severity },
     };
 }

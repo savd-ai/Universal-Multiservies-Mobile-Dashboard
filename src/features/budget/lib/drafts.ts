@@ -8,72 +8,72 @@ export interface SavedTargets {
     locks: Readonly<Record<string, boolean>>;
 }
 export const EMPTY_DRAFT: TargetDraft = { targets: {}, locks: {} };
-export function savedTargetsOf(匿壍: readonly Pick<PacingRow, "unitId" | "monthlyTarget" | "locked">[], 爮壍?: Pick<BudgetTargetsView, "targets" | "locks">): SavedTargets {
-    const 鄝壍: Record<string, number> = {};
-    const 希壍: Record<string, boolean> = {};
-    for (const 系壍 of 匿壍) {
-        鄝壍[系壍.unitId] = 爮壍?.targets[系壍.unitId] ?? 系壍.monthlyTarget;
-        希壍[系壍.unitId] = 爮壍 ? !!爮壍.locks[系壍.unitId] : !!系壍.locked;
+export function savedTargetsOf(rows: readonly Pick<PacingRow, "unitId" | "monthlyTarget" | "locked">[], view?: Pick<BudgetTargetsView, "targets" | "locks">): SavedTargets {
+    const targets: Record<string, number> = {};
+    const locks: Record<string, boolean> = {};
+    for (const r of rows) {
+        targets[r.unitId] = view?.targets[r.unitId] ?? r.monthlyTarget;
+        locks[r.unitId] = view ? !!view.locks[r.unitId] : !!r.locked;
     }
-    return { targets: 鄝壍, locks: 希壍 };
+    return { targets, locks };
 }
-const 鯪壍 = 0.005;
-const 棙壍 = (蟈壍: number | undefined, 咷壍: number | undefined) => 蟈壍 !== undefined && 咷壍 !== undefined && Math.abs(蟈壍 - 咷壍) < 鯪壍;
-function 玦壍<T>(銕壍: Readonly<Record<string, T>>, 径壍: string): Record<string, T> {
-    const 繳壍 = { ...銕壍 };
-    delete 繳壍[径壍];
-    return 繳壍;
+const EPS = 0.005;
+const same = (a: number | undefined, b: number | undefined) => a !== undefined && b !== undefined && Math.abs(a - b) < EPS;
+function without<T>(rec: Readonly<Record<string, T>>, key: string): Record<string, T> {
+    const next = { ...rec };
+    delete next[key];
+    return next;
 }
-export function withTarget(鵢壍: TargetDraft, 橑壍: string, 襀壍: number, 嘯壍: number | undefined): TargetDraft {
-    const 甞壍 = 棙壍(襀壍, 嘯壍) ? 玦壍(鵢壍.targets, 橑壍) : { ...鵢壍.targets, [橑壍]: 襀壍 };
-    return { ...鵢壍, targets: 甞壍 };
+export function withTarget(draft: TargetDraft, unitId: string, value: number, saved: number | undefined): TargetDraft {
+    const targets = same(value, saved) ? without(draft.targets, unitId) : { ...draft.targets, [unitId]: value };
+    return { ...draft, targets };
 }
-export function withLock(鐍壍: TargetDraft, 惼壍: string, 翫壍: boolean, 黚壍: boolean | undefined): TargetDraft {
-    const 毉壍 = 翫壍 === !!黚壍 ? 玦壍(鐍壍.locks, 惼壍) : { ...鐍壍.locks, [惼壍]: 翫壍 };
-    return { ...鐍壍, locks: 毉壍 };
+export function withLock(draft: TargetDraft, unitId: string, locked: boolean, saved: boolean | undefined): TargetDraft {
+    const locks = locked === !!saved ? without(draft.locks, unitId) : { ...draft.locks, [unitId]: locked };
+    return { ...draft, locks };
 }
-export function draftFromValues(誸壍: Readonly<Record<string, number>>, 垧壍: SavedTargets, 皖壍: TargetDraft = EMPTY_DRAFT): TargetDraft {
-    let 閅壍: TargetDraft = { targets: {}, locks: 皖壍.locks };
-    for (const [扴壍, 腣壍] of Object.entries(誸壍))
-        閅壍 = withTarget(閅壍, 扴壍, 腣壍, 垧壍.targets[扴壍]);
-    return 閅壍;
+export function draftFromValues(values: Readonly<Record<string, number>>, saved: SavedTargets, base: TargetDraft = EMPTY_DRAFT): TargetDraft {
+    let next: TargetDraft = { targets: {}, locks: base.locks };
+    for (const [id, v] of Object.entries(values))
+        next = withTarget(next, id, v, saved.targets[id]);
+    return next;
 }
-export function isDirty(乒壍: TargetDraft | null | undefined): boolean {
-    return !!乒壍 && (Object.keys(乒壍.targets).length > 0 || Object.keys(乒壍.locks).length > 0);
+export function isDirty(draft: TargetDraft | null | undefined): boolean {
+    return !!draft && (Object.keys(draft.targets).length > 0 || Object.keys(draft.locks).length > 0);
 }
-export function draftChangeCount(流壍: TargetDraft | null | undefined): {
+export function draftChangeCount(draft: TargetDraft | null | undefined): {
     targets: number;
     locks: number;
     total: number;
 } {
-    const 谰壍 = 流壍 ? Object.keys(流壍.targets).length : 0;
-    const 够壍 = 流壍 ? Object.keys(流壍.locks).length : 0;
-    return { targets: 谰壍, locks: 够壍, total: 谰壍 + 够壍 };
+    const targets = draft ? Object.keys(draft.targets).length : 0;
+    const locks = draft ? Object.keys(draft.locks).length : 0;
+    return { targets, locks, total: targets + locks };
 }
-export function effectiveTargets(砎壍: SavedTargets, 雽壍: TargetDraft | null | undefined): Record<string, number> {
-    return { ...砎壍.targets, ...(雽壍?.targets ?? {}) };
+export function effectiveTargets(saved: SavedTargets, draft: TargetDraft | null | undefined): Record<string, number> {
+    return { ...saved.targets, ...(draft?.targets ?? {}) };
 }
-export function effectiveLocks(揬壍: SavedTargets, 苛壍: TargetDraft | null | undefined): Record<string, boolean> {
-    return { ...揬壍.locks, ...(苛壍?.locks ?? {}) };
+export function effectiveLocks(saved: SavedTargets, draft: TargetDraft | null | undefined): Record<string, boolean> {
+    return { ...saved.locks, ...(draft?.locks ?? {}) };
 }
-export function draftTotals(俊壍: SavedTargets, 溹壍: TargetDraft | null | undefined): {
+export function draftTotals(saved: SavedTargets, draft: TargetDraft | null | undefined): {
     before: number;
     after: number;
 } {
-    const 趨壍 = (媗壍: Readonly<Record<string, number>>) => Object.values(媗壍).reduce((禆壍, 页壍) => 禆壍 + 页壍, 0);
-    return { before: 趨壍(俊壍.targets), after: 趨壍(effectiveTargets(俊壍, 溹壍)) };
+    const sum = (r: Readonly<Record<string, number>>) => Object.values(r).reduce((s, v) => s + v, 0);
+    return { before: sum(saved.targets), after: sum(effectiveTargets(saved, draft)) };
 }
-export function targetsBody(敤壍: string, 葓壍: Readonly<Record<string, number>>, 兂壍: Readonly<Record<string, number>>, 瀱壍: Readonly<Record<string, boolean>>): BudgetTargetsBody {
-    const 輠壍: Record<string, number> = {};
-    for (const [小壍, 竾壍] of Object.entries(兂壍)) {
-        if (!Number.isFinite(竾壍) || 竾壍 < 0)
+export function targetsBody(month: string, defaults: Readonly<Record<string, number>>, targets: Readonly<Record<string, number>>, locks: Readonly<Record<string, boolean>>): BudgetTargetsBody {
+    const outTargets: Record<string, number> = {};
+    for (const [id, v] of Object.entries(targets)) {
+        if (!Number.isFinite(v) || v < 0)
             continue;
-        if (!棙壍(竾壍, 葓壍[小壍]))
-            輠壍[小壍] = Math.round(竾壍 * 100) / 100;
+        if (!same(v, defaults[id]))
+            outTargets[id] = Math.round(v * 100) / 100;
     }
-    const 駭壍: Record<string, boolean> = {};
-    for (const [曜壍, 藋壍] of Object.entries(瀱壍))
-        if (藋壍)
-            駭壍[曜壍] = true;
-    return { month: 敤壍, targets: 輠壍, locks: 駭壍 };
+    const outLocks: Record<string, boolean> = {};
+    for (const [id, on] of Object.entries(locks))
+        if (on)
+            outLocks[id] = true;
+    return { month, targets: outTargets, locks: outLocks };
 }

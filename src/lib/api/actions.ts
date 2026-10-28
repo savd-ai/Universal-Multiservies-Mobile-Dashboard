@@ -13,23 +13,23 @@ export class ReadOnlyLiveError extends Error {
     }
 }
 export function useSimulateAction() {
-    const 陜壍 = useQueryClient();
-    const 捋壍 = useAccountId();
+    const qc = useQueryClient();
+    const acct = useAccountId();
     return useMutation({
-        mutationFn: async (舺壍: SimulateRequest) => {
+        mutationFn: async (body: SimulateRequest) => {
             try {
-                const 伩壍 = await request<SimulateResponse | SimulatedAction>("/api/actions/simulate", { body: 舺壍 });
-                return "action" in 伩壍 ? 伩壍.action : 伩壍;
+                const res = await request<SimulateResponse | SimulatedAction>("/api/actions/simulate", { body });
+                return "action" in res ? res.action : res;
             }
-            catch (渘壍) {
-                if (渘壍 instanceof ApiError && 渘壍.code === "READ_ONLY_LIVE")
-                    throw new ReadOnlyLiveError((渘壍.details as ReadOnlyAlternatives | undefined) ?? null);
-                throw 渘壍;
+            catch (err) {
+                if (err instanceof ApiError && err.code === "READ_ONLY_LIVE")
+                    throw new ReadOnlyLiveError((err.details as ReadOnlyAlternatives | undefined) ?? null);
+                throw err;
             }
         },
         onSuccess: () => {
-            void 陜壍.invalidateQueries({ queryKey: ["acct", 捋壍] });
-            void 陜壍.invalidateQueries({ queryKey: ["audit"] });
+            void qc.invalidateQueries({ queryKey: ["acct", acct] });
+            void qc.invalidateQueries({ queryKey: ["audit"] });
         },
     });
 }
@@ -43,12 +43,12 @@ export interface AuditRow {
     mode?: string;
     details?: Record<string, unknown>;
 }
-export function useAudit(贇壍 = 100) {
+export function useAudit(limit = 100) {
     return useQuery({
-        queryKey: ["audit", 贇壍],
-        queryFn: ({ signal: 姶壍 }) => request<{
+        queryKey: ["audit", limit],
+        queryFn: ({ signal }) => request<{
             entries: AuditRow[];
-        }>("/api/audit", { query: { limit: 贇壍 }, signal: 姶壍 }).then((磥壍) => 磥壍.entries ?? []),
+        }>("/api/audit", { query: { limit }, signal }).then((r) => r.entries ?? []),
         staleTime: 15000,
     });
 }

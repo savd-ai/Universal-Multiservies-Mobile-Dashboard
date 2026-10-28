@@ -65,21 +65,21 @@ function shortLiveProblem(cause: LiveProblem): string {
             return `the Google Ads API did not respond as expected (${cause.errorCode})`;
     }
 }
-export function describeBlankReason(皌壍: BlankReason | null | undefined): string {
-    if (!皌壍)
+export function describeBlankReason(reason: BlankReason | null | undefined): string {
+    if (!reason)
         return "Google Ads API connected.";
-    switch (皌壍.code) {
+    switch (reason.code) {
         case "demo":
-            return `Demo data: generated sample accounts, not read from Google Ads. Live data replaces it once Google Ads is connected (now: ${shortLiveProblem(皌壍.cause)}).`;
+            return `Demo data: generated sample accounts, not read from Google Ads. Live data replaces it once Google Ads is connected (now: ${shortLiveProblem(reason.cause)}).`;
         case "no_env":
             return "No Google Ads credentials found in .env. The dashboard stays blank until they are added.";
         case "missing_keys": {
-            const 镻壍 = 皌壍.missing.map((扪壍) => 扪壍.replace("GOOGLE_ADS_", "")).join(", ");
-            return `.env is missing ${皌壍.missing.length} of ${REQUIRED_GOOGLE_ADS_ENV.length} required keys (${镻壍}). The dashboard stays blank.`;
+            const short = reason.missing.map((k) => k.replace("GOOGLE_ADS_", "")).join(", ");
+            return `.env is missing ${reason.missing.length} of ${REQUIRED_GOOGLE_ADS_ENV.length} required keys (${short}). The dashboard stays blank.`;
         }
         case "auth_failed":
-            return `Google Ads credentials were rejected (${皌壍.errorCode}). ${皌壍.detail} The dashboard stays blank.`;
+            return `Google Ads credentials were rejected (${reason.errorCode}). ${reason.detail} The dashboard stays blank.`;
         case "api_error":
-            return `The Google Ads API did not respond as expected (${皌壍.errorCode}).${皌壍.detail ? ` ${皌壍.detail}` : ""} The dashboard stays blank.`;
+            return `The Google Ads API did not respond as expected (${reason.errorCode}).${reason.detail ? ` ${reason.detail}` : ""} The dashboard stays blank.`;
     }
 }

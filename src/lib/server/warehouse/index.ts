@@ -22,65 +22,65 @@ interface Slot {
     location: string | null;
 }
 export function warehouseLocation(): string {
-    const 袪壍 = appConfig();
-    if (袪壍.storeDriver === "memory" || !袪壍.dataDir)
+    const app = appConfig();
+    if (app.storeDriver === "memory" || !app.dataDir)
         return ":memory:";
-    const 喙壍 = warehouseConfig().dir ?? path.join(袪壍.dataDir, "warehouse");
-    return path.resolve(process.cwd(), 喙壍, "live.sqlite");
+    const dir = warehouseConfig().dir ?? path.join(app.dataDir, "warehouse");
+    return path.resolve(process.cwd(), dir, "live.sqlite");
 }
-function 璈壍(): Slot {
-    const 鍷壍 = warehouseLocation();
+function open(): Slot {
+    const location = warehouseLocation();
     if (!sqliteModule())
-        return { warehouse: null, reason: SQLITE_UNAVAILABLE, location: 鍷壍 };
+        return { warehouse: null, reason: SQLITE_UNAVAILABLE, location };
     try {
-        const 恦壍 = openDatabase(鍷壍);
-        const 罕壍 = now().toISOString();
-        const 鹄壍 = migrate(恦壍, 罕壍);
-        const 欳壍 = new WarehouseRepo(恦壍);
-        if (!欳壍.getMeta("created_at"))
-            欳壍.setMeta("created_at", 罕壍);
-        欳壍.setMeta("mode", "live");
-        欳壍.abandonRuns(罕壍);
-        if (鹄壍.length)
-            log.info("Warehouse schema migrated", { versions: 鹄壍.join(","), file: 鍷壍 });
-        return { warehouse: { mode: "live", repo: 欳壍, location: 鍷壍, sqliteVersion: sqliteVersion(恦壍), knownAccounts: new Set() }, reason: null, location: 鍷壍 };
+        const db = openDatabase(location);
+        const nowIso = now().toISOString();
+        const applied = migrate(db, nowIso);
+        const repo = new WarehouseRepo(db);
+        if (!repo.getMeta("created_at"))
+            repo.setMeta("created_at", nowIso);
+        repo.setMeta("mode", "live");
+        repo.abandonRuns(nowIso);
+        if (applied.length)
+            log.info("Warehouse schema migrated", { versions: applied.join(","), file: location });
+        return { warehouse: { mode: "live", repo, location, sqliteVersion: sqliteVersion(db), knownAccounts: new Set() }, reason: null, location };
     }
-    catch (訢壍) {
-        const 圑壍 = `The warehouse could not be opened: ${訢壍 instanceof Error ? 訢壍.message : String(訢壍)}`;
-        log.warn(圑壍);
-        return { warehouse: null, reason: 圑壍, location: 鍷壍 };
+    catch (err) {
+        const reason = `The warehouse could not be opened: ${err instanceof Error ? err.message : String(err)}`;
+        log.warn(reason);
+        return { warehouse: null, reason, location };
     }
 }
-const 瘀壍 = (): Slot => singleton("store:warehouse:live", () => 璈壍());
-export function getWarehouse(铯壍: Mode): Warehouse | null {
-    if (!warehouseConfig().enabled || 铯壍 !== "live")
+const slot = (): Slot => singleton("store:warehouse:live", () => open());
+export function getWarehouse(mode: Mode): Warehouse | null {
+    if (!warehouseConfig().enabled || mode !== "live")
         return null;
-    return 瘀壍().warehouse;
+    return slot().warehouse;
 }
-export function warehouseAvailability(懞壍: Mode): {
+export function warehouseAvailability(mode: Mode): {
     enabled: boolean;
     available: boolean;
     reason: string | null;
     location: string | null;
 } {
-    const 胍壍 = warehouseConfig();
-    if (!胍壍.enabled)
+    const cfg = warehouseConfig();
+    if (!cfg.enabled)
         return { enabled: false, available: false, reason: "WAREHOUSE_ENABLED=false: Google Ads data is not stored.", location: null };
-    if (懞壍 !== "live")
+    if (mode !== "live")
         return { enabled: true, available: false, reason: "No live Google Ads account is connected, so nothing is stored.", location: null };
-    const 龼壍 = 瘀壍();
-    return { enabled: true, available: !!龼壍.warehouse, reason: 龼壍.reason, location: 龼壍.location };
+    const value = slot();
+    return { enabled: true, available: !!value.warehouse, reason: value.reason, location: value.location };
 }
-export function warehouseSize(沫壍: Warehouse): number | null {
-    if (沫壍.location === ":memory:")
+export function warehouseSize(w: Warehouse): number | null {
+    if (w.location === ":memory:")
         return null;
-    let 讚壍 = 0;
-    for (const 墉壍 of [沫壍.location, `${沫壍.location}-wal`]) {
+    let total = 0;
+    for (const f of [w.location, `${w.location}-wal`]) {
         try {
-            讚壍 += statSync(墉壍).size;
+            total += statSync(f).size;
         }
         catch {
         }
     }
-    return 讚壍;
+    return total;
 }

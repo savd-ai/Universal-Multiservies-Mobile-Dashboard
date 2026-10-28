@@ -1,9 +1,9 @@
 import { DashboardScreen } from "@/features/dashboards/dashboard-screen";
-export default async function Page({ params: 衖壍 }: {
+export default async function Page({ params }: {
     params: Promise<{
         dashboardId: string;
     }>;
 }) {
-    const { dashboardId: 啅壍 } = await 衖壍;
-    return <DashboardScreen dashboardId={啅壍}/>;
+    const { dashboardId } = await params;
+    return <DashboardScreen dashboardId={dashboardId}/>;
 }

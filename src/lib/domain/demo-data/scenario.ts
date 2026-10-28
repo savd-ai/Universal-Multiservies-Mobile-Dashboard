@@ -57,18 +57,18 @@ export interface DemoAdGroupSpec {
     weight: number;
     keywords?: DemoKeywordSpec[];
 }
-const 焥壍 = (途壍: string, 崃壍: MatchType, 篲壍: number): DemoKeywordSpec => ({ text: 途壍, match: 崃壍, qs: 篲壍 });
+const kw = (text: string, match: MatchType, qs: number): DemoKeywordSpec => ({ text, match, qs });
 export const DEMO_AD_GROUPS: Record<string, DemoAdGroupSpec[]> = {
     c1: [
-        { name: "Brand — Exact", weight: 0.55, keywords: [焥壍("acme running", "Exact", 10), 焥壍("acme shoes", "Exact", 9), 焥壍("acme running shoes", "Exact", 10), 焥壍("acme store", "Exact", 9)] },
-        { name: "Brand — Product names", weight: 0.33, keywords: [焥壍("acme cloudstride", "Phrase", 9), 焥壍("acme trailblazer 3", "Phrase", 8), 焥壍("acme pacer", "Phrase", 8), 焥壍("acme glide", "Phrase", 7)] },
-        { name: "Brand — Misspellings", weight: 0.12, keywords: [焥壍("acmee running", "Exact", 7), 焥壍("acme runing", "Exact", 8), 焥壍("akme shoes", "Exact", 6)] },
+        { name: "Brand — Exact", weight: 0.55, keywords: [kw("acme running", "Exact", 10), kw("acme shoes", "Exact", 9), kw("acme running shoes", "Exact", 10), kw("acme store", "Exact", 9)] },
+        { name: "Brand — Product names", weight: 0.33, keywords: [kw("acme cloudstride", "Phrase", 9), kw("acme trailblazer 3", "Phrase", 8), kw("acme pacer", "Phrase", 8), kw("acme glide", "Phrase", 7)] },
+        { name: "Brand — Misspellings", weight: 0.12, keywords: [kw("acmee running", "Exact", 7), kw("acme runing", "Exact", 8), kw("akme shoes", "Exact", 6)] },
     ],
     c2: [
-        { name: "Running shoes", weight: 0.42, keywords: [焥壍("running shoes", "Phrase", 6), 焥壍("running shoes men", "Broad", 5), 焥壍("best running shoes", "Exact", 7), 焥壍("running shoes women", "Phrase", 6), 焥壍("lightweight running shoes", "Phrase", 7)] },
-        { name: "Trail running shoes", weight: 0.24, keywords: [焥壍("trail running shoes", "Phrase", 7), 焥壍("trail shoes women", "Exact", 8), 焥壍("waterproof trail runners", "Broad", 5), 焥壍("gore tex trail shoes", "Phrase", 6)] },
-        { name: "Wide fit shoes", weight: 0.18, keywords: [焥壍("wide fit running shoes", "Phrase", 8), 焥壍("wide toe box running shoes", "Exact", 8), 焥壍("wide running shoes men", "Broad", 6)] },
-        { name: "Marathon shoes", weight: 0.16, keywords: [焥壍("marathon running shoes", "Phrase", 6), 焥壍("carbon plate running shoes", "Exact", 7), 焥壍("racing flats", "Phrase", 5)] },
+        { name: "Running shoes", weight: 0.42, keywords: [kw("running shoes", "Phrase", 6), kw("running shoes men", "Broad", 5), kw("best running shoes", "Exact", 7), kw("running shoes women", "Phrase", 6), kw("lightweight running shoes", "Phrase", 7)] },
+        { name: "Trail running shoes", weight: 0.24, keywords: [kw("trail running shoes", "Phrase", 7), kw("trail shoes women", "Exact", 8), kw("waterproof trail runners", "Broad", 5), kw("gore tex trail shoes", "Phrase", 6)] },
+        { name: "Wide fit shoes", weight: 0.18, keywords: [kw("wide fit running shoes", "Phrase", 8), kw("wide toe box running shoes", "Exact", 8), kw("wide running shoes men", "Broad", 6)] },
+        { name: "Marathon shoes", weight: 0.16, keywords: [kw("marathon running shoes", "Phrase", 6), kw("carbon plate running shoes", "Exact", 7), kw("racing flats", "Phrase", 5)] },
     ],
     c3: [
         { name: "Asset group — Full catalog", weight: 0.58 },
@@ -96,14 +96,14 @@ export const DEMO_AD_GROUPS: Record<string, DemoAdGroupSpec[]> = {
         { name: "Interest — running", weight: 0.25 },
     ],
     c8: [
-        { name: "Competitor — StrideMax", weight: 0.46, keywords: [焥壍("stridemax shoes", "Phrase", 4), 焥壍("stridemax vs acme", "Exact", 5), 焥壍("stridemax running", "Broad", 3)] },
-        { name: "Competitor — PeakPace", weight: 0.32, keywords: [焥壍("peakpace running shoes", "Phrase", 4), 焥壍("peakpace sale", "Exact", 5), 焥壍("peakpace alternatives", "Phrase", 6)] },
-        { name: "Competitor — Velora", weight: 0.22, keywords: [焥壍("velora trainers", "Phrase", 3), 焥壍("velora outlet", "Exact", 4)] },
+        { name: "Competitor — StrideMax", weight: 0.46, keywords: [kw("stridemax shoes", "Phrase", 4), kw("stridemax vs acme", "Exact", 5), kw("stridemax running", "Broad", 3)] },
+        { name: "Competitor — PeakPace", weight: 0.32, keywords: [kw("peakpace running shoes", "Phrase", 4), kw("peakpace sale", "Exact", 5), kw("peakpace alternatives", "Phrase", 6)] },
+        { name: "Competitor — Velora", weight: 0.22, keywords: [kw("velora trainers", "Phrase", 3), kw("velora outlet", "Exact", 4)] },
     ],
-    t1: [{ name: "Brand — Exact", weight: 1, keywords: [焥壍("trail gear outlet", "Exact", 9), 焥壍("trailgear", "Exact", 9), 焥壍("trail gear store", "Phrase", 8)] }],
+    t1: [{ name: "Brand — Exact", weight: 1, keywords: [kw("trail gear outlet", "Exact", 9), kw("trailgear", "Exact", 9), kw("trail gear store", "Phrase", 8)] }],
     t2: [
-        { name: "Hiking boots", weight: 0.6, keywords: [焥壍("hiking boots", "Phrase", 6), 焥壍("waterproof hiking boots", "Phrase", 7), 焥壍("hiking boots women", "Exact", 7)] },
-        { name: "Trail shoes", weight: 0.4, keywords: [焥壍("trail shoes sale", "Phrase", 6), 焥壍("cheap trail shoes", "Broad", 4)] },
+        { name: "Hiking boots", weight: 0.6, keywords: [kw("hiking boots", "Phrase", 6), kw("waterproof hiking boots", "Phrase", 7), kw("hiking boots women", "Exact", 7)] },
+        { name: "Trail shoes", weight: 0.4, keywords: [kw("trail shoes sale", "Phrase", 6), kw("cheap trail shoes", "Broad", 4)] },
     ],
     t3: [{ name: "Asset group — Outlet", weight: 1 }],
     t4: [{ name: "Clearance — All", weight: 1 }],
@@ -115,77 +115,77 @@ export interface DemoSearchTermSpec {
     cvr: number;
     status?: "added" | "excluded" | "none";
 }
-const 髡壍 = (某壍: string, 蚿壍: number, 厮壍: number, 犝壍: DemoSearchTermSpec["status"] = "none"): DemoSearchTermSpec => ({ term: 某壍, weight: 蚿壍, cvr: 厮壍, status: 犝壍 });
+const st = (term: string, weight: number, cvr2: number, status: DemoSearchTermSpec["status"] = "none"): DemoSearchTermSpec => ({ term, weight, cvr: cvr2, status });
 export const DEMO_SEARCH_TERMS: Record<string, DemoSearchTermSpec[]> = {
     c1: [
-        髡壍("acme running", 0.3, 1.1, "added"),
-        髡壍("acme shoes", 0.18, 1.05, "added"),
-        髡壍("acme running shoes", 0.16, 1.1, "added"),
-        髡壍("acme cloudstride review", 0.08, 0.8),
-        髡壍("acme store near me", 0.07, 1.0),
-        髡壍("acme discount code", 0.06, 1.3),
-        髡壍("acme careers", 0.04, 0),
-        髡壍("acme running club", 0.04, 0.2),
-        髡壍("acme returns policy", 0.04, 0.1),
-        髡壍("acme outlet", 0.03, 0.9),
+        st("acme running", 0.3, 1.1, "added"),
+        st("acme shoes", 0.18, 1.05, "added"),
+        st("acme running shoes", 0.16, 1.1, "added"),
+        st("acme cloudstride review", 0.08, 0.8),
+        st("acme store near me", 0.07, 1.0),
+        st("acme discount code", 0.06, 1.3),
+        st("acme careers", 0.04, 0),
+        st("acme running club", 0.04, 0.2),
+        st("acme returns policy", 0.04, 0.1),
+        st("acme outlet", 0.03, 0.9),
     ],
     c2: [
-        髡壍("running shoes", 0.16, 1.0, "added"),
-        髡壍("best running shoes 2026", 0.1, 1.1),
-        髡壍("running shoes women", 0.09, 1.0, "added"),
-        髡壍("wide fit running shoes", 0.08, 1.4),
-        髡壍("trail running shoes waterproof", 0.07, 1.1),
-        髡壍("free running shoes", 0.06, 0),
-        髡壍("running shoes jobs", 0.04, 0),
-        髡壍("how to clean running shoes", 0.05, 0),
-        髡壍("used running shoes", 0.04, 0.05),
-        髡壍("running shoe repair near me", 0.03, 0),
-        髡壍("running shoes pdf size chart", 0.03, 0),
-        髡壍("carbon plate running shoes", 0.07, 0.9),
-        髡壍("marathon shoes for flat feet", 0.06, 1.2),
-        髡壍("cheap running shoes", 0.06, 0.4),
-        髡壍("diy shoe stretcher", 0.03, 0),
-        髡壍("running shoes men", 0.03, 1.0),
+        st("running shoes", 0.16, 1.0, "added"),
+        st("best running shoes 2026", 0.1, 1.1),
+        st("running shoes women", 0.09, 1.0, "added"),
+        st("wide fit running shoes", 0.08, 1.4),
+        st("trail running shoes waterproof", 0.07, 1.1),
+        st("free running shoes", 0.06, 0),
+        st("running shoes jobs", 0.04, 0),
+        st("how to clean running shoes", 0.05, 0),
+        st("used running shoes", 0.04, 0.05),
+        st("running shoe repair near me", 0.03, 0),
+        st("running shoes pdf size chart", 0.03, 0),
+        st("carbon plate running shoes", 0.07, 0.9),
+        st("marathon shoes for flat feet", 0.06, 1.2),
+        st("cheap running shoes", 0.06, 0.4),
+        st("diy shoe stretcher", 0.03, 0),
+        st("running shoes men", 0.03, 1.0),
     ],
     c3: [
-        髡壍("running shoes sale", 0.2, 1.1),
-        髡壍("trail shoes", 0.15, 1.0),
-        髡壍("acme running", 0.12, 1.4),
-        髡壍("running socks", 0.1, 0.8),
-        髡壍("running jacket women", 0.1, 0.7),
-        髡壍("free shipping running shoes", 0.08, 0.6),
-        髡壍("running shoes jobs", 0.05, 0),
-        髡壍("how to lace running shoes", 0.06, 0),
-        髡壍("gym shoes", 0.08, 0.6),
-        髡壍("velora outlet", 0.06, 0.1),
+        st("running shoes sale", 0.2, 1.1),
+        st("trail shoes", 0.15, 1.0),
+        st("acme running", 0.12, 1.4),
+        st("running socks", 0.1, 0.8),
+        st("running jacket women", 0.1, 0.7),
+        st("free shipping running shoes", 0.08, 0.6),
+        st("running shoes jobs", 0.05, 0),
+        st("how to lace running shoes", 0.06, 0),
+        st("gym shoes", 0.08, 0.6),
+        st("velora outlet", 0.06, 0.1),
     ],
     c4: [
-        髡壍("acme cloudstride", 0.22, 1.2),
-        髡壍("trail running shoes women", 0.16, 1.1),
-        髡壍("running shoes under 100", 0.14, 1.0),
-        髡壍("running water bottle", 0.1, 0.8),
-        髡壍("running shoes kids", 0.1, 0.9),
-        髡壍("shoe laces", 0.08, 0.3),
-        髡壍("running shoes repair kit", 0.06, 0),
-        髡壍("used acme shoes", 0.07, 0.05),
-        髡壍("running socks merino", 0.07, 0.9),
+        st("acme cloudstride", 0.22, 1.2),
+        st("trail running shoes women", 0.16, 1.1),
+        st("running shoes under 100", 0.14, 1.0),
+        st("running water bottle", 0.1, 0.8),
+        st("running shoes kids", 0.1, 0.9),
+        st("shoe laces", 0.08, 0.3),
+        st("running shoes repair kit", 0.06, 0),
+        st("used acme shoes", 0.07, 0.05),
+        st("running socks merino", 0.07, 0.9),
     ],
     c8: [
-        髡壍("stridemax shoes", 0.28, 1.0, "added"),
-        髡壍("stridemax vs acme", 0.18, 1.4, "added"),
-        髡壍("peakpace running shoes", 0.17, 0.9, "added"),
-        髡壍("stridemax customer service", 0.1, 0),
-        髡壍("peakpace login", 0.08, 0),
-        髡壍("velora trainers", 0.1, 0.8, "added"),
-        髡壍("stridemax warranty claim", 0.05, 0),
-        髡壍("peakpace sale", 0.04, 1.1),
+        st("stridemax shoes", 0.28, 1.0, "added"),
+        st("stridemax vs acme", 0.18, 1.4, "added"),
+        st("peakpace running shoes", 0.17, 0.9, "added"),
+        st("stridemax customer service", 0.1, 0),
+        st("peakpace login", 0.08, 0),
+        st("velora trainers", 0.1, 0.8, "added"),
+        st("stridemax warranty claim", 0.05, 0),
+        st("peakpace sale", 0.04, 1.1),
     ],
     t2: [
-        髡壍("hiking boots", 0.35, 1.0, "added"),
-        髡壍("waterproof hiking boots", 0.25, 1.2),
-        髡壍("hiking boots repair", 0.1, 0),
-        髡壍("free hiking boots", 0.08, 0),
-        髡壍("hiking boots women", 0.22, 1.1, "added"),
+        st("hiking boots", 0.35, 1.0, "added"),
+        st("waterproof hiking boots", 0.25, 1.2),
+        st("hiking boots repair", 0.1, 0),
+        st("free hiking boots", 0.08, 0),
+        st("hiking boots women", 0.22, 1.1, "added"),
     ],
 };
 export const DEVICE_MIX: Record<string, Record<string, number>> = {
@@ -212,21 +212,21 @@ export const GEO_MIX: [
     ["FR", 0.03, 0.75],
     ["ZZ", 0.03, 0.6],
 ];
-export function hourCurve(醌壍: CampaignType, 幻壍: boolean): number[] {
-    const 絪壍: number[] = [];
-    for (let 鱙壍 = 0; 鱙壍 < 24; 鱙壍++) {
-        const 楈壍 = 幻壍 ? 鱙壍 - 1 : 鱙壍;
-        const 蠷壍 = 楈壍 < 6 ? 0.18 + 楈壍 * 0.03 : 0;
-        const 唦壍 = 绢壍(楈壍, 9, 2.2) * 0.8;
-        const 琕壍 = 绢壍(楈壍, 12.5, 1.6) * 1.0;
-        const 錄壍 = 绢壍(楈壍, 20, 2.1) * (醌壍 === "Video" || 醌壍 === "Demand Gen" ? 1.5 : 1.05);
-        const 忳壍 = 醌壍 === "Display" ? 0.55 : 0.25;
-        絪壍.push(蠷壍 + 忳壍 + 唦壍 + 琕壍 + 錄壍);
+export function hourCurve(campaignType: CampaignType, weekend: boolean): number[] {
+    const out: number[] = [];
+    for (let h = 0; h < 24; h++) {
+        const hh = weekend ? h - 1 : h;
+        const night = hh < 6 ? 0.18 + hh * 0.03 : 0;
+        const morning = gauss(hh, 9, 2.2) * 0.8;
+        const lunch = gauss(hh, 12.5, 1.6) * 1.0;
+        const evening = gauss(hh, 20, 2.1) * (campaignType === "Video" || campaignType === "Demand Gen" ? 1.5 : 1.05);
+        const base = campaignType === "Display" ? 0.55 : 0.25;
+        out.push(night + base + morning + lunch + evening);
     }
-    return 絪壍;
+    return out;
 }
-function 绢壍(鷑壍: number, 櫀壍: number, 覯壍: number): number {
-    return Math.exp(-((鷑壍 - 櫀壍) ** 2) / (2 * 覯壍 * 覯壍));
+function gauss(x: number, mu: number, sigma: number): number {
+    return Math.exp(-((x - mu) ** 2) / (2 * sigma * sigma));
 }
 export interface DemoPlatformSpec {
     share: number;

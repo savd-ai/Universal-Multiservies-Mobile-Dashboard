@@ -15,15 +15,15 @@ export interface GoogleAdsSource {
         name: string;
     } | null>;
     defaultAccountId(): string;
-    account(半壍: string): Promise<AccountInfo>;
-    today(爹壍: string): Promise<CivilDate>;
-    dataThrough(鄨壍: string): Promise<CivilDate>;
-    getDims(帗壍: string): Promise<EntityDims>;
-    getTable(紆壍: string, 鯵壍: GoogleTableId, 棤壍: DateRange): Promise<FactSlice>;
-    getChangeEvents(蟓壍: string, 哂壍: DateRange): Promise<ChangeEvent[]>;
-    getGoogleEstimates(玱壍: string): Promise<GoogleEstimates>;
-    coverage(銠壍: string, 徏壍: GoogleTableId): Promise<DateRange | null>;
-    invalidate(繾壍?: string): Promise<void>;
+    account(accountId: string): Promise<AccountInfo>;
+    today(accountId: string): Promise<CivilDate>;
+    dataThrough(accountId: string): Promise<CivilDate>;
+    getDims(accountId: string): Promise<EntityDims>;
+    getTable(accountId: string, table: GoogleTableId, range: DateRange): Promise<FactSlice>;
+    getChangeEvents(accountId: string, range: DateRange): Promise<ChangeEvent[]>;
+    getGoogleEstimates(accountId: string): Promise<GoogleEstimates>;
+    coverage(accountId: string, table: GoogleTableId): Promise<DateRange | null>;
+    invalidate(accountId?: string): Promise<void>;
 }
 export interface HealthResult {
     ok: boolean;

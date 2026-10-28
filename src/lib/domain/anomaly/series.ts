@@ -22,85 +22,85 @@ export interface EntitySeries {
     days: (DayTotals | null)[];
 }
 export const emptyDay = (): DayTotals => ({ cost: 0, clicks: 0, impressions: 0, conversions: 0, conv_value: 0, is_search_impr: 0, is_eligible: 0, is_lost_budget: 0, is_lost_rank: 0 });
-function 忣壍(绒壍: DayTotals, 鷁壍: Partial<DayTotals>): void {
-    绒壍.cost += 鷁壍.cost ?? 0;
-    绒壍.clicks += 鷁壍.clicks ?? 0;
-    绒壍.impressions += 鷁壍.impressions ?? 0;
-    绒壍.conversions += 鷁壍.conversions ?? 0;
-    绒壍.conv_value += 鷁壍.conv_value ?? 0;
-    绒壍.is_search_impr += 鷁壍.is_search_impr ?? 0;
-    绒壍.is_eligible += 鷁壍.is_eligible ?? 0;
-    绒壍.is_lost_budget += 鷁壍.is_lost_budget ?? 0;
-    绒壍.is_lost_rank += 鷁壍.is_lost_rank ?? 0;
+function addInto(t: DayTotals, r: Partial<DayTotals>): void {
+    t.cost += r.cost ?? 0;
+    t.clicks += r.clicks ?? 0;
+    t.impressions += r.impressions ?? 0;
+    t.conversions += r.conversions ?? 0;
+    t.conv_value += r.conv_value ?? 0;
+    t.is_search_impr += r.is_search_impr ?? 0;
+    t.is_eligible += r.is_eligible ?? 0;
+    t.is_lost_budget += r.is_lost_budget ?? 0;
+    t.is_lost_rank += r.is_lost_rank ?? 0;
 }
-export function buildCampaignSeries(檰壍: readonly CampaignDailyRow[], 覟壍: readonly CampaignDim[], 嚎壍: CivilDate, 畽壍: CivilDate): Map<string, EntitySeries> {
-    const 鑬壍 = enumerate(嚎壍, 畽壍);
-    const 慛壍 = new Map(鑬壍.map((聊壍, 鼹壍) => [聊壍, 鼹壍]));
-    const 氨壍 = new Map<string, EntitySeries>();
-    for (const 謗壍 of 覟壍) {
-        const 堆壍 = 鑬壍.map((盵壍) => (謗壍.start && 盵壍 < 謗壍.start ? null : emptyDay()));
-        氨壍.set(謗壍.id, { id: 謗壍.id, name: 謗壍.name, type: 謗壍.type, campaign: 謗壍, dates: 鑬壍, days: 堆壍 });
+export function buildCampaignSeries(rows: readonly CampaignDailyRow[], campaigns: readonly CampaignDim[], start: CivilDate, end: CivilDate): Map<string, EntitySeries> {
+    const dates = enumerate(start, end);
+    const index = new Map(dates.map((d, i) => [d, i]));
+    const out = new Map<string, EntitySeries>();
+    for (const c of campaigns) {
+        const days = dates.map((d) => (c.start && d < c.start ? null : emptyDay()));
+        out.set(c.id, { id: c.id, name: c.name, type: c.type, campaign: c, dates, days });
     }
-    for (const 闤壍 of 檰壍) {
-        const 拓壍 = 氨壍.get(闤壍.campaign_id);
-        const 臂壍 = 慛壍.get(闤壍.date);
-        if (!拓壍 || 臂壍 === undefined)
+    for (const r of rows) {
+        const s = out.get(r.campaign_id);
+        const i = index.get(r.date);
+        if (!s || i === undefined)
             continue;
-        const 亱壍 = 拓壍.days[臂壍] ?? emptyDay();
-        忣壍(亱壍, 闤壍);
-        拓壍.days[臂壍] = 亱壍;
+        const day = s.days[i] ?? emptyDay();
+        addInto(day, r);
+        s.days[i] = day;
     }
-    return 氨壍;
+    return out;
 }
-export function combineSeries(涠壍: string, 貏壍: string, 奾壍: readonly EntitySeries[], 硭壍: CivilDate[]): EntitySeries {
-    const 靜壍: (DayTotals | null)[] = 硭壍.map(() => null);
-    for (const 摋壍 of 奾壍) {
-        摋壍.days.forEach((茺壍, 倩壍) => {
-            if (!茺壍)
+export function combineSeries(id: string, name: string, parts: readonly EntitySeries[], dates: CivilDate[]): EntitySeries {
+    const days: (DayTotals | null)[] = dates.map(() => null);
+    for (const p of parts) {
+        p.days.forEach((d, i) => {
+            if (!d)
                 return;
-            const 漘壍 = 靜壍[倩壍] ?? emptyDay();
-            忣壍(漘壍, 茺壍);
-            靜壍[倩壍] = 漘壍;
+            const t = days[i] ?? emptyDay();
+            addInto(t, d);
+            days[i] = t;
         });
     }
-    return { id: 涠壍, name: 貏壍, dates: 硭壍, days: 靜壍 };
+    return { id, name, dates, days };
 }
 export interface WindowSum extends DayTotals {
     n: number;
 }
-export function sumWindow(踇壍: EntitySeries, 嫶壍: number, 秥壍: number): WindowSum {
-    const 飔壍: WindowSum = { ...emptyDay(), n: 0 };
-    for (let 旃壍 = Math.max(0, 嫶壍); 旃壍 <= Math.min(踇壍.days.length - 1, 秥壍); 旃壍++) {
-        const 蒲壍 = 踇壍.days[旃壍];
-        if (!蒲壍)
+export function sumWindow(s: EntitySeries, value: number, to: number): WindowSum {
+    const t: WindowSum = { ...emptyDay(), n: 0 };
+    for (let i = Math.max(0, value); i <= Math.min(s.days.length - 1, to); i++) {
+        const d = s.days[i];
+        if (!d)
             continue;
-        忣壍(飔壍, 蒲壍);
-        飔壍.n++;
+        addInto(t, d);
+        t.n++;
     }
-    return 飔壍;
+    return t;
 }
 export interface MonitoredDef {
     key: MonitoredMetric;
     label: string;
     format: MetricFormat;
     badUp: boolean;
-    daily(冡壍: DayTotals): number | null;
-    display(炐壍: DayTotals): number | null;
-    window(轿壍: WindowSum): number | null;
+    daily(d: DayTotals): number | null;
+    display(d: DayTotals): number | null;
+    window(w: WindowSum): number | null;
     volume: "clicks" | "impr" | "conv";
 }
-const 屮壍 = (筝壍: number, 驌壍: WindowSum) => (驌壍.n > 0 ? 筝壍 / 驌壍.n : null);
+const perDay = (v: number, w: WindowSum) => (w.n > 0 ? v / w.n : null);
 export const MONITORED: Record<MonitoredMetric, MonitoredDef> = {
-    spend: { key: "spend", label: "Spend", format: "money", badUp: true, daily: (朻壍) => 朻壍.cost, display: (蘪壍) => 蘪壍.cost, window: (匙壍) => 屮壍(匙壍.cost, 匙壍), volume: "clicks" },
-    conversions: { key: "conversions", label: "Conversions", format: "decimal", badUp: false, daily: (爈壍) => 爈壍.conversions, display: (郷壍) => 郷壍.conversions, window: (左壍) => 屮壍(左壍.conversions, 左壍), volume: "conv" },
+    spend: { key: "spend", label: "Spend", format: "money", badUp: true, daily: (d) => d.cost, display: (d) => d.cost, window: (w) => perDay(w.cost, w), volume: "clicks" },
+    conversions: { key: "conversions", label: "Conversions", format: "decimal", badUp: false, daily: (d) => d.conversions, display: (d) => d.conversions, window: (w) => perDay(w.conversions, w), volume: "conv" },
     cpa: {
         key: "cpa",
         label: "CPA",
         format: "money",
         badUp: true,
-        daily: (糕壍) => 糕壍.cost / Math.max(糕壍.conversions, 0.1),
-        display: (鯄壍) => (鯄壍.conversions > 0 ? 鯄壍.cost / 鯄壍.conversions : null),
-        window: (梳壍) => (梳壍.n > 0 ? 梳壍.cost / Math.max(梳壍.conversions, 0.1) : null),
+        daily: (d) => d.cost / Math.max(d.conversions, 0.1),
+        display: (d) => (d.conversions > 0 ? d.cost / d.conversions : null),
+        window: (w) => (w.n > 0 ? w.cost / Math.max(w.conversions, 0.1) : null),
         volume: "conv",
     },
     ctr: {
@@ -108,9 +108,9 @@ export const MONITORED: Record<MonitoredMetric, MonitoredDef> = {
         label: "CTR",
         format: "percent",
         badUp: false,
-        daily: (螢壍) => (螢壍.impressions > 0 ? 螢壍.clicks / 螢壍.impressions : null),
-        display: (咑壍) => (咑壍.impressions > 0 ? 咑壍.clicks / 咑壍.impressions : null),
-        window: (玀壍) => (玀壍.impressions > 0 ? 玀壍.clicks / 玀壍.impressions : null),
+        daily: (d) => (d.impressions > 0 ? d.clicks / d.impressions : null),
+        display: (d) => (d.impressions > 0 ? d.clicks / d.impressions : null),
+        window: (w) => (w.impressions > 0 ? w.clicks / w.impressions : null),
         volume: "impr",
     },
     cpc: {
@@ -118,9 +118,9 @@ export const MONITORED: Record<MonitoredMetric, MonitoredDef> = {
         label: "CPC",
         format: "money",
         badUp: true,
-        daily: (鉯壍) => (鉯壍.clicks > 0 ? 鉯壍.cost / 鉯壍.clicks : null),
-        display: (彞壍) => (彞壍.clicks > 0 ? 彞壍.cost / 彞壍.clicks : null),
-        window: (繍壍) => (繍壍.clicks > 0 ? 繍壍.cost / 繍壍.clicks : null),
+        daily: (d) => (d.clicks > 0 ? d.cost / d.clicks : null),
+        display: (d) => (d.clicks > 0 ? d.cost / d.clicks : null),
+        window: (w) => (w.clicks > 0 ? w.cost / w.clicks : null),
         volume: "clicks",
     },
     cvr: {
@@ -128,9 +128,9 @@ export const MONITORED: Record<MonitoredMetric, MonitoredDef> = {
         label: "Conv. rate",
         format: "percent",
         badUp: false,
-        daily: (鴼壍) => (鴼壍.clicks > 0 ? 鴼壍.conversions / 鴼壍.clicks : null),
-        display: (樫壍) => (樫壍.clicks > 0 ? 樫壍.conversions / 樫壍.clicks : null),
-        window: (褚壍) => (褚壍.clicks > 0 ? 褚壍.conversions / 褚壍.clicks : null),
+        daily: (d) => (d.clicks > 0 ? d.conversions / d.clicks : null),
+        display: (d) => (d.clicks > 0 ? d.conversions / d.clicks : null),
+        window: (w) => (w.clicks > 0 ? w.conversions / w.clicks : null),
         volume: "conv",
     },
     roas: {
@@ -138,44 +138,44 @@ export const MONITORED: Record<MonitoredMetric, MonitoredDef> = {
         label: "ROAS",
         format: "ratio",
         badUp: false,
-        daily: (嘉壍) => (嘉壍.cost > 0 ? 嘉壍.conv_value / 嘉壍.cost : null),
-        display: (瓸壍) => (瓸壍.cost > 0 ? 瓸壍.conv_value / 瓸壍.cost : null),
-        window: (鏧壍) => (鏧壍.cost > 0 ? 鏧壍.conv_value / 鏧壍.cost : null),
+        daily: (d) => (d.cost > 0 ? d.conv_value / d.cost : null),
+        display: (d) => (d.cost > 0 ? d.conv_value / d.cost : null),
+        window: (w) => (w.cost > 0 ? w.conv_value / w.cost : null),
         volume: "conv",
     },
 };
-export function dailyValues(惖壍: EntitySeries, 翅壍: MonitoredDef, 麴壍: number, 殣壍: number): number[] {
-    const 誒壍: number[] = [];
-    for (let 垁壍 = Math.max(0, 麴壍); 垁壍 <= Math.min(惖壍.days.length - 1, 殣壍); 垁壍++) {
-        const 癰壍 = 惖壍.days[垁壍];
-        if (!癰壍)
+export function dailyValues(s: EntitySeries, def: MonitoredDef, value: number, to: number): number[] {
+    const out: number[] = [];
+    for (let i = Math.max(0, value); i <= Math.min(s.days.length - 1, to); i++) {
+        const d = s.days[i];
+        if (!d)
             continue;
-        const 镟壍 = 翅壍.daily(癰壍);
-        if (镟壍 !== null && Number.isFinite(镟壍))
-            誒壍.push(镟壍);
+        const v = def.daily(d);
+        if (v !== null && Number.isFinite(v))
+            out.push(v);
     }
-    return 誒壍;
+    return out;
 }
-export function displaySeries(扎壍: EntitySeries, 脽壍: (丬壍: DayTotals) => number | null, 洛壍 = 24): {
+export function displaySeries(s: EntitySeries, value: (d: DayTotals) => number | null, n = 24): {
     date: CivilDate;
     value: number | null;
 }[] {
-    const 谊壍 = Math.max(0, 扎壍.dates.length - 洛壍);
-    const 壹壍: {
+    const start = Math.max(0, s.dates.length - n);
+    const out: {
         date: CivilDate;
         value: number | null;
     }[] = [];
-    for (let 矨壍 = 谊壍; 矨壍 < 扎壍.dates.length; 矨壍++) {
-        const 雗壍 = 扎壍.days[矨壍];
-        const 揆壍 = 雗壍 ? 脽壍(雗壍) : null;
-        壹壍.push({ date: 扎壍.dates[矨壍] as CivilDate, value: 揆壍 !== null && Number.isFinite(揆壍) ? 揆壍 : null });
+    for (let i = start; i < s.dates.length; i++) {
+        const d = s.days[i];
+        const v = d ? value(d) : null;
+        out.push({ date: s.dates[i] as CivilDate, value: v !== null && Number.isFinite(v) ? v : null });
     }
-    return 壹壍;
+    return out;
 }
-export function firstDataIndex(芵壍: EntitySeries): number {
-    const 侤壍 = 芵壍.days.findIndex((溓壍) => 溓壍 !== null);
-    return 侤壍 < 0 ? 芵壍.days.length : 侤壍;
+export function firstDataIndex(s: EntitySeries): number {
+    const i = s.days.findIndex((d) => d !== null);
+    return i < 0 ? s.days.length : i;
 }
-export function dateAt(趂壍: EntitySeries, 婱壍: number): CivilDate {
-    return 趂壍.dates[Math.max(0, Math.min(趂壍.dates.length - 1, 婱壍))] ?? addDays(趂壍.dates[0] ?? "1970-01-01", 婱壍);
+export function dateAt(s: EntitySeries, i: number): CivilDate {
+    return s.dates[Math.max(0, Math.min(s.dates.length - 1, i))] ?? addDays(s.dates[0] ?? "1970-01-01", i);
 }

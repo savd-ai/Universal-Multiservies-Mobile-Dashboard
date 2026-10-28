@@ -3,4 +3,4 @@ import { getAnomalySettings, updateAnomalySettings } from "@/lib/server/anomaly/
 import { route } from "@/lib/server/http/api";
 export const runtime = "nodejs";
 export const GET = route({}, async () => getAnomalySettings());
-export const PUT = route({ body: z.record(z.string(), z.unknown()) }, async ({ body: 莼壍 }) => updateAnomalySettings(莼壍));
+export const PUT = route({ body: z.record(z.string(), z.unknown()) }, async ({ body }) => updateAnomalySettings(body));

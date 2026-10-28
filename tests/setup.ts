@@ -1,14 +1,14 @@
 import { vi } from "vitest";
 import { FixtureGoogleAdsSource } from "./support/fixture-source";
-vi.mock("@/lib/server/datasource/resolver", async (斓壍) => {
-    const 蒂壍 = await 斓壍<typeof import("@/lib/server/datasource/resolver")>();
+vi.mock("@/lib/server/datasource/resolver", async (value) => {
+    const value2 = await value<typeof import("@/lib/server/datasource/resolver")>();
     return {
-        ...蒂壍,
-        resolveGoogleAds: (共壍?: {
+        ...value2,
+        resolveGoogleAds: (value3?: {
             fresh?: boolean;
         }) => (globalThis as {
             __savdRealResolver?: boolean;
-        }).__savdRealResolver ? 蒂壍.resolveGoogleAds(共壍) : Promise.resolve({ source: new FixtureGoogleAdsSource(), health: null }),
+        }).__savdRealResolver ? value2.resolveGoogleAds(value3) : Promise.resolve({ source: new FixtureGoogleAdsSource(), health: null }),
     };
 });
 export {};

@@ -29,183 +29,183 @@ import { SaveQuestionDialog, SaveToDashboardDialog } from "./save-dialogs";
 import { SavedQuestionsDrawer } from "./saved-questions";
 import { suggestViz } from "./viz-suggest";
 import { useCan } from "@/lib/api/auth";
-const 顓壍 = { history: "replace" as const, scroll: false };
+const qOpts = { history: "replace" as const, scroll: false };
 export function ExploreScreen() {
-    const 敂壍 = useQueryClient();
-    const 萱壍 = useCan()("dashboards.edit");
-    const 儠壍 = useStatus();
-    const 瀏壍 = useCatalog();
-    const 軾壍 = useQuestions();
-    const 寭壍 = useFilters(儠壍.data?.today);
-    const [竜壍, 駋壍] = useQueryState("q", parseAsString.withOptions(顓壍));
-    const [暺壍, 薩壍] = useQueryState("question", parseAsString.withOptions(顓壍));
-    const [劘壍, 熇壍] = useQueryState("view", parseAsStringEnum<PreviewTab>(["chart", "table", "spec"]).withDefault("chart").withOptions(顓壍));
-    const [, 遶壍] = useQueryState("campaign", parseAsString.withOptions({ history: "push", scroll: false }));
-    const [嵥壍, 籔壍] = useState<null | "save" | "dashboard" | "saved">(null);
-    const [魃壍, 栲壍] = useState<{
+    const qc = useQueryClient();
+    const canEdit = useCan()("dashboards.edit");
+    const status = useStatus();
+    const catalog = useCatalog();
+    const questions = useQuestions();
+    const filters = useFilters(status.data?.today);
+    const [q, setQ] = useQueryState("q", parseAsString.withOptions(qOpts));
+    const [questionId, setQuestionId] = useQueryState("question", parseAsString.withOptions(qOpts));
+    const [tab, setTab] = useQueryState("view", parseAsStringEnum<PreviewTab>(["chart", "table", "spec"]).withDefault("chart").withOptions(qOpts));
+    const [, setCampaign] = useQueryState("campaign", parseAsString.withOptions({ history: "push", scroll: false }));
+    const [dialog, setDialog] = useState<null | "save" | "dashboard" | "saved">(null);
+    const [metricEditor, setMetricEditor] = useState<{
         open: boolean;
         key?: string;
     }>({ open: false });
-    const [蜡壍, 吐壍] = useState(0);
-    const 狿壍 = useRef<string | null>(null);
-    const 釮壍 = useMemo(() => (竜壍 ? decodeExploreParam(竜壍) : null), [竜壍]);
-    const 廝壍 = 釮壍?.ok ? 釮壍.state : null;
-    const 緌壍 = 瀏壍.data;
+    const [generation, setGeneration] = useState(0);
+    const noted = useRef<string | null>(null);
+    const decoded = useMemo(() => (q ? decodeExploreParam(q) : null), [q]);
+    const state = decoded?.ok ? decoded.state : null;
+    const cat = catalog.data;
     useEffect(() => {
-        if (!竜壍 || !釮壍 || 狿壍.current === 竜壍)
+        if (!q || !decoded || noted.current === q)
             return;
-        if (!釮壍.ok) {
-            狿壍.current = 竜壍;
-            toast(`Couldn't open that question — ${釮壍.reason}`, { tone: "warn", ms: 5000 });
-            void 駋壍(encodeExploreState(defaultState()));
+        if (!decoded.ok) {
+            noted.current = q;
+            toast(`Couldn't open that question — ${decoded.reason}`, { tone: "warn", ms: 5000 });
+            void setQ(encodeExploreState(defaultState()));
         }
-        else if (釮壍.notes.length) {
-            狿壍.current = 竜壍;
-            toast(釮壍.notes[0] as string, { tone: "warn" });
+        else if (decoded.notes.length) {
+            noted.current = q;
+            toast(decoded.notes[0] as string, { tone: "warn" });
         }
-    }, [竜壍, 釮壍, 駋壍]);
+    }, [q, decoded, setQ]);
     useEffect(() => {
-        if (!暺壍 || 竜壍 || !軾壍.data)
+        if (!questionId || q || !questions.data)
             return;
-        const 鲻壍 = 軾壍.data.find((榪壍) => 榪壍.id === 暺壍);
-        if (!鲻壍) {
-            if (狿壍.current === `question:${暺壍}`)
+        const found = questions.data.find((x) => x.id === questionId);
+        if (!found) {
+            if (noted.current === `question:${questionId}`)
                 return;
-            狿壍.current = `question:${暺壍}`;
+            noted.current = `question:${questionId}`;
             toast("That saved question no longer exists.", { tone: "warn" });
-            void 薩壍(null);
+            void setQuestionId(null);
             return;
         }
-        const 袙壍 = stateFromPayload({ query: 鲻壍.query, viz: 鲻壍.viz });
-        if (袙壍.ok)
-            void 駋壍(encodeExploreState(袙壍.state));
-    }, [暺壍, 竜壍, 軾壍.data, 駋壍, 薩壍]);
-    const 喈壍 = useCallback((瑷壍: NotebookAction) => {
-        void 駋壍((鍦壍) => {
-            const 恕壍 = 鍦壍 ? decodeExploreParam(鍦壍) : null;
-            return encodeExploreState(notebookReducer(恕壍?.ok ? 恕壍.state : defaultState(), 瑷壍));
+        const r = stateFromPayload({ query: found.query, viz: found.viz });
+        if (r.ok)
+            void setQ(encodeExploreState(r.state));
+    }, [questionId, q, questions.data, setQ, setQuestionId]);
+    const dispatch = useCallback((action: NotebookAction) => {
+        void setQ((prev) => {
+            const cur = prev ? decodeExploreParam(prev) : null;
+            return encodeExploreState(notebookReducer(cur?.ok ? cur.state : defaultState(), action));
         });
-    }, [駋壍]);
-    const 罄壍 = useCallback((鸳壍: ExploreState, 欢壍: string | null = null) => {
-        void 駋壍(encodeExploreState(鸳壍), { history: "push" });
-        void 薩壍(欢壍, { history: "push" });
-        吐壍((訑壍) => 訑壍 + 1);
-    }, [駋壍, 薩壍]);
-    const 圀壍 = useCallback((痯壍: SavedQuestion) => {
-        const 铞壍 = stateFromPayload({ query: 痯壍.query, viz: 痯壍.viz });
-        if (铞壍.ok)
-            罄壍(铞壍.state, 痯壍.id);
+    }, [setQ]);
+    const load = useCallback((next: ExploreState, savedId: string | null = null) => {
+        void setQ(encodeExploreState(next), { history: "push" });
+        void setQuestionId(savedId, { history: "push" });
+        setGeneration((g) => g + 1);
+    }, [setQ, setQuestionId]);
+    const openSaved = useCallback((sq: SavedQuestion) => {
+        const r = stateFromPayload({ query: sq.query, viz: sq.viz });
+        if (r.ok)
+            load(r.state, sq.id);
         else
-            toast(`Couldn't open “${痯壍.name}” — ${铞壍.reason}`, { tone: "crit" });
-    }, [罄壍]);
-    const 懍壍 = 寭壍.dateRange;
-    const 肼壍 = 寭壍.rangeKey === "custom" ? 寭壍.rangeLabel || RANGE_LABELS.custom : RANGE_LABELS[寭壍.rangeKey];
-    const 龫壍 = useMemo(() => (廝壍 ? runnableSpec(廝壍.spec, 懍壍) : null), [廝壍, 懍壍]);
-    const 沚壍 = 廝壍 ? (廝壍.viz ?? suggestViz(廝壍.spec, 緌壍)) : null;
-    const 讉壍 = 暺壍 ? 軾壍.data?.find((塸壍) => 塸壍.id === 暺壍) : undefined;
-    const 睧壍 = useMemo(() => {
-        if (!讉壍 || !廝壍)
+            toast(`Couldn't open “${sq.name}” — ${r.reason}`, { tone: "crit" });
+    }, [load]);
+    const pageRange = filters.dateRange;
+    const pageRangeLabel = filters.rangeKey === "custom" ? filters.rangeLabel || RANGE_LABELS.custom : RANGE_LABELS[filters.rangeKey];
+    const runSpec = useMemo(() => (state ? runnableSpec(state.spec, pageRange) : null), [state, pageRange]);
+    const viz = state ? (state.viz ?? suggestViz(state.spec, cat)) : null;
+    const saved = questionId ? questions.data?.find((x) => x.id === questionId) : undefined;
+    const edited = useMemo(() => {
+        if (!saved || !state)
             return false;
-        const 陖壍 = stateFromPayload({ query: 讉壍.query, viz: 讉壍.viz });
-        return !陖壍.ok || JSON.stringify(toPayload(陖壍.state)) !== JSON.stringify(toPayload(廝壍));
-    }, [讉壍, 廝壍]);
-    const 捅壍 = useCallback((舴壍: string) => {
-        if (!緌壍 || !廝壍)
+        const base = stateFromPayload({ query: saved.query, viz: saved.viz });
+        return !base.ok || JSON.stringify(toPayload(base.state)) !== JSON.stringify(toPayload(state));
+    }, [saved, state]);
+    const setSource = useCallback((source: string) => {
+        if (!cat || !state)
             return;
-        const 伣壍 = pruneForSource(緌壍, 廝壍.spec, 舴壍);
-        喈壍({ type: "setSpec", spec: 伣壍.spec });
-        if (伣壍.removed.length)
-            toast(`Removed ${listLabel(伣壍.removed)} — not available for ${sourceLabel(舴壍)}`, { tone: "warn", ms: 5000 });
-    }, [緌壍, 廝壍, 喈壍]);
-    const 渒壍: WidgetRuntime | null = useMemo(() => 儠壍.data
+        const pruned = pruneForSource(cat, state.spec, source);
+        dispatch({ type: "setSpec", spec: pruned.spec });
+        if (pruned.removed.length)
+            toast(`Removed ${listLabel(pruned.removed)} — not available for ${sourceLabel(source)}`, { tone: "warn", ms: 5000 });
+    }, [cat, state, dispatch]);
+    const rt: WidgetRuntime | null = useMemo(() => status.data
         ? {
-            filters: 寭壍,
-            today: 儠壍.data.today,
-            dataThrough: 儠壍.data.dataThrough,
-            currency: 儠壍.data.display.currency || 儠壍.data.account.currency,
-            money: moneyFromStatus(儠壍.data),
-            mode: 儠壍.data.mode,
+            filters,
+            today: status.data.today,
+            dataThrough: status.data.dataThrough,
+            currency: status.data.display.currency || status.data.account.currency,
+            money: moneyFromStatus(status.data),
+            mode: status.data.mode,
             editing: false,
             dashboardId: "explore",
-            openCampaign: (贁壍: string) => void 遶壍(贁壍),
-            toggleCrossFilter: (姰壍: string, 磟壍: string, 韎壍?: {
+            openCampaign: (id: string) => void setCampaign(id),
+            toggleCrossFilter: (dim: string, value: string, opts?: {
                 exclude?: boolean;
             }) => {
-                喈壍({ type: "toggleFilterValue", dim: 姰壍 as DimensionKey, value: 磟壍, exclude: 韎壍?.exclude });
-                toast(`Filter: ${dimLabel(緌壍, 姰壍)} ${韎壍?.exclude ? "is not" : "is"} ${磟壍} — click again to remove`);
+                dispatch({ type: "toggleFilterValue", dim: dim as DimensionKey, value, exclude: opts?.exclude });
+                toast(`Filter: ${dimLabel(cat, dim)} ${opts?.exclude ? "is not" : "is"} ${value} — click again to remove`);
             },
         }
-        : null, [儠壍.data, 寭壍, 遶壍, 喈壍, 緌壍]);
-    const 撽壍 = 讉壍?.name ?? (廝壍 ? autoTitle(廝壍.spec, 緌壍) : "New question");
-    const 莬壍 = (傛壍: string, 澊壍: string) => {
-        const 蹹壍 = navigator.clipboard?.writeText(傛壍);
-        if (!蹹壍)
+        : null, [status.data, filters, setCampaign, dispatch, cat]);
+    const title = saved?.name ?? (state ? autoTitle(state.spec, cat) : "New question");
+    const copy = (text: string, what: string) => {
+        const done = navigator.clipboard?.writeText(text);
+        if (!done)
             return toast("Copying isn't available in this browser", { tone: "crit" });
-        void 蹹壍.then(() => toast(`${澊壍} copied`)).catch(() => toast("Copy failed — your browser blocked clipboard access", { tone: "crit" }));
+        void done.then(() => toast(`${what} copied`)).catch(() => toast("Copy failed — your browser blocked clipboard access", { tone: "crit" }));
     };
-    const 孨壍 = () => 龫壍 && void 莬壍(new URL(exploreHref(龫壍, 廝壍?.viz), window.location.origin).toString(), "Link");
-    const 穗壍 = () => 龫壍 && 沚壍 && void 莬壍(JSON.stringify({ spec: 龫壍, viz: 沚壍 }, null, 2), "Spec JSON");
-    const 饆壍 = (昵壍: "csv" | "json") => {
-        if (!龫壍)
+    const copyLink = () => runSpec && void copy(new URL(exploreHref(runSpec, state?.viz), window.location.origin).toString(), "Link");
+    const copyJson = () => runSpec && viz && void copy(JSON.stringify({ spec: runSpec, viz }, null, 2), "Spec JSON");
+    const doExport = (format: "csv" | "json") => {
+        if (!runSpec)
             return;
-        void exportQuery({ ...龫壍, limit: 龫壍.limit ?? 10000 }, 昵壍, slugify(撽壍)).catch((蔤壍: Error) => toast(蔤壍.message || "Export failed", { tone: "crit" }));
+        void exportQuery({ ...runSpec, limit: runSpec.limit ?? 10000 }, format, slugify(title)).catch((e: Error) => toast(e.message || "Export failed", { tone: "crit" }));
     };
-    const 刓壍 = (焂壍: Fix) => {
-        喈壍({ type: "setSpec", spec: 焂壍.spec });
-        toast(焂壍.label);
+    const applyFix = (fix: Fix) => {
+        dispatch({ type: "setSpec", spec: fix.spec });
+        toast(fix.label);
     };
-    const 迱壍 = () => {
-        void 駋壍(null, { history: "push" });
-        void 薩壍(null, { history: "push" });
-        吐壍((峠壍) => 峠壍 + 1);
+    const newQuestion = () => {
+        void setQ(null, { history: "push" });
+        void setQuestionId(null, { history: "push" });
+        setGeneration((g) => g + 1);
     };
-    const 篏壍: NotebookCtx | null = 廝壍 && 緌壍 && 儠壍.data
+    const nb: NotebookCtx | null = state && cat && status.data
         ? {
-            state: 廝壍,
-            spec: 廝壍.spec,
-            dispatch: 喈壍,
-            catalog: 緌壍,
-            today: 儠壍.data.today,
-            dataThrough: 儠壍.data.dataThrough,
-            currency: 渒壍?.currency ?? 儠壍.data.account.currency,
-            mode: 儠壍.data.mode,
-            pageRange: 懍壍,
-            pageRangeLabel: 肼壍,
-            setSource: 捅壍,
-            editMetric: (骾壍) => 栲壍({ open: true, key: 骾壍 }),
+            state,
+            spec: state.spec,
+            dispatch,
+            catalog: cat,
+            today: status.data.today,
+            dataThrough: status.data.dataThrough,
+            currency: rt?.currency ?? status.data.account.currency,
+            mode: status.data.mode,
+            pageRange,
+            pageRangeLabel,
+            setSource,
+            editMetric: (key) => setMetricEditor({ open: true, key }),
         }
         : null;
-    const 枭壍 = 廝壍
-        ? [sourceLabel(廝壍.spec.source), 廝壍.spec.dateRange ? dateRangeLabel(廝壍.spec.dateRange) : `Page range · ${肼壍}`, 廝壍.spec.compare !== "none" ? COMPARE_LABEL[廝壍.spec.compare] : null].filter(Boolean).join(" · ")
+    const subtitle = state
+        ? [sourceLabel(state.spec.source), state.spec.dateRange ? dateRangeLabel(state.spec.dateRange) : `Page range · ${pageRangeLabel}`, state.spec.compare !== "none" ? COMPARE_LABEL[state.spec.compare] : null].filter(Boolean).join(" · ")
         : "";
-    const 蚜壍 = 軾壍.data?.length ?? 0;
-    let 压壍: React.ReactNode;
-    if (瀏壍.error)
-        压壍 = <ErrorState error={瀏壍.error} onRetry={() => void 瀏壍.refetch()}/>;
-    else if (!緌壍 || !儠壍.data || (暺壍 && !竜壍) || (竜壍 && !廝壍))
-        压壍 = <鑙壍 />;
-    else if (!篏壍 || !渒壍 || !沚壍)
-        压壍 = (<ExploreStart catalog={緌壍} onStart={(牺壍) => 罄壍(牺壍)} onScratch={() => 罄壍(defaultState())} onOpenSaved={圀壍} onAllSaved={() => 籔壍("saved")}/>);
+    const count = questions.data?.length ?? 0;
+    let body: React.ReactNode;
+    if (catalog.error)
+        body = <ErrorState error={catalog.error} onRetry={() => void catalog.refetch()}/>;
+    else if (!cat || !status.data || (questionId && !q) || (q && !state))
+        body = <ExploreSkeleton />;
+    else if (!nb || !rt || !viz)
+        body = (<ExploreStart catalog={cat} onStart={(s) => load(s)} onScratch={() => load(defaultState())} onOpenSaved={openSaved} onAllSaved={() => setDialog("saved")}/>);
     else
-        压壍 = (<div className="grid grid-cols-1 items-start gap-6 wide:grid-cols-[minmax(360px,5fr)_minmax(0,7fr)]">
-        <Notebook key={蜡壍} nb={篏壍}/>
+        body = (<div className="grid grid-cols-1 items-start gap-6 wide:grid-cols-[minmax(360px,5fr)_minmax(0,7fr)]">
+        <Notebook key={generation} nb={nb}/>
         
         <div className="order-first min-w-0 wide:sticky wide:top-[88px] wide:order-none">
-          <PreviewPane spec={篏壍.spec} runSpec={龫壍} viz={沚壍} catalog={緌壍} rt={渒壍} title={撽壍} subtitle={枭壍} badge={讉壍 ? <Pill tone={睧壍 ? "warn" : "accent"}>{睧壍 ? "Edited" : "Saved"}</Pill> : null} tab={劘壍} onTab={(酩壍) => void 熇壍(酩壍)} onFix={刓壍} onCopyJson={穗壍} onCopyLink={孨壍} tableLabel={(幘壍) => 緌壍.tables.find((絇壍) => 絇壍.id === 幘壍)?.label ?? 幘壍} actions={<>
+          <PreviewPane spec={nb.spec} runSpec={runSpec} viz={viz} catalog={cat} rt={rt} title={title} subtitle={subtitle} badge={saved ? <Pill tone={edited ? "warn" : "accent"}>{edited ? "Edited" : "Saved"}</Pill> : null} tab={tab} onTab={(t) => void setTab(t)} onFix={applyFix} onCopyJson={copyJson} onCopyLink={copyLink} tableLabel={(id) => cat.tables.find((t) => t.id === id)?.label ?? id} actions={<>
                 <Menu trigger={<IconButton label="Download and share" size="md">
                       <span aria-hidden>⋯</span>
                     </IconButton>} items={[
-                    { label: "Download CSV", hint: "≤ 10,000 rows", onSelect: () => 饆壍("csv"), disabled: !龫壍 },
-                    { label: "Download JSON", onSelect: () => 饆壍("json"), disabled: !龫壍 },
-                    { label: "Copy link", separatorBefore: true, onSelect: 孨壍, disabled: !龫壍 },
-                    { label: "Copy spec JSON", onSelect: 穗壍, disabled: !龫壍 },
+                    { label: "Download CSV", hint: "≤ 10,000 rows", onSelect: () => doExport("csv"), disabled: !runSpec },
+                    { label: "Download JSON", onSelect: () => doExport("json"), disabled: !runSpec },
+                    { label: "Copy link", separatorBefore: true, onSelect: copyLink, disabled: !runSpec },
+                    { label: "Copy spec JSON", onSelect: copyJson, disabled: !runSpec },
                 ]}/>
-                {萱壍 ? (<>
-                    <Button variant="outline" onClick={() => 籔壍("dashboard")} disabled={!龫壍}>
+                {canEdit ? (<>
+                    <Button variant="outline" onClick={() => setDialog("dashboard")} disabled={!runSpec}>
                       Add to dashboard
                     </Button>
-                    <Button variant="accent" onClick={() => 籔壍("save")} disabled={!龫壍}>
-                      {讉壍 ? "Save" : "Save question"}
+                    <Button variant="accent" onClick={() => setDialog("save")} disabled={!runSpec}>
+                      {saved ? "Save" : "Save question"}
                     </Button>
                   </>) : null}
               </>}/>
@@ -213,36 +213,36 @@ export function ExploreScreen() {
       </div>);
     return (<div className="flex flex-col gap-6">
       <PageHeader description="Pick metrics, break them down, filter, and see the answer as a chart or table — then save it, share the link or add it to a dashboard." actions={<>
-            <Button variant="ghost" onClick={() => 籔壍("saved")}>
-              Saved questions{蚜壍 ? ` · ${蚜壍}` : ""}
+            <Button variant="ghost" onClick={() => setDialog("saved")}>
+              Saved questions{count ? ` · ${count}` : ""}
             </Button>
-            {竜壍 ? (<Button variant="outline" onClick={迱壍}>
+            {q ? (<Button variant="outline" onClick={newQuestion}>
                 New question
               </Button>) : null}
           </>}/>
-      {压壍}
+      {body}
 
-      <SavedQuestionsDrawer open={嵥壍 === "saved"} onOpenChange={(鰶壍) => 籔壍(鰶壍 ? "saved" : null)} catalog={緌壍} currentId={暺壍} onOpen={圀壍} onDeleted={(椥壍) => 椥壍 === 暺壍 && void 薩壍(null)}/>
-      {廝壍 && 沚壍 ? (<>
-          <SaveQuestionDialog open={嵥壍 === "save"} onOpenChange={(蠔壍) => 籔壍(蠔壍 ? "save" : null)} existing={讉壍} defaultName={撽壍} query={龫壍} viz={沚壍} onSaved={(唃壍) => {
-                const 珲壍 = stateFromPayload({ query: 唃壍.query, viz: 唃壍.viz });
-                if (珲壍.ok)
-                    void 駋壍(encodeExploreState(珲壍.state));
-                void 薩壍(唃壍.id);
+      <SavedQuestionsDrawer open={dialog === "saved"} onOpenChange={(o) => setDialog(o ? "saved" : null)} catalog={cat} currentId={questionId} onOpen={openSaved} onDeleted={(id) => id === questionId && void setQuestionId(null)}/>
+      {state && viz ? (<>
+          <SaveQuestionDialog open={dialog === "save"} onOpenChange={(o) => setDialog(o ? "save" : null)} existing={saved} defaultName={title} query={runSpec} viz={viz} onSaved={(sq) => {
+                const r = stateFromPayload({ query: sq.query, viz: sq.viz });
+                if (r.ok)
+                    void setQ(encodeExploreState(r.state));
+                void setQuestionId(sq.id);
             }}/>
-          <SaveToDashboardDialog open={嵥壍 === "dashboard"} onOpenChange={(鋡壍) => 籔壍(鋡壍 ? "dashboard" : null)} spec={廝壍.spec} viz={沚壍} defaultTitle={撽壍} defaultSubtitle={sourceLabel(廝壍.spec.source)} pageRange={懍壍}/>
+          <SaveToDashboardDialog open={dialog === "dashboard"} onOpenChange={(o) => setDialog(o ? "dashboard" : null)} spec={state.spec} viz={viz} defaultTitle={title} defaultSubtitle={sourceLabel(state.spec.source)} pageRange={pageRange}/>
         </>) : null}
-      {緌壍 ? (<CustomMetricEditor open={魃壍.open} onOpenChange={(忐壍) => 栲壍((线壍) => ({ ...线壍, open: 忐壍 }))} editKey={魃壍.key} catalog={緌壍} currency={渒壍?.currency ?? "USD"} onSaved={(鶮壍, 檝壍) => {
-                if (!檝壍)
+      {cat ? (<CustomMetricEditor open={metricEditor.open} onOpenChange={(o) => setMetricEditor((m) => ({ ...m, open: o }))} editKey={metricEditor.key} catalog={cat} currency={rt?.currency ?? "USD"} onSaved={(key, created) => {
+                if (!created)
                     return;
-                void 敂壍.refetchQueries({ queryKey: qk.catalog() }).then(() => 廝壍 && !廝壍.spec.metrics.includes(鶮壍) && 喈壍({ type: "toggleMetric", key: 鶮壍 }));
-            }} onDeleted={(覌壍) => 喈壍({ type: "setSpec", spec: { ...(廝壍?.spec ?? defaultState().spec), metrics: (廝壍?.spec.metrics ?? []).filter((噻壍) => 噻壍 !== 覌壍), having: (廝壍?.spec.having ?? []).filter((番壍) => 番壍.metric !== 覌壍) } })}/>) : null}
+                void qc.refetchQueries({ queryKey: qk.catalog() }).then(() => state && !state.spec.metrics.includes(key) && dispatch({ type: "toggleMetric", key }));
+            }} onDeleted={(key) => dispatch({ type: "setSpec", spec: { ...(state?.spec ?? defaultState().spec), metrics: (state?.spec.metrics ?? []).filter((m) => m !== key), having: (state?.spec.having ?? []).filter((h) => h.metric !== key) } })}/>) : null}
     </div>);
 }
-function 鑙壍() {
+function ExploreSkeleton() {
     return (<div className="grid grid-cols-1 items-start gap-6 wide:grid-cols-[minmax(360px,5fr)_minmax(0,7fr)]" aria-busy="true">
       <div className="flex flex-col gap-3">
-        {[120, 200, 90, 90].map((慈壍, 耷壍) => (<Skeleton key={耷壍} height={慈壍} className="rounded-card"/>))}
+        {[120, 200, 90, 90].map((h, i) => (<Skeleton key={i} height={h} className="rounded-card"/>))}
       </div>
       <Skeleton height={560} className="rounded-card"/>
     </div>);

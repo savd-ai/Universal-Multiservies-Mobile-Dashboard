@@ -83,13 +83,13 @@ export interface QueryResult {
         tookMs: number;
     };
 }
-export function normalizeSpec(埓壍: QuerySpec): QuerySpec {
+export function normalizeSpec(spec: QuerySpec): QuerySpec {
     return {
-        ...埓壍,
-        filters: [...埓壍.filters].sort((盂壍, 閱壍) => JSON.stringify(盂壍).localeCompare(JSON.stringify(閱壍))),
-        having: [...埓壍.having].sort((抠壍, 膏壍) => JSON.stringify(抠壍).localeCompare(JSON.stringify(膏壍))),
+        ...spec,
+        filters: [...spec.filters].sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
+        having: [...spec.having].sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
     };
 }
-export function specHash(乾壍: QuerySpec): string {
-    return JSON.stringify(normalizeSpec(乾壍));
+export function specHash(spec: QuerySpec): string {
+    return JSON.stringify(normalizeSpec(spec));
 }

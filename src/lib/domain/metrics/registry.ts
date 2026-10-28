@@ -14,54 +14,54 @@ export interface MetricDef {
     deps: MeasureKey[];
     description: string;
     formula?: string;
-    compute: (殞壍: Aggregates, 認壍?: Record<string, FormulaValue>) => number | null;
+    compute: (agg: Aggregates, values?: Record<string, FormulaValue>) => number | null;
 }
-const 坼壍 = (癫壍: MeasureKey, 镚壍: string, 扉壍: string, 脸壍: MetricFormat, 丧壍: MetricDirection, 洖壍: string): MetricDef => ({
-    key: 癫壍,
-    label: 镚壍,
-    short: 扉壍,
+const base = (key: MeasureKey, label: string, short: string, format: MetricFormat, direction: MetricDirection, description: string): MetricDef => ({
+    key,
+    label,
+    short,
     kind: "base",
-    format: 脸壍,
-    direction: 丧壍,
-    deps: [癫壍],
-    description: 洖壍,
-    compute: (谅壍) => 谅壍[癫壍] ?? 0,
+    format,
+    direction,
+    deps: [key],
+    description,
+    compute: (agg) => agg[key] ?? 0,
 });
-const 壴壍 = (矣壍: string, 雒壍: string, 揁壍: string, 芰壍: MetricFormat, 侟壍: MetricDirection, 溎壍: MeasureKey, 赽壍: MeasureKey, 婬壍: string, 祛壍 = 1): MetricDef => ({
-    key: 矣壍,
-    label: 雒壍,
-    short: 揁壍,
+const ratio = (key: string, label: string, short: string, format: MetricFormat, direction: MetricDirection, num: MeasureKey, den: MeasureKey, description: string, scale = 1): MetricDef => ({
+    key,
+    label,
+    short,
     kind: "derived",
-    format: 芰壍,
-    direction: 侟壍,
-    deps: [溎壍, 赽壍],
-    description: 婬壍,
-    formula: 祛壍 === 1 ? `${溎壍} / ${赽壍}` : `${祛壍} * ${溎壍} / ${赽壍}`,
-    compute: (顊壍) => {
-        const 改壍 = safeDiv((顊壍[溎壍] ?? 0) * 祛壍, 顊壍[赽壍] ?? 0);
-        return 改壍;
+    format,
+    direction,
+    deps: [num, den],
+    description,
+    formula: scale === 1 ? `${num} / ${den}` : `${scale} * ${num} / ${den}`,
+    compute: (agg) => {
+        const v = safeDiv((agg[num] ?? 0) * scale, agg[den] ?? 0);
+        return v;
     },
 });
 export const BUILTIN_METRICS: MetricDef[] = [
-    坼壍("cost", "Spend", "Spend", "money", "neutral", "Total cost of clicks and impressions."),
-    坼壍("impressions", "Impressions", "Impr.", "number", "up_good", "Times your ads were shown."),
-    坼壍("clicks", "Clicks", "Clicks", "number", "up_good", "Clicks on your ads."),
-    坼壍("conversions", "Conversions", "Conv.", "decimal", "up_good", "Conversions counted by your conversion actions (can be fractional with data-driven attribution)."),
-    坼壍("conv_value", "Conversion value", "Value", "money", "up_good", "Total value of conversions (revenue)."),
-    壴壍("ctr", "CTR", "CTR", "percent", "up_good", "clicks", "impressions", "Click-through rate = clicks ÷ impressions."),
-    壴壍("cpc", "Avg. CPC", "CPC", "money", "down_good", "cost", "clicks", "Average cost per click = spend ÷ clicks."),
-    壴壍("cpm", "Avg. CPM", "CPM", "money", "down_good", "cost", "impressions", "Cost per 1,000 impressions.", 1000),
-    壴壍("cvr", "Conv. rate", "CVR", "percent", "up_good", "conversions", "clicks", "Conversion rate = conversions ÷ clicks."),
-    壴壍("cpa", "Cost / conv.", "CPA", "money", "down_good", "cost", "conversions", "Cost per acquisition = spend ÷ conversions."),
-    壴壍("roas", "ROAS", "ROAS", "ratio", "up_good", "conv_value", "cost", "Return on ad spend = conversion value ÷ spend."),
-    壴壍("aov", "Avg. order value", "AOV", "money", "up_good", "conv_value", "conversions", "Conversion value ÷ conversions."),
-    壴壍("search_is", "Search impr. share", "Impr. share", "percent", "up_good", "is_search_impr", "is_eligible", "Impressions received ÷ impressions you were eligible for (Search & Shopping)."),
-    壴壍("lost_is_budget", "Lost IS (budget)", "Lost IS budget", "percent", "down_good", "is_lost_budget", "is_eligible", "Share of eligible impressions lost because the budget ran out."),
-    壴壍("lost_is_rank", "Lost IS (rank)", "Lost IS rank", "percent", "down_good", "is_lost_rank", "is_eligible", "Share of eligible impressions lost to Ad Rank (bid, quality)."),
-    壴壍("avg_qs", "Avg. Quality Score", "Avg. QS", "decimal", "up_good", "qs_weight", "qs_impr", "Impression-weighted Quality Score (keywords)."),
-    壴壍("mer", "MER", "MER", "ratio", "up_good", "store_revenue", "cost", "Marketing efficiency ratio = store revenue ÷ total ad spend (blended)."),
+    base("cost", "Spend", "Spend", "money", "neutral", "Total cost of clicks and impressions."),
+    base("impressions", "Impressions", "Impr.", "number", "up_good", "Times your ads were shown."),
+    base("clicks", "Clicks", "Clicks", "number", "up_good", "Clicks on your ads."),
+    base("conversions", "Conversions", "Conv.", "decimal", "up_good", "Conversions counted by your conversion actions (can be fractional with data-driven attribution)."),
+    base("conv_value", "Conversion value", "Value", "money", "up_good", "Total value of conversions (revenue)."),
+    ratio("ctr", "CTR", "CTR", "percent", "up_good", "clicks", "impressions", "Click-through rate = clicks ÷ impressions."),
+    ratio("cpc", "Avg. CPC", "CPC", "money", "down_good", "cost", "clicks", "Average cost per click = spend ÷ clicks."),
+    ratio("cpm", "Avg. CPM", "CPM", "money", "down_good", "cost", "impressions", "Cost per 1,000 impressions.", 1000),
+    ratio("cvr", "Conv. rate", "CVR", "percent", "up_good", "conversions", "clicks", "Conversion rate = conversions ÷ clicks."),
+    ratio("cpa", "Cost / conv.", "CPA", "money", "down_good", "cost", "conversions", "Cost per acquisition = spend ÷ conversions."),
+    ratio("roas", "ROAS", "ROAS", "ratio", "up_good", "conv_value", "cost", "Return on ad spend = conversion value ÷ spend."),
+    ratio("aov", "Avg. order value", "AOV", "money", "up_good", "conv_value", "conversions", "Conversion value ÷ conversions."),
+    ratio("search_is", "Search impr. share", "Impr. share", "percent", "up_good", "is_search_impr", "is_eligible", "Impressions received ÷ impressions you were eligible for (Search & Shopping)."),
+    ratio("lost_is_budget", "Lost IS (budget)", "Lost IS budget", "percent", "down_good", "is_lost_budget", "is_eligible", "Share of eligible impressions lost because the budget ran out."),
+    ratio("lost_is_rank", "Lost IS (rank)", "Lost IS rank", "percent", "down_good", "is_lost_rank", "is_eligible", "Share of eligible impressions lost to Ad Rank (bid, quality)."),
+    ratio("avg_qs", "Avg. Quality Score", "Avg. QS", "decimal", "up_good", "qs_weight", "qs_impr", "Impression-weighted Quality Score (keywords)."),
+    ratio("mer", "MER", "MER", "ratio", "up_good", "store_revenue", "cost", "Marketing efficiency ratio = store revenue ÷ total ad spend (blended)."),
 ];
-const 萨壍 = new Map(BUILTIN_METRICS.map((儗壍) => [儗壍.key, 儗壍]));
+const BUILTIN_BY_KEY = new Map(BUILTIN_METRICS.map((m) => [m.key, m]));
 export interface CustomMetricInput {
     key: string;
     label: string;
@@ -72,73 +72,73 @@ export interface CustomMetricInput {
 }
 export class MetricRegistry {
     private readonly defs = new Map<string, MetricDef>();
-    constructor(瀆壍: readonly CustomMetricInput[] = []) {
-        for (const 軵壍 of BUILTIN_METRICS)
-            this.defs.set(軵壍.key, 軵壍);
-        this.addCustom(瀆壍);
+    constructor(custom: readonly CustomMetricInput[] = []) {
+        for (const m of BUILTIN_METRICS)
+            this.defs.set(m.key, m);
+        this.addCustom(custom);
     }
-    private addCustom(寤壍: readonly CustomMetricInput[]): void {
-        const 竓壍 = new Map(寤壍.map((駂壍) => [駂壍.key, 駂壍]));
-        const 暱壍 = new Map<string, ReturnType<typeof compileFormula>>();
-        for (const 薠壍 of 寤壍) {
+    private addCustom(custom: readonly CustomMetricInput[]): void {
+        const pending = new Map(custom.map((c) => [c.key, c]));
+        const compiled = new Map<string, ReturnType<typeof compileFormula>>();
+        for (const c of custom) {
             try {
-                暱壍.set(薠壍.key, compileFormula(薠壍.formula));
+                compiled.set(c.key, compileFormula(c.formula));
             }
             catch {
             }
         }
-        const 劏壍 = new Set<string>();
-        const 煾壍 = new Map<string, MetricDef>();
-        const 遭壍 = (嵜壍: string): MetricDef | null => {
-            const 籋壍 = 萨壍.get(嵜壍);
-            if (籋壍)
-                return 籋壍;
-            if (煾壍.has(嵜壍))
-                return 煾壍.get(嵜壍) ?? null;
-            const 鬺壍 = 竓壍.get(嵜壍);
-            const 栩壍 = 暱壍.get(嵜壍);
-            if (!鬺壍 || !栩壍)
+        const visiting = new Set<string>();
+        const done = new Map<string, MetricDef>();
+        const resolveDef = (key: string): MetricDef | null => {
+            const builtin = BUILTIN_BY_KEY.get(key);
+            if (builtin)
+                return builtin;
+            if (done.has(key))
+                return done.get(key) ?? null;
+            const input = pending.get(key);
+            const comp = compiled.get(key);
+            if (!input || !comp)
                 return null;
-            if (劏壍.has(嵜壍))
+            if (visiting.has(key))
                 return null;
-            劏壍.add(嵜壍);
-            const 蜘壍: MetricDef[] = [];
-            for (const 吇壍 of 栩壍.identifiers) {
-                const 狶壍 = 遭壍(吇壍);
-                if (!狶壍) {
-                    劏壍.delete(嵜壍);
+            visiting.add(key);
+            const depDefs: MetricDef[] = [];
+            for (const id of comp.identifiers) {
+                const d = resolveDef(id);
+                if (!d) {
+                    visiting.delete(key);
                     return null;
                 }
-                蜘壍.push(狶壍);
+                depDefs.push(d);
             }
-            劏壍.delete(嵜壍);
-            const 釥壍 = [...new Set(蜘壍.flatMap((廔壍) => 廔壍.deps))];
-            const 緃壍: MetricDef = {
-                key: 嵜壍,
-                label: 鬺壍.label,
-                short: 鬺壍.label,
+            visiting.delete(key);
+            const deps = [...new Set(depDefs.flatMap((d) => d.deps))];
+            const def: MetricDef = {
+                key,
+                label: input.label,
+                short: input.label,
                 kind: "custom",
-                format: 鬺壍.format,
-                direction: 鬺壍.direction,
-                deps: 釥壍,
-                description: 鬺壍.description ?? `Custom metric: ${鬺壍.formula}`,
-                formula: 鬺壍.formula,
-                compute: (鲲壍) => 栩壍.run((榡壍) => this.computeValue(榡壍, 鲲壍)),
+                format: input.format,
+                direction: input.direction,
+                deps,
+                description: input.description ?? `Custom metric: ${input.formula}`,
+                formula: input.formula,
+                compute: (agg) => comp.run((name) => this.computeValue(name, agg)),
             };
-            煾壍.set(嵜壍, 緃壍);
-            return 緃壍;
+            done.set(key, def);
+            return def;
         };
-        for (const 袐壍 of 寤壍) {
-            const 啿壍 = 遭壍(袐壍.key);
-            if (啿壍)
-                this.defs.set(袐壍.key, 啿壍);
+        for (const c of custom) {
+            const def = resolveDef(c.key);
+            if (def)
+                this.defs.set(c.key, def);
         }
     }
-    get(瑮壍: string): MetricDef | undefined {
-        return this.defs.get(瑮壍);
+    get(key: string): MetricDef | undefined {
+        return this.defs.get(key);
     }
-    has(鍝壍: string): boolean {
-        return this.defs.has(鍝壍);
+    has(key: string): boolean {
+        return this.defs.has(key);
     }
     list(): MetricDef[] {
         return [...this.defs.values()];
@@ -146,23 +146,23 @@ export class MetricRegistry {
     keys(): Set<string> {
         return new Set(this.defs.keys());
     }
-    computeValue(恌壍: string, 缻壍: Aggregates): number | null {
-        const 鸪壍 = this.defs.get(恌壍);
-        if (!鸪壍)
+    computeValue(key: string, agg: Aggregates): number | null {
+        const def = this.defs.get(key);
+        if (!def)
             return null;
-        const 欙壍 = 鸪壍.compute(缻壍);
-        return 欙壍 === null || !Number.isFinite(欙壍) ? null : 欙壍;
+        const v = def.compute(agg);
+        return v === null || !Number.isFinite(v) ? null : v;
     }
-    availableIn(計壍: string): FactTableId[] {
-        const 囷壍 = this.defs.get(計壍);
-        if (!囷壍)
+    availableIn(key: string): FactTableId[] {
+        const def = this.defs.get(key);
+        if (!def)
             return [];
         return (Object.values(FACT_TABLES) as {
             id: FactTableId;
             measures: readonly MeasureKey[];
         }[])
-            .filter((痦壍) => 囷壍.deps.every((铕壍) => 痦壍.measures.includes(铕壍)))
-            .map((懄壍) => 懄壍.id);
+            .filter((t) => def.deps.every((d) => t.measures.includes(d)))
+            .map((t) => t.id);
     }
 }
 export interface FormatOptions {
@@ -171,56 +171,56 @@ export interface FormatOptions {
     compact?: boolean;
     decimals?: number;
 }
-const 肳壍 = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
-export function formatMoney(龢壍: number, 沑壍: FormatOptions = {}): string {
-    const 讀壍 = 沑壍.currency ?? "USD";
-    const 塯壍 = 龢壍 * (沑壍.fx ?? 1);
-    const 睞壍 = Math.abs(塯壍);
-    if (讀壍 === "VND")
-        return `₫${肳壍.format(塯壍)}`;
-    const 降壍 = currencySymbol(讀壍);
-    if (沑壍.compact !== false && 睞壍 >= 10000)
-        return `${塯壍 < 0 ? "−" : ""}${降壍}${肳壍.format(睞壍)}`;
-    const 挼壍 = 沑壍.decimals ?? (睞壍 < 100 && 睞壍 !== Math.round(睞壍) ? 2 : 0);
-    const 舫壍 = 睞壍.toLocaleString("en-US", { minimumFractionDigits: 挼壍, maximumFractionDigits: 挼壍 });
-    return `${塯壍 < 0 ? "−" : ""}${降壍}${舫壍}`;
+const compactFmt = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+export function formatMoney(v: number, opts: FormatOptions = {}): string {
+    const currency = opts.currency ?? "USD";
+    const value = v * (opts.fx ?? 1);
+    const abs = Math.abs(value);
+    if (currency === "VND")
+        return `₫${compactFmt.format(value)}`;
+    const currencySymbol2 = currencySymbol(currency);
+    if (opts.compact !== false && abs >= 10000)
+        return `${value < 0 ? "−" : ""}${currencySymbol2}${compactFmt.format(abs)}`;
+    const decimals = opts.decimals ?? (abs < 100 && abs !== Math.round(abs) ? 2 : 0);
+    const body = abs.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    return `${value < 0 ? "−" : ""}${currencySymbol2}${body}`;
 }
-export function currencySymbol(会壍: string): string {
-    const 渉壍: Record<string, string> = { USD: "$", EUR: "€", GBP: "£", JPY: "¥", VND: "₫", AUD: "A$", CAD: "C$", SGD: "S$", INR: "₹" };
-    return 渉壍[会壍] ?? `${会壍} `;
+export function currencySymbol(currency: string): string {
+    const map: Record<string, string> = { USD: "$", EUR: "€", GBP: "£", JPY: "¥", VND: "₫", AUD: "A$", CAD: "C$", SGD: "S$", INR: "₹" };
+    return map[currency] ?? `${currency} `;
 }
-export function formatNumber(賸壍: number, 姧壍: FormatOptions = {}): string {
-    const 磖壍 = Math.abs(賸壍);
-    if (姧壍.compact !== false && 磖壍 >= 10000)
-        return 肳壍.format(賸壍).replace("-", "−");
-    const 韅壍 = 姧壍.decimals ?? 0;
-    return 賸壍.toLocaleString("en-US", { minimumFractionDigits: 韅壍, maximumFractionDigits: 韅壍 }).replace("-", "−");
+export function formatNumber(v: number, opts: FormatOptions = {}): string {
+    const abs = Math.abs(v);
+    if (opts.compact !== false && abs >= 10000)
+        return compactFmt.format(v).replace("-", "−");
+    const decimals = opts.decimals ?? 0;
+    return v.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).replace("-", "−");
 }
-export function formatMetricValue(撴壍: MetricFormat, 莣壍: number | null | undefined, 傒壍: FormatOptions = {}): string {
-    if (莣壍 === null || 莣壍 === undefined || !Number.isFinite(莣壍))
+export function formatMetricValue(format: MetricFormat, v: number | null | undefined, opts: FormatOptions = {}): string {
+    if (v === null || v === undefined || !Number.isFinite(v))
         return "—";
-    switch (撴壍) {
+    switch (format) {
         case "money":
-            return formatMoney(莣壍, 傒壍);
+            return formatMoney(v, opts);
         case "number":
-            return formatNumber(莣壍, 傒壍);
+            return formatNumber(v, opts);
         case "decimal":
-            return formatNumber(莣壍, { ...傒壍, decimals: 傒壍.decimals ?? (Math.abs(莣壍) >= 100 ? 0 : 1) });
+            return formatNumber(v, { ...opts, decimals: opts.decimals ?? (Math.abs(v) >= 100 ? 0 : 1) });
         case "percent":
-            return `${(莣壍 * 100).toFixed(傒壍.decimals ?? 2)}%`;
+            return `${(v * 100).toFixed(opts.decimals ?? 2)}%`;
         case "ratio":
-            return `${莣壍.toFixed(傒壍.decimals ?? 2)}x`;
+            return `${v.toFixed(opts.decimals ?? 2)}x`;
     }
 }
-export function formatDelta(澁壍: number | null | undefined): string {
-    if (澁壍 === null || 澁壍 === undefined || !Number.isFinite(澁壍))
+export function formatDelta(pct: number | null | undefined): string {
+    if (pct === null || pct === undefined || !Number.isFinite(pct))
         return "—";
-    const 蹰壍 = 澁壍 >= 0 ? "+" : "−";
-    return `${蹰壍}${Math.abs(澁壍 * 100).toFixed(1)}%`;
+    const sign = pct >= 0 ? "+" : "−";
+    return `${sign}${Math.abs(pct * 100).toFixed(1)}%`;
 }
-export function deltaSentiment(孟壍: MetricDirection, 穎壍: number | null | undefined): "good" | "bad" | null {
-    if (穎壍 === null || 穎壍 === undefined || !Number.isFinite(穎壍) || Math.abs(穎壍) < 0.005 || 孟壍 === "neutral")
+export function deltaSentiment(direction: MetricDirection, pct: number | null | undefined): "good" | "bad" | null {
+    if (pct === null || pct === undefined || !Number.isFinite(pct) || Math.abs(pct) < 0.005 || direction === "neutral")
         return null;
-    const 餽壍 = 穎壍 > 0;
-    return (孟壍 === "up_good") === 餽壍 ? "good" : "bad";
+    const up = pct > 0;
+    return (direction === "up_good") === up ? "good" : "bad";
 }

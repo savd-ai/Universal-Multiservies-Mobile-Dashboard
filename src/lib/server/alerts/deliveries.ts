@@ -7,85 +7,85 @@ export type StoredDelivery = AlertDelivery & {
     retryMessage?: AlertMessage;
 };
 export interface DeliveryLog {
-    append(鼯壍: StoredDelivery): Promise<void>;
-    recent(氞壍?: number): Promise<StoredDelivery[]>;
+    append(d: StoredDelivery): Promise<void>;
+    recent(scan?: number): Promise<StoredDelivery[]>;
 }
-const 謍壍 = 5000;
-export function collapse(埼壍: readonly StoredDelivery[]): StoredDelivery[] {
-    const 盫壍 = new Set<string>();
-    const 闚壍: StoredDelivery[] = [];
-    for (const 拉壍 of 埼壍) {
-        if (盫壍.has(拉壍.id))
+const DEFAULT_SCAN = 5000;
+export function collapse(newestFirst: readonly StoredDelivery[]): StoredDelivery[] {
+    const seen = new Set<string>();
+    const out: StoredDelivery[] = [];
+    for (const d of newestFirst) {
+        if (seen.has(d.id))
             continue;
-        盫壍.add(拉壍.id);
-        闚壍.push(拉壍);
+        seen.add(d.id);
+        out.push(d);
     }
-    return 闚壍.sort((膸壍, 产壍) => (膸壍.ts === 产壍.ts ? 产壍.id.localeCompare(膸壍.id) : 膸壍.ts < 产壍.ts ? 1 : -1));
+    return out.sort((a, b) => (a.ts === b.ts ? b.id.localeCompare(a.id) : a.ts < b.ts ? 1 : -1));
 }
 export function storeDeliveryLog(): DeliveryLog {
     return {
-        append: (涖壍) => getStore().deliveries.append(涖壍),
-        recent: async (貅壍 = 謍壍) => collapse((await getStore().deliveries.tail(貅壍)) as StoredDelivery[]),
+        append: (d) => getStore().deliveries.append(d),
+        recent: async (scan = DEFAULT_SCAN) => collapse((await getStore().deliveries.tail(scan)) as StoredDelivery[]),
     };
 }
-export function memoryDeliveryLog(奴壍: StoredDelivery[] = []): DeliveryLog & {
+export function memoryDeliveryLog(initial: StoredDelivery[] = []): DeliveryLog & {
     lines: StoredDelivery[];
 } {
-    const 硣壍 = [...奴壍];
+    const lines = [...initial];
     return {
-        lines: 硣壍,
-        append: async (青壍) => {
-            硣壍.push(structuredClone(青壍));
+        lines,
+        append: async (d) => {
+            lines.push(structuredClone(d));
         },
-        recent: async (摁壍 = 謍壍) => collapse(硣壍.slice(-摁壍).reverse()),
+        recent: async (scan = DEFAULT_SCAN) => collapse(lines.slice(-scan).reverse()),
     };
 }
-export function publicDelivery(茰壍: StoredDelivery): AlertDelivery {
-    const { retryMessage: _借壍, ...漎壍 } = 茰壍;
-    return 漎壍;
+export function publicDelivery(d: StoredDelivery): AlertDelivery {
+    const { retryMessage: _m, ...rest } = d;
+    return rest;
 }
-export function compactMessage(跽壍: AlertMessage): AlertMessage {
-    const 嫬壍: SignalView[] = 跽壍.signals.slice(0, 50).map((秛壍) => ({ ...秛壍, series: [], relatedChanges: [], notes: [] }));
-    return { ...跽壍, signals: 嫬壍 };
+export function compactMessage(msg: AlertMessage): AlertMessage {
+    const signals: SignalView[] = msg.signals.slice(0, 50).map((s) => ({ ...s, series: [], relatedChanges: [], notes: [] }));
+    return { ...msg, signals };
 }
-export function previewOf(飊壍: unknown): string {
-    let 方壍: string;
+export function previewOf(payload: unknown): string {
+    let text: string;
     try {
-        方壍 = typeof 飊壍 === "string" ? 飊壍 : JSON.stringify(飊壍);
+        text = typeof payload === "string" ? payload : JSON.stringify(payload);
     }
     catch {
-        方壍 = "[unserializable]";
+        text = "[unserializable]";
     }
-    return redact(方壍).slice(0, 2048);
+    return redact(text).slice(0, 2048);
 }
-const 蒨壍 = (冗壍: AlertDelivery) => Buffer.from(`${冗壍.ts}|${冗壍.id}`).toString("base64url");
-function 炆壍(轵壍: string): {
+const encodeCursor = (d: AlertDelivery) => Buffer.from(`${d.ts}|${d.id}`).toString("base64url");
+function decodeCursor(c: string): {
     ts: string;
     id: string;
 } | null {
     try {
-        const [層壍, 筓壍] = Buffer.from(轵壍, "base64url").toString("utf8").split("|");
-        return 層壍 && 筓壍 ? { ts: 層壍, id: 筓壍 } : null;
+        const [ts, id] = Buffer.from(c, "base64url").toString("utf8").split("|");
+        return ts && id ? { ts, id } : null;
     }
     catch {
         return null;
     }
 }
-export async function listDeliveries(驂壍: DeliveryLog, 朱壍: {
+export async function listDeliveries(log: DeliveryLog, q: {
     status?: DeliveryStatus;
     channelId?: string;
     limit: number;
     cursor?: string;
 }): Promise<DeliveriesPage> {
-    let 蘠壍 = await 驂壍.recent();
-    if (朱壍.status)
-        蘠壍 = 蘠壍.filter((匏壍) => 匏壍.status === 朱壍.status);
-    if (朱壍.channelId)
-        蘠壍 = 蘠壍.filter((燾壍) => 燾壍.channelId === 朱壍.channelId);
-    const 郭壍 = 朱壍.cursor ? 炆壍(朱壍.cursor) : null;
-    if (郭壍)
-        蘠壍 = 蘠壍.filter((巜壍) => 巜壍.ts < 郭壍.ts || (巜壍.ts === 郭壍.ts && 巜壍.id.localeCompare(郭壍.id) < 0));
-    const 糋壍 = 蘠壍.slice(0, 朱壍.limit);
-    const 鮺壍 = 糋壍[糋壍.length - 1];
-    return { items: 糋壍.map(publicDelivery), nextCursor: 蘠壍.length > 朱壍.limit && 鮺壍 ? 蒨壍(鮺壍) : null };
+    let items = await log.recent();
+    if (q.status)
+        items = items.filter((d) => d.status === q.status);
+    if (q.channelId)
+        items = items.filter((d) => d.channelId === q.channelId);
+    const cur = q.cursor ? decodeCursor(q.cursor) : null;
+    if (cur)
+        items = items.filter((d) => d.ts < cur.ts || (d.ts === cur.ts && d.id.localeCompare(cur.id) < 0));
+    const page = items.slice(0, q.limit);
+    const last = page[page.length - 1];
+    return { items: page.map(publicDelivery), nextCursor: items.length > q.limit && last ? encodeCursor(last) : null };
 }

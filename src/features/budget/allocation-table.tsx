@@ -9,35 +9,35 @@ import { DAILY_OVERDELIVERY_FACTOR, MONTHLY_CAP_FACTOR, type PacingReport } from
 import { MoneyInput, PaceBadge } from "./budget-ui";
 import { money, moneyExact, MONEY_STEP, perDay, snapToRange } from "./lib/money";
 import { todayMarker, type PacingView } from "./lib/pacing";
-const 脋壍 = "minmax(180px,1.6fr) minmax(250px,1.7fr) 84px 84px minmax(120px,1.1fr) 104px 104px";
-function 鿺壍({ locked: 泩壍, name: 诘壍, onChange: 壇壍 }: {
+const GRID = "minmax(180px,1.6fr) minmax(250px,1.7fr) 84px 84px minmax(120px,1.1fr) 104px 104px";
+function LockToggle({ locked, name, onChange }: {
     locked: boolean;
     name: string;
-    onChange: (瞶壍: boolean) => void;
+    onChange: (v: boolean) => void;
 }) {
-    return (<button type="button" aria-pressed={泩壍} aria-label={`${泩壍 ? "Unlock" : "Lock"} ${诘壍}`} title={泩壍 ? "Locked: rebalancing keeps this budget fixed" : "Lock to keep this budget fixed when rebalancing"} onClick={() => 壇壍(!泩壍)} className={cn("shrink-0 rounded-pill border px-2 py-[3px] font-mono text-micro tracking-label uppercase transition-colors", 泩壍 ? "border-accent bg-teal-t text-accent" : "border-line text-faint hover:border-tone/30 hover:text-fg")}>
-      {泩壍 ? "Locked" : "Lock"}
+    return (<button type="button" aria-pressed={locked} aria-label={`${locked ? "Unlock" : "Lock"} ${name}`} title={locked ? "Locked: rebalancing keeps this budget fixed" : "Lock to keep this budget fixed when rebalancing"} onClick={() => onChange(!locked)} className={cn("shrink-0 rounded-pill border px-2 py-[3px] font-mono text-micro tracking-label uppercase transition-colors", locked ? "border-accent bg-teal-t text-accent" : "border-line text-faint hover:border-tone/30 hover:text-fg")}>
+      {locked ? "Locked" : "Lock"}
     </button>);
 }
-function 隥壍(掔壍: PacingView, 芃壍: Pick<PacingReport, "remainingDays">): boolean {
-    if (芃壍.remainingDays === 0)
+function needsNote(v: PacingView, report: Pick<PacingReport, "remainingDays">): boolean {
+    if (report.remainingDays === 0)
         return false;
-    if (掔壍.status === "paused")
-        return 掔壍.target - 掔壍.mtdSpend >= 1;
-    return 掔壍.status !== "on_track" || !!掔壍.capped || !!掔壍.paused;
+    if (v.status === "paused")
+        return v.target - v.mtdSpend >= 1;
+    return v.status !== "on_track" || !!v.capped || !!v.paused;
 }
-export function AllocationRows({ views: 佲壍, report: 湡壍, currency: 赐壍, onTarget: 娿壍, onLock: 礮壍, readOnly: 頝壍 }: {
+export function AllocationRows({ views, report, currency, onTarget, onLock, readOnly }: {
     views: readonly PacingView[];
     report: PacingReport;
     currency: string;
-    onTarget: (攌壍: string, 菻壍: number) => void;
-    onLock: (僪壍: string, 濙壍: boolean) => void;
+    onTarget: (unitId: string, v: number) => void;
+    onLock: (unitId: string, locked: boolean) => void;
     readOnly?: boolean;
 }) {
-    const [, 軈壍] = useQueryState("campaign", parseAsString.withOptions({ history: "push", scroll: false }));
-    const 宷壍 = todayMarker(湡壍);
-    return (<div role="table" aria-label={`Monthly targets for ${湡壍.monthLabel}`} className="min-w-[1000px]">
-      <div role="row" className="grid gap-3.5 border-b border-line px-[22px] py-4 font-mono text-micro tracking-label text-faint uppercase" style={{ gridTemplateColumns: 脋壍 }}>
+    const [, setCampaign] = useQueryState("campaign", parseAsString.withOptions({ history: "push", scroll: false }));
+    const marker = todayMarker(report);
+    return (<div role="table" aria-label={`Monthly targets for ${report.monthLabel}`} className="min-w-[1000px]">
+      <div role="row" className="grid gap-3.5 border-b border-line px-[22px] py-4 font-mono text-micro tracking-label text-faint uppercase" style={{ gridTemplateColumns: GRID }}>
         <span role="columnheader">Campaign</span>
         <span role="columnheader">Monthly budget</span>
         <span role="columnheader" className="text-right">
@@ -54,63 +54,63 @@ export function AllocationRows({ views: 佲壍, report: 湡壍, currency: 赐壍
           Recommended
         </span>
       </div>
-      {佲壍.map((窦壍) => {
-            const 馕壍 = 窦壍.status === "overpacing";
-            const 暄壍 = Math.max(窦壍.sliderMax, Math.ceil(窦壍.target / MONEY_STEP) * MONEY_STEP);
-            const 蕳壍 = Math.min(窦壍.sliderMin, Math.floor(窦壍.target / MONEY_STEP) * MONEY_STEP);
-            const 剢壍 = !窦壍.shared && 窦壍.campaignIds.length === 1 ? 窦壍.campaignIds[0] : undefined;
-            const 煑壍 = [窦壍.shared ? "Shared" : 窦壍.type, `ROAS ${窦壍.roasMtd === null ? "—" : `${窦壍.roasMtd.toFixed(2)}x`}`, 窦壍.paused && 窦壍.status !== "paused" ? "Paused" : null, 窦壍.budgetLimited ? "Limited by budget" : null].filter(Boolean).join(" · ");
-            return (<div key={窦壍.unitId} role="row" className={cn("border-b border-line-soft last:border-b-0", 窦壍.edited && "bg-teal/4")}>
-            <div className="grid items-center gap-3.5 px-[22px] py-3.5 text-[13px] tabular" style={{ gridTemplateColumns: 脋壍 }}>
+      {views.map((v) => {
+            const over = v.status === "overpacing";
+            const max = Math.max(v.sliderMax, Math.ceil(v.target / MONEY_STEP) * MONEY_STEP);
+            const min = Math.min(v.sliderMin, Math.floor(v.target / MONEY_STEP) * MONEY_STEP);
+            const campaignId = !v.shared && v.campaignIds.length === 1 ? v.campaignIds[0] : undefined;
+            const sub = [v.shared ? "Shared" : v.type, `ROAS ${v.roasMtd === null ? "—" : `${v.roasMtd.toFixed(2)}x`}`, v.paused && v.status !== "paused" ? "Paused" : null, v.budgetLimited ? "Limited by budget" : null].filter(Boolean).join(" · ");
+            return (<div key={v.unitId} role="row" className={cn("border-b border-line-soft last:border-b-0", v.edited && "bg-teal/4")}>
+            <div className="grid items-center gap-3.5 px-[22px] py-3.5 text-[13px] tabular" style={{ gridTemplateColumns: GRID }}>
               <div role="cell" className="flex min-w-0 flex-col gap-0.5">
-                {剢壍 ? (<button type="button" onClick={() => void 軈壍(剢壍)} className="flex min-w-0 text-left font-medium hover:text-accent" title={`Open ${窦壍.name}`}>
-                    <MiddleTruncate text={窦壍.name}/>
-                  </button>) : (<MiddleTruncate text={窦壍.name} className="font-medium"/>)}
-                <span className="truncate font-mono text-micro tracking-[0.1em] text-faint uppercase">{煑壍}</span>
+                {campaignId ? (<button type="button" onClick={() => void setCampaign(campaignId)} className="flex min-w-0 text-left font-medium hover:text-accent" title={`Open ${v.name}`}>
+                    <MiddleTruncate text={v.name}/>
+                  </button>) : (<MiddleTruncate text={v.name} className="font-medium"/>)}
+                <span className="truncate font-mono text-micro tracking-[0.1em] text-faint uppercase">{sub}</span>
               </div>
-              {頝壍 ? (<div role="cell" className="flex items-center gap-2.5">
-                  <span className="font-medium">{moneyExact(窦壍.target, 赐壍)}</span>
-                  {窦壍.lockedNow ? <span className="rounded-pill border border-accent bg-teal-t px-2 py-[3px] font-mono text-micro tracking-label text-accent uppercase">Locked</span> : null}
+              {readOnly ? (<div role="cell" className="flex items-center gap-2.5">
+                  <span className="font-medium">{moneyExact(v.target, currency)}</span>
+                  {v.lockedNow ? <span className="rounded-pill border border-accent bg-teal-t px-2 py-[3px] font-mono text-micro tracking-label text-accent uppercase">Locked</span> : null}
                 </div>) : (<div role="cell" className="flex items-center gap-2.5">
-                  <Slider min={蕳壍} max={暄壍} step={MONEY_STEP} value={窦壍.target} onChange={(遀壍) => 娿壍(窦壍.unitId, snapToRange(遀壍, 蕳壍, 暄壍))} aria-label={`Monthly budget for ${窦壍.name}`} aria-valuetext={moneyExact(窦壍.target, 赐壍)} className="min-w-0 flex-1"/>
-                  <MoneyInput value={窦壍.target} currency={赐壍} onCommit={(崯壍) => 娿壍(窦壍.unitId, 崯壍)} ariaLabel={`Monthly budget for ${窦壍.name}, exact amount`} edited={窦壍.edited} title={窦壍.edited ? `Saved: ${moneyExact(窦壍.savedTarget, 赐壍)}` : "Type an amount (rounds to $50)"}/>
-                  <鿺壍 locked={窦壍.lockedNow} name={窦壍.name} onChange={(簞壍) => 礮壍(窦壍.unitId, 簞壍)}/>
+                  <Slider min={min} max={max} step={MONEY_STEP} value={v.target} onChange={(x) => onTarget(v.unitId, snapToRange(x, min, max))} aria-label={`Monthly budget for ${v.name}`} aria-valuetext={moneyExact(v.target, currency)} className="min-w-0 flex-1"/>
+                  <MoneyInput value={v.target} currency={currency} onCommit={(x) => onTarget(v.unitId, x)} ariaLabel={`Monthly budget for ${v.name}, exact amount`} edited={v.edited} title={v.edited ? `Saved: ${moneyExact(v.savedTarget, currency)}` : "Type an amount (rounds to $50)"}/>
+                  <LockToggle locked={v.lockedNow} name={v.name} onChange={(x) => onLock(v.unitId, x)}/>
                 </div>)}
               <span role="cell" className="text-right text-muted">
-                {money(窦壍.mtdSpend, 赐壍)}
+                {money(v.mtdSpend, currency)}
               </span>
               <span role="cell" className="text-right">
-                {money(窦壍.projected, 赐壍)}
+                {money(v.projected, currency)}
               </span>
               <div role="cell">
-                <Meter value={窦壍.spentShare} projected={窦壍.projectedShare} marker={宷壍} tone={馕壍 ? "warn" : "accent"} height={8} label={`${窦壍.name}: ${Math.round(窦壍.spentShare * 100)}% spent, ${Math.round(窦壍.paceRatio * 100)}% projected`}/>
+                <Meter value={v.spentShare} projected={v.projectedShare} marker={marker} tone={over ? "warn" : "accent"} height={8} label={`${v.name}: ${Math.round(v.spentShare * 100)}% spent, ${Math.round(v.paceRatio * 100)}% projected`}/>
               </div>
               <span role="cell" className="flex justify-end">
-                <PaceBadge status={窦壍.status}/>
+                <PaceBadge status={v.status}/>
               </span>
               <div role="cell" className="flex flex-col items-end gap-0.5">
-                <Tooltip content={窦壍.recommendationNote}>
+                <Tooltip content={v.recommendationNote}>
                   <span tabIndex={0} className="cursor-help font-semibold outline-none">
-                    {perDay(窦壍.recommendedDaily, 赐壍)}
+                    {perDay(v.recommendedDaily, currency)}
                   </span>
                 </Tooltip>
-                <span className="font-mono text-micro text-faint">{窦壍.dailyBudget === null ? "no daily budget" : `now ${moneyExact(窦壍.dailyBudget, 赐壍)}`}</span>
+                <span className="font-mono text-micro text-faint">{v.dailyBudget === null ? "no daily budget" : `now ${moneyExact(v.dailyBudget, currency)}`}</span>
               </div>
             </div>
-            {隥壍(窦壍, 湡壍) ? (<div role="cell" aria-colspan={7} className="-mt-1.5 flex gap-2 px-[22px] pb-3 text-xs leading-relaxed text-muted-3">
-                <span aria-hidden className={馕壍 ? "text-warn" : "text-faint"}>
-                  {馕壍 ? "▲" : "●"}
+            {needsNote(v, report) ? (<div role="cell" aria-colspan={7} className="-mt-1.5 flex gap-2 px-[22px] pb-3 text-xs leading-relaxed text-muted-3">
+                <span aria-hidden className={over ? "text-warn" : "text-faint"}>
+                  {over ? "▲" : "●"}
                 </span>
-                <span>{窦壍.recommendationNote}</span>
+                <span>{v.recommendationNote}</span>
               </div>) : null}
           </div>);
         })}
     </div>);
 }
-export function CapsNote({ className: 鬍壍 }: {
+export function CapsNote({ className }: {
     className?: string;
 }) {
-    return (<p className={cn("m-0 text-xs leading-relaxed text-muted-3", 鬍壍)}>
+    return (<p className={cn("m-0 text-xs leading-relaxed text-muted-3", className)}>
       Google Ads budgets are daily. On any single day Google may spend up to {DAILY_OVERDELIVERY_FACTOR}× the daily budget, but it never charges more than {MONTHLY_CAP_FACTOR}× the daily budget in a calendar month — so a
       month&apos;s spend lands near daily × days. Monthly targets here are planning amounts; the recommendation is the daily budget that lands on the target over the remaining days.
     </p>);

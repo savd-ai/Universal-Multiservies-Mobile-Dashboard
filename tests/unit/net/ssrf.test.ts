@@ -6,13 +6,13 @@ afterEach(() => {
     vi.unstubAllEnvs();
     vi.restoreAllMocks();
 });
-const 畕壍 = (鑄壍: string) => {
+const blocked = (url: string) => {
     try {
-        assertSafeUrl(鑄壍);
+        assertSafeUrl(url);
         return false;
     }
-    catch (愳壍) {
-        expect(愳壍).toMatchObject({ code: "SSRF_BLOCKED" });
+    catch (err) {
+        expect(err).toMatchObject({ code: "SSRF_BLOCKED" });
         return true;
     }
 };
@@ -40,11 +40,11 @@ describe("IP block list", () => {
         "::ffff:10.0.0.1",
         "64:ff9b::10.0.0.1",
         "not-an-ip",
-    ])("blocks %s", (耢壍) => {
-        expect(isBlockedIp(耢壍, false)).toBe(true);
+    ])("blocks %s", (ip) => {
+        expect(isBlockedIp(ip, false)).toBe(true);
     });
-    it.each(["8.8.8.8", "1.1.1.1", "172.32.0.1", "11.0.0.1", "2606:4700:4700::1111", "::ffff:8.8.8.8"])("allows %s", (鼑壍) => {
-        expect(isBlockedIp(鼑壍, false)).toBe(false);
+    it.each(["8.8.8.8", "1.1.1.1", "172.32.0.1", "11.0.0.1", "2606:4700:4700::1111", "::ffff:8.8.8.8"])("allows %s", (ip) => {
+        expect(isBlockedIp(ip, false)).toBe(false);
     });
     it("PLUGINS_ALLOW_PRIVATE_NETWORK lifts private ranges but never cloud metadata", () => {
         expect(isBlockedIp("10.0.0.1", true)).toBe(false);
@@ -80,32 +80,32 @@ describe("URL checks", () => {
         "ftp://example.com/",
         "javascript:alert(1)",
         "not a url",
-    ])("blocks %s", (氀壍) => {
-        expect(畕壍(氀壍)).toBe(true);
+    ])("blocks %s", (url) => {
+        expect(blocked(url)).toBe(true);
     });
-    it.each(["https://example.com/", "https://hooks.slack.com/services/T/B/X", "https://8.8.8.8/dns", "https://[2606:4700:4700::1111]/"])("allows %s", (諯壍) => {
-        expect(畕壍(諯壍)).toBe(false);
+    it.each(["https://example.com/", "https://hooks.slack.com/services/T/B/X", "https://8.8.8.8/dns", "https://[2606:4700:4700::1111]/"])("allows %s", (url) => {
+        expect(blocked(url)).toBe(false);
     });
 });
 describe("connect-time DNS guard (anti rebinding)", () => {
-    const 埞壍 = (盍壍: dns.LookupAddress[]) => vi.spyOn(dns, "lookup").mockImplementation(((閼壍: string, 披壍: unknown, 膚壍: (争壍: NodeJS.ErrnoException | null, 浸壍: dns.LookupAddress[]) => void) => 膚壍(null, 盍壍)) as unknown as typeof dns.lookup);
+    const lookupReturning = (addresses: dns.LookupAddress[]) => vi.spyOn(dns, "lookup").mockImplementation(((_host: string, _opts: unknown, cb: (err: NodeJS.ErrnoException | null, a: dns.LookupAddress[]) => void) => cb(null, addresses)) as unknown as typeof dns.lookup);
     it("rejects hostnames that resolve to private addresses", async () => {
-        埞壍([
+        lookupReturning([
             { address: "93.184.216.34", family: 4 },
             { address: "10.0.0.7", family: 4 },
         ]);
-        const 豧壍 = await new Promise<NodeJS.ErrnoException | null>((奖壍) => guardedLookup("rebind.example.com", {}, (硅壍) => 奖壍(硅壍)));
-        expect(豧壍?.code).toBe("SSRF_BLOCKED");
+        const err = await new Promise<NodeJS.ErrnoException | null>((resolve) => guardedLookup("rebind.example.com", {}, (e) => resolve(e)));
+        expect(err?.code).toBe("SSRF_BLOCKED");
     });
     it("passes public addresses through in the requested shape", async () => {
-        埞壍([{ address: "93.184.216.34", family: 4 }]);
-        const 霴壍 = await new Promise<{
+        lookupReturning([{ address: "93.184.216.34", family: 4 }]);
+        const single = await new Promise<{
             address: unknown;
             family?: number;
-        }>((搣壍) => guardedLookup("example.com", {}, (茒壍, 倁壍, 滰壍) => 搣壍({ address: 倁壍, family: 滰壍 })));
-        expect(霴壍).toEqual({ address: "93.184.216.34", family: 4 });
-        const 跟壍 = await new Promise<unknown>((嫎壍) => guardedLookup("example.com", { all: true }, (禽壍, 颬壍) => 嫎壍(颬壍)));
-        expect(跟壍).toEqual([{ address: "93.184.216.34", family: 4 }]);
+        }>((resolve) => guardedLookup("example.com", {}, (_e, address, family) => resolve({ address, family })));
+        expect(single).toEqual({ address: "93.184.216.34", family: 4 });
+        const all = await new Promise<unknown>((resolve) => guardedLookup("example.com", { all: true }, (_e, address) => resolve(address)));
+        expect(all).toEqual([{ address: "93.184.216.34", family: 4 }]);
     });
 });
 describe("guardedFetch", () => {

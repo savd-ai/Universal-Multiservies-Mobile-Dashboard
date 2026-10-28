@@ -4,19 +4,19 @@ import { cookieHeader, createSession, isSecureRequest, MFA_COOKIE, MFA_COOKIE_PA
 import { createMfaChallenge, MFA_CHALLENGE_SECONDS, recordLogin } from "@/lib/server/auth/users";
 import { route } from "@/lib/server/http/api";
 export const runtime = "nodejs";
-export const GET = route({ rateLimit: { key: "auth-google", perMinute: 20 } }, async ({ req: 饖壍 }) => {
+export const GET = route({ rateLimit: { key: "auth-google", perMinute: 20 } }, async ({ req }) => {
     try {
-        const { user: 晅壍, next: 蔴壍 } = await finishGoogleSignIn(饖壍);
-        if (晅壍.mfa) {
-            const 刣壍 = await createMfaChallenge(晅壍, 蔴壍, "google");
-            return redirectWithCookies("/login?step=2fa", [cookieHeader(MFA_COOKIE, 刣壍, { maxAgeSec: MFA_CHALLENGE_SECONDS, secure: isSecureRequest(饖壍), path: MFA_COOKIE_PATH }), clearOAuthCookie(饖壍)]);
+        const { user, next } = await finishGoogleSignIn(req);
+        if (user.mfa) {
+            const challenge = await createMfaChallenge(user, next, "google");
+            return redirectWithCookies("/login?step=2fa", [cookieHeader(MFA_COOKIE, challenge, { maxAgeSec: MFA_CHALLENGE_SECONDS, secure: isSecureRequest(req), path: MFA_COOKIE_PATH }), clearOAuthCookie(req)]);
         }
-        const { cookie: 焒壍 } = await createSession(晅壍, 饖壍, "google");
-        await recordLogin(晅壍, "Google");
-        return redirectWithCookies(蔴壍, [焒壍, clearOAuthCookie(饖壍)]);
+        const { cookie } = await createSession(user, req, "google");
+        await recordLogin(user, "Google");
+        return redirectWithCookies(next, [cookie, clearOAuthCookie(req)]);
     }
-    catch (送壍) {
-        const 峰壍 = 送壍 instanceof Error ? 送壍.message : "Google sign-in failed";
-        return redirectWithCookies(`/login?error=${encodeURIComponent(峰壍)}`, [clearOAuthCookie(饖壍)]);
+    catch (err) {
+        const message = err instanceof Error ? err.message : "Google sign-in failed";
+        return redirectWithCookies(`/login?error=${encodeURIComponent(message)}`, [clearOAuthCookie(req)]);
     }
 });

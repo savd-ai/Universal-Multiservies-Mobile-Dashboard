@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import { accountsVisibleTo, AGENCY_WORKSPACE, assignableRoles, can, canOpenAccount, PERMISSIONS, permissionsFor, workspaceFor } from "@/lib/domain/auth/roles";
 import { safeNext } from "@/lib/domain/contracts/auth";
 import { fxFactor, ratioKpis, sumKpis } from "@/lib/domain/contracts/portfolio";
-const 铎壍 = [
+const clients = [
     { id: "c-acme01", name: "Acme", accountIds: ["111", "222"] },
     { id: "c-trail1", name: "Trail", accountIds: ["333"] },
 ];
-const 憽壍 = [{ id: "111" }, { id: "222" }, { id: "333" }, { id: "444" }];
+const accounts = [{ id: "111" }, { id: "222" }, { id: "333" }, { id: "444" }];
 describe("permissions", () => {
     it("agency admins can do everything; members can't manage users or clients", () => {
         expect(permissionsFor("agency_admin")).toEqual([...PERMISSIONS]);
@@ -15,9 +15,9 @@ describe("permissions", () => {
         expect(can("agency_member", "budget.plan")).toBe(true);
     });
     it("client roles never manage clients or the system", () => {
-        for (const 肬壍 of ["client_admin", "client_viewer"] as const) {
-            expect(can(肬壍, "clients.manage")).toBe(false);
-            expect(can(肬壍, "system.manage")).toBe(false);
+        for (const role of ["client_admin", "client_viewer"] as const) {
+            expect(can(role, "clients.manage")).toBe(false);
+            expect(can(role, "system.manage")).toBe(false);
         }
         expect(can("client_admin", "users.manage")).toBe(true);
         expect(can("client_admin", "alerts.manage")).toBe(true);
@@ -34,23 +34,23 @@ describe("permissions", () => {
 });
 describe("account visibility and workspaces", () => {
     it("agency roles see every account; client roles only their client's", () => {
-        expect(accountsVisibleTo({ role: "agency_member", clientId: null }, 铎壍, 憽壍).map((龛壍) => 龛壍.id)).toEqual(["111", "222", "333", "444"]);
-        expect(accountsVisibleTo({ role: "client_viewer", clientId: "c-acme01" }, 铎壍, 憽壍).map((沊壍) => 沊壍.id)).toEqual(["111", "222"]);
-        expect(accountsVisibleTo({ role: "client_admin", clientId: "c-gone00" }, 铎壍, 憽壍)).toEqual([]);
+        expect(accountsVisibleTo({ role: "agency_member", clientId: null }, clients, accounts).map((a) => a.id)).toEqual(["111", "222", "333", "444"]);
+        expect(accountsVisibleTo({ role: "client_viewer", clientId: "c-acme01" }, clients, accounts).map((a) => a.id)).toEqual(["111", "222"]);
+        expect(accountsVisibleTo({ role: "client_admin", clientId: "c-gone00" }, clients, accounts)).toEqual([]);
     });
     it("canOpenAccount refuses other clients' and unassigned accounts for client roles", () => {
-        const 譹壍 = { role: "client_viewer" as const, clientId: "c-acme01" };
-        expect(canOpenAccount(譹壍, 铎壍, "222")).toBe(true);
-        expect(canOpenAccount(譹壍, 铎壍, "333")).toBe(false);
-        expect(canOpenAccount(譹壍, 铎壍, "444")).toBe(false);
-        expect(canOpenAccount({ role: "agency_admin", clientId: null }, 铎壍, "444")).toBe(true);
+        const viewer = { role: "client_viewer" as const, clientId: "c-acme01" };
+        expect(canOpenAccount(viewer, clients, "222")).toBe(true);
+        expect(canOpenAccount(viewer, clients, "333")).toBe(false);
+        expect(canOpenAccount(viewer, clients, "444")).toBe(false);
+        expect(canOpenAccount({ role: "agency_admin", clientId: null }, clients, "444")).toBe(true);
     });
     it("the workspace follows the account for agency users and the client for client users", () => {
-        const 塨壍 = { role: "agency_admin" as const, clientId: null };
-        expect(workspaceFor(塨壍, 铎壍, "333")).toBe("c-trail1");
-        expect(workspaceFor(塨壍, 铎壍, "444")).toBe(AGENCY_WORKSPACE);
-        expect(workspaceFor(塨壍, 铎壍, null)).toBe(AGENCY_WORKSPACE);
-        expect(workspaceFor({ role: "client_admin", clientId: "c-acme01" }, 铎壍, "333")).toBe("c-acme01");
+        const agency = { role: "agency_admin" as const, clientId: null };
+        expect(workspaceFor(agency, clients, "333")).toBe("c-trail1");
+        expect(workspaceFor(agency, clients, "444")).toBe(AGENCY_WORKSPACE);
+        expect(workspaceFor(agency, clients, null)).toBe(AGENCY_WORKSPACE);
+        expect(workspaceFor({ role: "client_admin", clientId: "c-acme01" }, clients, "333")).toBe("c-acme01");
     });
 });
 describe("safeNext", () => {
@@ -71,16 +71,16 @@ describe("portfolio money", () => {
         expect(fxFactor("EUR", "USD", {})).toBeNull();
     });
     it("sums as ratio of sums, skipping parts without a rate", () => {
-        const 睗壍 = ratioKpis({ cost: 100, conversions: 10, convValue: 400, clicks: 50, impressions: 1000 });
-        const 陆壍 = ratioKpis({ cost: 300, conversions: 10, convValue: 300, clicks: 50, impressions: 1000 });
-        const 挵壍 = sumKpis([
-            { kpis: 睗壍, factor: 1 },
-            { kpis: 陆壍, factor: 1 },
-            { kpis: 睗壍, factor: null },
+        const a = ratioKpis({ cost: 100, conversions: 10, convValue: 400, clicks: 50, impressions: 1000 });
+        const b = ratioKpis({ cost: 300, conversions: 10, convValue: 300, clicks: 50, impressions: 1000 });
+        const total = sumKpis([
+            { kpis: a, factor: 1 },
+            { kpis: b, factor: 1 },
+            { kpis: a, factor: null },
         ]);
-        expect(挵壍?.cost).toBe(400);
-        expect(挵壍?.cpa).toBe(20);
-        expect(挵壍?.roas).toBeCloseTo(700 / 400);
+        expect(total?.cost).toBe(400);
+        expect(total?.cpa).toBe(20);
+        expect(total?.roas).toBeCloseTo(700 / 400);
         expect(sumKpis([{ kpis: null, factor: 1 }])).toBeNull();
     });
 });

@@ -3,34 +3,34 @@ import { Agent, fetch as undiciFetch } from "undici";
 import { singleton } from "../cache";
 import { AppError } from "../http/errors";
 import { assertSafeUrl, guardedLookup } from "./ssrf";
-const 繹壍 = () => singleton("net:agent", () => new Agent({ connect: { lookup: guardedLookup as never }, connections: 16 }));
+const agent = () => singleton("net:agent", () => new Agent({ connect: { lookup: guardedLookup as never }, connections: 16 }));
 export interface GuardedInit extends RequestInit {
     timeoutMs?: number;
     maxBytes?: number;
 }
-const 鵨壍 = new Set(["accept", "accept-language", "content-type", "user-agent"]);
-export async function guardedFetch(橗壍: string, 襆壍: GuardedInit = {}): Promise<Response> {
-    const 嘵壍 = 襆壍.timeoutMs ?? 15000;
-    const 甤壍 = 襆壍.maxBytes ?? 5 * 1024 * 1024;
-    let 鐓壍 = assertSafeUrl(橗壍).toString();
-    let 愂壍 = 襆壍.method ?? "GET";
-    let 翱壍 = 襆壍.body;
-    let 黠壍 = new Headers(襆壍.headers);
-    const 每壍 = 襆壍.signal ? AbortSignal.any([襆壍.signal, AbortSignal.timeout(嘵壍)]) : AbortSignal.timeout(嘵壍);
-    for (let 誾壍 = 0; 誾壍 <= 3; 誾壍++) {
-        let 垭壍: Awaited<ReturnType<typeof undiciFetch>>;
+const CROSS_ORIGIN_SAFE_HEADERS = new Set(["accept", "accept-language", "content-type", "user-agent"]);
+export async function guardedFetch(url: string, init: GuardedInit = {}): Promise<Response> {
+    const timeoutMs = init.timeoutMs ?? 15000;
+    const maxBytes = init.maxBytes ?? 5 * 1024 * 1024;
+    let current = assertSafeUrl(url).toString();
+    let method = init.method ?? "GET";
+    let body = init.body;
+    let headers = new Headers(init.headers);
+    const signal = init.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs);
+    for (let hop = 0; hop <= 3; hop++) {
+        let res: Awaited<ReturnType<typeof undiciFetch>>;
         try {
-            垭壍 = await undiciFetch(鐓壍, {
-                method: 愂壍,
-                headers: 黠壍 as never,
-                body: 翱壍 as never,
+            res = await undiciFetch(current, {
+                method,
+                headers: headers as never,
+                body: body as never,
                 redirect: "manual",
-                signal: 每壍,
-                dispatcher: 繹壍(),
+                signal,
+                dispatcher: agent(),
             });
         }
-        catch (皜壍) {
-            const 開壍 = 皜壍 as {
+        catch (err) {
+            const e = err as {
                 name?: string;
                 cause?: {
                     code?: string;
@@ -38,60 +38,60 @@ export async function guardedFetch(橗壍: string, 襆壍: GuardedInit = {}): Pr
                 };
                 message?: string;
             };
-            if (開壍.cause?.code === "SSRF_BLOCKED" || /SSRF_BLOCKED/.test(開壍.cause?.message ?? ""))
+            if (e.cause?.code === "SSRF_BLOCKED" || /SSRF_BLOCKED/.test(e.cause?.message ?? ""))
                 throw new AppError("SSRF_BLOCKED", "The endpoint resolves to a blocked (private or reserved) address");
-            if (開壍.name === "TimeoutError" || 開壍.name === "AbortError")
-                throw new AppError("UPSTREAM_ERROR", `Request timed out after ${Math.round(嘵壍 / 1000)}s`);
-            throw new AppError("UPSTREAM_ERROR", `Request failed: ${開壍.cause?.message ?? 開壍.message ?? "network error"}`);
+            if (e.name === "TimeoutError" || e.name === "AbortError")
+                throw new AppError("UPSTREAM_ERROR", `Request timed out after ${Math.round(timeoutMs / 1000)}s`);
+            throw new AppError("UPSTREAM_ERROR", `Request failed: ${e.cause?.message ?? e.message ?? "network error"}`);
         }
-        if (垭壍.status >= 300 && 垭壍.status < 400 && 垭壍.headers.get("location")) {
-            if (誾壍 === 3)
+        if (res.status >= 300 && res.status < 400 && res.headers.get("location")) {
+            if (hop === 3)
                 throw new AppError("UPSTREAM_ERROR", "Too many redirects");
-            const 扺壍 = assertSafeUrl(new URL(垭壍.headers.get("location") as string, 鐓壍).toString());
-            await 垭壍.body?.cancel();
-            if (垭壍.status === 303 || ((垭壍.status === 301 || 垭壍.status === 302) && 愂壍 === "POST")) {
-                愂壍 = "GET";
-                翱壍 = undefined;
-                黠壍.delete("content-type");
+            const next = assertSafeUrl(new URL(res.headers.get("location") as string, current).toString());
+            await res.body?.cancel();
+            if (res.status === 303 || ((res.status === 301 || res.status === 302) && method === "POST")) {
+                method = "GET";
+                body = undefined;
+                headers.delete("content-type");
             }
-            if (扺壍.origin !== new URL(鐓壍).origin) {
-                const 腩壍 = new Headers();
-                黠壍.forEach((乘壍, 浇壍) => {
-                    if (鵨壍.has(浇壍.toLowerCase()))
-                        腩壍.set(浇壍, 乘壍);
+            if (next.origin !== new URL(current).origin) {
+                const safe = new Headers();
+                headers.forEach((v, k) => {
+                    if (CROSS_ORIGIN_SAFE_HEADERS.has(k.toLowerCase()))
+                        safe.set(k, v);
                 });
-                黠壍 = 腩壍;
+                headers = safe;
             }
-            鐓壍 = 扺壍.toString();
+            current = next.toString();
             continue;
         }
-        const 谶壍 = await 夥壍(垭壍.body as ReadableStream<Uint8Array> | null, 甤壍);
-        return new Response(谶壍.buffer.slice(谶壍.byteOffset, 谶壍.byteOffset + 谶壍.byteLength) as ArrayBuffer, { status: 垭壍.status, statusText: 垭壍.statusText, headers: new Headers(垭壍.headers as unknown as Headers) });
+        const bytes = await readCapped(res.body as ReadableStream<Uint8Array> | null, maxBytes);
+        return new Response(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer, { status: res.status, statusText: res.statusText, headers: new Headers(res.headers as unknown as Headers) });
     }
     throw new AppError("UPSTREAM_ERROR", "Too many redirects");
 }
-async function 夥壍(研壍: ReadableStream<Uint8Array> | null, 霃壍: number): Promise<Uint8Array> {
-    if (!研壍)
+async function readCapped(stream: ReadableStream<Uint8Array> | null, maxBytes: number): Promise<Uint8Array> {
+    if (!stream)
         return new Uint8Array();
-    const 揲壍 = 研壍.getReader();
-    const 苡壍: Uint8Array[] = [];
-    let 俐壍 = 0;
+    const reader = stream.getReader();
+    const chunks: Uint8Array[] = [];
+    let total = 0;
     for (;;) {
-        const { done: 溿壍, value: 趮壍 } = await 揲壍.read();
-        if (溿壍)
+        const { done, value } = await reader.read();
+        if (done)
             break;
-        俐壍 += 趮壍.byteLength;
-        if (俐壍 > 霃壍) {
-            await 揲壍.cancel();
-            throw new AppError("UPSTREAM_ERROR", `Response is larger than ${Math.round(霃壍 / 1024)} KB`);
+        total += value.byteLength;
+        if (total > maxBytes) {
+            await reader.cancel();
+            throw new AppError("UPSTREAM_ERROR", `Response is larger than ${Math.round(maxBytes / 1024)} KB`);
         }
-        苡壍.push(趮壍);
+        chunks.push(value);
     }
-    const 媝壍 = new Uint8Array(俐壍);
-    let 禌壍 = 0;
-    for (const 须壍 of 苡壍) {
-        媝壍.set(须壍, 禌壍);
-        禌壍 += 须壍.byteLength;
+    const out = new Uint8Array(total);
+    let off = 0;
+    for (const c of chunks) {
+        out.set(c, off);
+        off += c.byteLength;
     }
-    return 媝壍;
+    return out;
 }

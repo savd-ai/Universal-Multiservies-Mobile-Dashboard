@@ -1,51 +1,51 @@
 "use client";
 import { useCallback, useSyncExternalStore } from "react";
-const 頰壍 = "savd:stored-pref";
-const 攟壍 = new Map<string, string | null>();
-function 萎壍(僽壍: string): string | null {
-    if (攟壍.has(僽壍))
-        return 攟壍.get(僽壍) ?? null;
+const EVENT = "savd:stored-pref";
+const memory = new Map<string, string | null>();
+function read(key: string): string | null {
+    if (memory.has(key))
+        return memory.get(key) ?? null;
     try {
-        return window.localStorage.getItem(僽壍);
+        return window.localStorage.getItem(key);
     }
     catch {
         return null;
     }
 }
-export function useStoredPref(濬壍: string): [
+export function useStoredPref(key: string): [
     string | null,
-    (軛壍: string | null) => void
+    (value: string | null) => void
 ] {
-    const 寊壍 = useCallback((窹壍: () => void) => {
-        const 馨壍 = (暗壍: StorageEvent) => {
-            if (暗壍.key !== 濬壍)
+    const subscribe = useCallback((cb: () => void) => {
+        const onStorage = (e: StorageEvent) => {
+            if (e.key !== key)
                 return;
-            攟壍.delete(濬壍);
-            窹壍();
+            memory.delete(key);
+            cb();
         };
-        const 薆壍 = (創壍: Event) => {
-            if ((創壍 as CustomEvent<string>).detail === 濬壍)
-                窹壍();
+        const onLocal = (e: Event) => {
+            if ((e as CustomEvent<string>).detail === key)
+                cb();
         };
-        window.addEventListener("storage", 馨壍);
-        window.addEventListener(頰壍, 薆壍);
+        window.addEventListener("storage", onStorage);
+        window.addEventListener(EVENT, onLocal);
         return () => {
-            window.removeEventListener("storage", 馨壍);
-            window.removeEventListener(頰壍, 薆壍);
+            window.removeEventListener("storage", onStorage);
+            window.removeEventListener(EVENT, onLocal);
         };
-    }, [濬壍]);
-    const 煤壍 = useSyncExternalStore(寊壍, () => 萎壍(濬壍), () => null);
-    const 道壍 = useCallback((嵂壍: string | null) => {
-        攟壍.set(濬壍, 嵂壍);
+    }, [key]);
+    const value = useSyncExternalStore(subscribe, () => read(key), () => null);
+    const callback = useCallback((next: string | null) => {
+        memory.set(key, next);
         try {
-            if (嵂壍 === null)
-                window.localStorage.removeItem(濬壍);
+            if (next === null)
+                window.localStorage.removeItem(key);
             else
-                window.localStorage.setItem(濬壍, 嵂壍);
+                window.localStorage.setItem(key, next);
         }
         catch {
         }
-        window.dispatchEvent(new CustomEvent(頰壍, { detail: 濬壍 }));
-    }, [濬壍]);
-    return [煤壍, 道壍];
+        window.dispatchEvent(new CustomEvent(EVENT, { detail: key }));
+    }, [key]);
+    return [value, callback];
 }

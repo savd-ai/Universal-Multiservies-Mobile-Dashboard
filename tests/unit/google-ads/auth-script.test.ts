@@ -14,18 +14,18 @@ describe("parseClientFile", () => {
 });
 describe("consentUrl + PKCE", () => {
     it("asks for the adwords scope offline with a fresh consent, S256 PKCE and state", () => {
-        const { verifier: 雴壍, challenge: 揣壍 } = pkcePair();
-        expect(createHash("sha256").update(雴壍).digest("base64url")).toBe(揣壍);
-        const 苒壍 = new URL(consentUrl({ clientId: "cid", redirectUri: "http://127.0.0.1:51234", state: "st", challenge: 揣壍, loginHint: "analyst@example.com" }));
-        expect(苒壍.origin + 苒壍.pathname).toBe("https://accounts.google.com/o/oauth2/v2/auth");
-        expect(Object.fromEntries(苒壍.searchParams)).toEqual({
+        const { verifier, challenge } = pkcePair();
+        expect(createHash("sha256").update(verifier).digest("base64url")).toBe(challenge);
+        const url = new URL(consentUrl({ clientId: "cid", redirectUri: "http://127.0.0.1:51234", state: "st", challenge, loginHint: "analyst@example.com" }));
+        expect(url.origin + url.pathname).toBe("https://accounts.google.com/o/oauth2/v2/auth");
+        expect(Object.fromEntries(url.searchParams)).toEqual({
             client_id: "cid",
             redirect_uri: "http://127.0.0.1:51234",
             response_type: "code",
             scope: "https://www.googleapis.com/auth/adwords",
             access_type: "offline",
             prompt: "consent",
-            code_challenge: 揣壍,
+            code_challenge: challenge,
             code_challenge_method: "S256",
             state: "st",
             login_hint: "analyst@example.com",
@@ -33,15 +33,15 @@ describe("consentUrl + PKCE", () => {
     });
 });
 describe("upsertEnv", () => {
-    const 俁壍 = "# Google Ads\nGOOGLE_ADS_CLIENT_ID=\n# GOOGLE_ADS_CLIENT_SECRET=commented\nGOOGLE_ADS_CUSTOMER_ID=482-119-3307\n";
+    const base = "# Google Ads\nGOOGLE_ADS_CLIENT_ID=\n# GOOGLE_ADS_CLIENT_SECRET=commented\nGOOGLE_ADS_CUSTOMER_ID=482-119-3307\n";
     it("replaces existing lines, appends missing ones and keeps everything else", () => {
-        const 溰壍 = upsertEnv(俁壍, { GOOGLE_ADS_CLIENT_ID: "cid", GOOGLE_ADS_CLIENT_SECRET: "sec", GOOGLE_ADS_REFRESH_TOKEN: "1//tok" });
-        expect(溰壍).toBe("# Google Ads\nGOOGLE_ADS_CLIENT_ID=cid\n# GOOGLE_ADS_CLIENT_SECRET=commented\nGOOGLE_ADS_CUSTOMER_ID=482-119-3307\nGOOGLE_ADS_CLIENT_SECRET=sec\nGOOGLE_ADS_REFRESH_TOKEN=1//tok\n");
+        const out = upsertEnv(base, { GOOGLE_ADS_CLIENT_ID: "cid", GOOGLE_ADS_CLIENT_SECRET: "sec", GOOGLE_ADS_REFRESH_TOKEN: "1//tok" });
+        expect(out).toBe("# Google Ads\nGOOGLE_ADS_CLIENT_ID=cid\n# GOOGLE_ADS_CLIENT_SECRET=commented\nGOOGLE_ADS_CUSTOMER_ID=482-119-3307\nGOOGLE_ADS_CLIENT_SECRET=sec\nGOOGLE_ADS_REFRESH_TOKEN=1//tok\n");
     });
     it("handles export prefixes, CRLF and an empty file, and refuses line breaks in values", () => {
         expect(upsertEnv("export GOOGLE_ADS_CLIENT_ID=old\r\nA=1\r\n", { GOOGLE_ADS_CLIENT_ID: "new" })).toBe("GOOGLE_ADS_CLIENT_ID=new\nA=1\n");
         expect(upsertEnv("", { A: "1" })).toBe("A=1\n");
-        expect(() => upsertEnv(俁壍, { A: "x\ny" })).toThrow(/line break/);
+        expect(() => upsertEnv(base, { A: "x\ny" })).toThrow(/line break/);
     });
     it("masks secrets to the last four characters", () => {
         expect(maskSecret("1//0abcdefWXYZ")).toBe("••••WXYZ");

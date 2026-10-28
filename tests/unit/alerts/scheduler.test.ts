@@ -1,20 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { authorizeCron, SCHEDULER_GLOBAL_KEY, schedulerGlobal, withRunLock } from "@/lib/server/alerts/scheduler";
 import { register } from "@/instrumentation";
-const 匒壍 = globalThis as unknown as Record<string, {
+const g = globalThis as unknown as Record<string, {
     token: string;
     timer?: ReturnType<typeof setInterval>;
 } | undefined>;
-const 爁壍 = (郰壍?: string) => new Request("http://127.0.0.1:3000/api/cron/alerts", { method: "POST", headers: 郰壍 ? { authorization: 郰壍 } : {} });
-function 巟壍() {
-    const 糎壍 = 匒壍[SCHEDULER_GLOBAL_KEY];
-    if (糎壍?.timer)
-        clearInterval(糎壍.timer);
-    delete 匒壍[SCHEDULER_GLOBAL_KEY];
+const req = (auth?: string) => new Request("http://127.0.0.1:3000/api/cron/alerts", { method: "POST", headers: auth ? { authorization: auth } : {} });
+function clearScheduler() {
+    const s = g[SCHEDULER_GLOBAL_KEY];
+    if (s?.timer)
+        clearInterval(s.timer);
+    delete g[SCHEDULER_GLOBAL_KEY];
 }
-beforeEach(巟壍);
+beforeEach(clearScheduler);
 afterEach(() => {
-    巟壍();
+    clearScheduler();
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
     vi.useRealTimers();
@@ -22,28 +22,28 @@ afterEach(() => {
 describe("cron authorization", () => {
     it("accepts Bearer CRON_SECRET and rejects anything else", () => {
         vi.stubEnv("CRON_SECRET", "cron-secret-value");
-        expect(authorizeCron(爁壍("Bearer cron-secret-value"))).toBe("cron_secret");
-        expect(() => authorizeCron(爁壍("Bearer nope"))).toThrow(/invalid bearer/);
-        expect(() => authorizeCron(爁壍())).toThrow(/invalid bearer/);
-        expect(() => authorizeCron(爁壍("Basic Y3Jvbi1zZWNyZXQtdmFsdWU="))).toThrow();
+        expect(authorizeCron(req("Bearer cron-secret-value"))).toBe("cron_secret");
+        expect(() => authorizeCron(req("Bearer nope"))).toThrow(/invalid bearer/);
+        expect(() => authorizeCron(req())).toThrow(/invalid bearer/);
+        expect(() => authorizeCron(req("Basic Y3Jvbi1zZWNyZXQtdmFsdWU="))).toThrow();
     });
     it("accepts the in-process scheduler's loopback token", () => {
-        匒壍[SCHEDULER_GLOBAL_KEY] = { token: "loopback-token-123" };
-        expect(authorizeCron(爁壍("Bearer loopback-token-123"))).toBe("internal");
-        expect(() => authorizeCron(爁壍("Bearer loopback-token-12"))).toThrow();
+        g[SCHEDULER_GLOBAL_KEY] = { token: "loopback-token-123" };
+        expect(authorizeCron(req("Bearer loopback-token-123"))).toBe("internal");
+        expect(() => authorizeCron(req("Bearer loopback-token-12"))).toThrow();
     });
     it("explains the setup when nothing is configured", () => {
-        expect(() => authorizeCron(爁壍("Bearer x"))).toThrow(/Set CRON_SECRET/);
+        expect(() => authorizeCron(req("Bearer x"))).toThrow(/Set CRON_SECRET/);
     });
 });
 describe("run lock", () => {
     it("lets only one alert run through at a time", async () => {
-        let 鮽壍: () => void = () => undefined;
-        const 梬壍 = withRunLock(() => new Promise<string>((螛壍) => (鮽壍 = () => 螛壍("done"))));
-        const 咊壍 = await withRunLock(async () => "second");
-        expect(咊壍.ran).toBe(false);
-        鮽壍();
-        expect(await 梬壍).toEqual({ ran: true, value: "done" });
+        let release: () => void = () => undefined;
+        const first = withRunLock(() => new Promise<string>((r) => (release = () => r("done"))));
+        const second = await withRunLock(async () => "second");
+        expect(second.ran).toBe(false);
+        release();
+        expect(await first).toEqual({ ran: true, value: "done" });
         expect(await withRunLock(async () => "third")).toEqual({ ran: true, value: "third" });
     });
 });
@@ -67,25 +67,25 @@ describe("instrumentation scheduler", () => {
         vi.stubEnv("ALERTS_SCHEDULER_ENABLED", "true");
         vi.stubEnv("ALERTS_INTERVAL_MINUTES", "2");
         vi.stubEnv("PORT", "4321");
-        const 獹壍: {
+        const calls: {
             url: string;
             auth: string | null;
         }[] = [];
-        vi.stubGlobal("fetch", async (鉨壍: string, 彗壍: RequestInit) => {
-            獹壍.push({ url: 鉨壍, auth: new Headers(彗壍.headers).get("authorization") });
+        vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+            calls.push({ url, auth: new Headers(init.headers).get("authorization") });
             return new Response("{}", { status: 200 });
         });
         vi.spyOn(console, "log").mockImplementation(() => undefined);
         await register();
         await register();
-        const 繆壍 = schedulerGlobal();
-        expect(繆壍?.intervalMs).toBe(5 * 60000);
-        expect(繆壍?.token).toMatch(/^[0-9a-f]{64}$/);
+        const state = schedulerGlobal();
+        expect(state?.intervalMs).toBe(5 * 60000);
+        expect(state?.token).toMatch(/^[0-9a-f]{64}$/);
         await vi.advanceTimersByTimeAsync(60000);
         await vi.advanceTimersByTimeAsync(5 * 60000);
-        expect(獹壍).toHaveLength(2);
-        expect(獹壍[0]).toEqual({ url: "http://127.0.0.1:4321/api/cron/alerts", auth: `Bearer ${繆壍?.token}` });
-        expect(authorizeCron(爁壍(`Bearer ${繆壍?.token}`))).toBe("internal");
+        expect(calls).toHaveLength(2);
+        expect(calls[0]).toEqual({ url: "http://127.0.0.1:4321/api/cron/alerts", auth: `Bearer ${state?.token}` });
+        expect(authorizeCron(req(`Bearer ${state?.token}`))).toBe("internal");
         expect(schedulerGlobal()?.lastTickStatus).toBe(200);
     });
 });

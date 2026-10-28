@@ -14,117 +14,117 @@ interface ChannelDialogProps {
     onClose: () => void;
     encryption: boolean;
 }
-export function ChannelDialog({ channel: 噊壍, onClose: 甹壍, encryption: 鐨壍 }: ChannelDialogProps) {
-    const 愗壍 = !!噊壍;
-    const [耆壍, 黵壍] = useState<AlertChannelPlugin>(噊壍?.pluginId ?? "slack");
-    const [毤壍, 諓壍] = useState(噊壍?.name ?? PLUGIN_META.slack.label);
-    const [埂壍, 皱壍] = useState(愗壍);
-    const [閠壍, 抏壍] = useState("");
-    const [腾壍, 乭壍] = useState(噊壍?.options.mention ?? "");
-    const [浜壍, 豋壍] = useState("");
-    const [夺壍, 砩壍] = useState(false);
-    const [霘壍, 搇壍] = useState(噊壍?.options.includeLinks ?? true);
-    const [苶壍, 俥壍] = useState(噊壍?.enabled ?? true);
-    const [滔壍, 跃壍] = useState<{
+export function ChannelDialog({ channel, onClose, encryption }: ChannelDialogProps) {
+    const editing = !!channel;
+    const [pluginId, setPluginId] = useState<AlertChannelPlugin>(channel?.pluginId ?? "slack");
+    const [name, setName] = useState(channel?.name ?? PLUGIN_META.slack.label);
+    const [nameTouched, setNameTouched] = useState(editing);
+    const [url, setUrl] = useState("");
+    const [mention, setMention] = useState(channel?.options.mention ?? "");
+    const [secret, setSecret] = useState("");
+    const [clearSecret, setClearSecret] = useState(false);
+    const [includeLinks, setIncludeLinks] = useState(channel?.options.includeLinks ?? true);
+    const [enabled, setEnabled] = useState(channel?.enabled ?? true);
+    const [error, setError] = useState<{
         message: string;
         secrets?: boolean;
     } | null>(null);
-    const 媲壍 = useSaveAlertChannel();
-    const 禡壍 = PLUGIN_META[耆壍];
-    const 颐壍 = 愗壍 && 耆壍 !== 噊壍.pluginId;
-    const 敿壍 = (葮壍: AlertChannelPlugin) => {
-        黵壍(葮壍);
-        if (!埂壍)
-            諓壍(PLUGIN_META[葮壍].label);
-        跃壍(null);
+    const save = useSaveAlertChannel();
+    const meta = PLUGIN_META[pluginId];
+    const typeChanged = editing && pluginId !== channel.pluginId;
+    const pick = (p: AlertChannelPlugin) => {
+        setPluginId(p);
+        if (!nameTouched)
+            setName(PLUGIN_META[p].label);
+        setError(null);
     };
-    const 兝壍 = () => {
-        const 灌壍 = 毤壍.trim();
-        const 輻壍 = 閠壍.trim();
-        if (!灌壍)
-            return 跃壍({ message: "Give the channel a name." });
-        if ((!愗壍 || 颐壍) && !輻壍)
-            return 跃壍({ message: 颐壍 ? `Changing the type needs the new ${禡壍.label} webhook URL.` : "Paste the webhook URL." });
-        if (輻壍 && !/^https?:\/\//i.test(輻壍))
-            return 跃壍({ message: "The webhook URL must start with https://" });
-        const 尪壍 = { includeLinks: 霘壍, mention: 禡壍.mention ? 腾壍.trim() || undefined : undefined };
-        const 笙壍 = (騈壍: AlertChannelView) => {
-            toast(愗壍 ? `Saved “${騈壍.name}”` : `Added “${騈壍.name}” — send a test to check it`);
-            甹壍();
+    const submit = () => {
+        const n = name.trim();
+        const u = url.trim();
+        if (!n)
+            return setError({ message: "Give the channel a name." });
+        if ((!editing || typeChanged) && !u)
+            return setError({ message: typeChanged ? `Changing the type needs the new ${meta.label} webhook URL.` : "Paste the webhook URL." });
+        if (u && !/^https?:\/\//i.test(u))
+            return setError({ message: "The webhook URL must start with https://" });
+        const options = { includeLinks, mention: meta.mention ? mention.trim() || undefined : undefined };
+        const onSuccess = (ch: AlertChannelView) => {
+            toast(editing ? `Saved “${ch.name}”` : `Added “${ch.name}” — send a test to check it`);
+            onClose();
         };
-        const 曷壍 = (藦壍: Error) => 跃壍({ message: 藦壍.message || "Couldn't save the channel", secrets: isSecretsDisabled(藦壍) });
-        if (!愗壍) {
-            const 動壍: AlertChannelBody = { pluginId: 耆壍, name: 灌壍, enabled: 苶壍, url: 輻壍, options: 尪壍, ...(禡壍.signing && 浜壍 ? { signingSecret: 浜壍 } : {}) };
-            媲壍.mutate({ body: 動壍 }, { onSuccess: 笙壍, onError: 曷壍 });
+        const onError = (e: Error) => setError({ message: e.message || "Couldn't save the channel", secrets: isSecretsDisabled(e) });
+        if (!editing) {
+            const body2: AlertChannelBody = { pluginId, name: n, enabled, url: u, options, ...(meta.signing && secret ? { signingSecret: secret } : {}) };
+            save.mutate({ body: body2 }, { onSuccess, onError });
             return;
         }
-        const 燄壍: AlertChannelUpdate = {
-            name: 灌壍,
-            enabled: 苶壍,
-            options: { includeLinks: 霘壍, mention: 禡壍.mention ? 腾壍.trim() : "" },
-            version: 噊壍.version,
-            ...(颐壍 ? { pluginId: 耆壍 } : {}),
-            ...(輻壍 ? { url: 輻壍 } : {}),
-            ...(禡壍.signing && 夺壍 ? { signingSecret: "" } : 禡壍.signing && 浜壍 ? { signingSecret: 浜壍 } : {}),
+        const body: AlertChannelUpdate = {
+            name: n,
+            enabled,
+            options: { includeLinks, mention: meta.mention ? mention.trim() : "" },
+            version: channel.version,
+            ...(typeChanged ? { pluginId } : {}),
+            ...(u ? { url: u } : {}),
+            ...(meta.signing && clearSecret ? { signingSecret: "" } : meta.signing && secret ? { signingSecret: secret } : {}),
         };
-        媲壍.mutate({ id: 噊壍.id, body: 燄壍 }, { onSuccess: 笙壍, onError: 曷壍 });
+        save.mutate({ id: channel.id, body }, { onSuccess, onError });
     };
-    return (<Modal open onOpenChange={(邳壍) => !邳壍 && 甹壍()} eyebrow={愗壍 ? "Edit channel" : "Add channel"} title={愗壍 ? 噊壍.name : "Where should alerts go?"} description={愗壍 ? `${PLUGIN_META[噊壍.pluginId].label} · the URL stays encrypted and is never shown again.` : "Alerts, resolved notices and the daily digest are posted here. Nothing is sent until a route matches."} width={560} footer={<>
-          <Button variant="ghost" onClick={甹壍}>
+    return (<Modal open onOpenChange={(o) => !o && onClose()} eyebrow={editing ? "Edit channel" : "Add channel"} title={editing ? channel.name : "Where should alerts go?"} description={editing ? `${PLUGIN_META[channel.pluginId].label} · the URL stays encrypted and is never shown again.` : "Alerts, resolved notices and the daily digest are posted here. Nothing is sent until a route matches."} width={560} footer={<>
+          <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="accent" onClick={兝壍} loading={媲壍.isPending}>
-            {愗壍 ? "Save channel" : "Add channel"}
+          <Button variant="accent" onClick={submit} loading={save.isPending}>
+            {editing ? "Save channel" : "Add channel"}
           </Button>
         </>}>
       <div className="flex flex-col gap-4">
-        {!鐨壍 ? (<p className="rounded-mini border border-line bg-fill px-3.5 py-3 text-xs leading-relaxed text-muted">
+        {!encryption ? (<p className="rounded-mini border border-line bg-fill px-3.5 py-3 text-xs leading-relaxed text-muted">
             Saving webhook URLs from the UI needs <span className="font-mono">APP_ENCRYPTION_KEY</span> in .env (generate one with <span className="font-mono">npm run gen:key</span>). Without it, define the channel in .env instead — it shows up here read-only.
           </p>) : null}
 
         <div className="flex flex-col gap-2">
           <span className="label-mono">Type</span>
-          <Segmented ariaLabel="Channel type" variant="sans" fill value={耆壍} onChange={敿壍} options={ALERT_CHANNEL_PLUGINS.map((嶢壍) => ({ value: 嶢壍, label: 嶢壍 === "teams" ? "Teams" : 嶢壍 === "webhook" ? "Webhook" : PLUGIN_META[嶢壍].label }))}/>
-          <p className="text-xs leading-relaxed text-muted-3">{禡壍.help}</p>
+          <Segmented ariaLabel="Channel type" variant="sans" fill value={pluginId} onChange={pick} options={ALERT_CHANNEL_PLUGINS.map((p) => ({ value: p, label: p === "teams" ? "Teams" : p === "webhook" ? "Webhook" : PLUGIN_META[p].label }))}/>
+          <p className="text-xs leading-relaxed text-muted-3">{meta.help}</p>
         </div>
 
         <Field label="Name">
-          {(粑壍) => (<Input id={粑壍} variant="field" value={毤壍} maxLength={60} onChange={(鮀壍) => {
-                諓壍(鮀壍.target.value);
-                皱壍(true);
+          {(id) => (<Input id={id} variant="field" value={name} maxLength={60} onChange={(e) => {
+                setName(e.target.value);
+                setNameTouched(true);
             }}/>)}
         </Field>
 
-        <Field label={耆壍 === "teams" ? "Workflows webhook URL" : "Webhook URL"} hint={愗壍 && 噊壍.url.masked && !颐壍 ? `Leave blank to keep the current URL (${噊壍.url.masked}).` : `Or set ${禡壍.envKey} in .env.`}>
-          {(桯壍) => (<Input id={桯壍} variant="field" type="url" value={閠壍} onChange={(蝞壍) => 抏壍(蝞壍.target.value)} placeholder={禡壍.placeholder} autoComplete="off" spellCheck={false} className="font-mono text-xs"/>)}
+        <Field label={pluginId === "teams" ? "Workflows webhook URL" : "Webhook URL"} hint={editing && channel.url.masked && !typeChanged ? `Leave blank to keep the current URL (${channel.url.masked}).` : `Or set ${meta.envKey} in .env.`}>
+          {(id) => (<Input id={id} variant="field" type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder={meta.placeholder} autoComplete="off" spellCheck={false} className="font-mono text-xs"/>)}
         </Field>
 
-        {禡壍.mention ? (<Field label="Mention (optional)" hint="@here, @channel or a user / group mention like <@U0123ABCD> — added to alerts, never to tests.">
-            {(呍壍) => <Input id={呍壍} variant="field" value={腾壍} maxLength={60} onChange={(猼壍) => 乭壍(猼壍.target.value)} placeholder="@here"/>}
+        {meta.mention ? (<Field label="Mention (optional)" hint="@here, @channel or a user / group mention like <@U0123ABCD> — added to alerts, never to tests.">
+            {(id) => <Input id={id} variant="field" value={mention} maxLength={60} onChange={(e) => setMention(e.target.value)} placeholder="@here"/>}
           </Field>) : null}
 
-        {禡壍.signing ? (<div className="flex flex-col gap-2">
-            <Field label="Signing secret (optional)" hint={愗壍 && 噊壍.signing ? "A secret is set. Type a new one to replace it." : "Used to sign every request (HMAC-SHA256)."}>
-              {(鈫壍) => <Input id={鈫壍} variant="field" type="password" value={浜壍} onChange={(弚壍) => 豋壍(弚壍.target.value)} autoComplete="new-password" disabled={夺壍}/>}
+        {meta.signing ? (<div className="flex flex-col gap-2">
+            <Field label="Signing secret (optional)" hint={editing && channel.signing ? "A secret is set. Type a new one to replace it." : "Used to sign every request (HMAC-SHA256)."}>
+              {(id) => <Input id={id} variant="field" type="password" value={secret} onChange={(e) => setSecret(e.target.value)} autoComplete="new-password" disabled={clearSecret}/>}
             </Field>
-            {愗壍 && 噊壍.signing ? (<label className="flex cursor-pointer items-center gap-2.5 text-xs text-muted">
-                <Checkbox checked={夺壍} onChange={砩壍} ariaLabel="Remove the signing secret"/>
+            {editing && channel.signing ? (<label className="flex cursor-pointer items-center gap-2.5 text-xs text-muted">
+                <Checkbox checked={clearSecret} onChange={setClearSecret} ariaLabel="Remove the signing secret"/>
                 Remove the signing secret
               </label>) : null}
           </div>) : null}
 
         <div className="flex flex-wrap gap-x-6 gap-y-3">
-          <Switch checked={霘壍} onChange={搇壍} label="Include dashboard links"/>
-          <Switch checked={苶壍} onChange={俥壍} label={苶壍 ? "Enabled" : "Disabled"}/>
+          <Switch checked={includeLinks} onChange={setIncludeLinks} label="Include dashboard links"/>
+          <Switch checked={enabled} onChange={setEnabled} label={enabled ? "Enabled" : "Disabled"}/>
         </div>
 
-        {滔壍 ? (滔壍.secrets ? (<div role="alert" className="flex flex-col gap-2.5 rounded-mini border border-crit/25 bg-crit-t/40 p-4 text-[13px] text-muted">
+        {error ? (error.secrets ? (<div role="alert" className="flex flex-col gap-2.5 rounded-mini border border-crit/25 bg-crit-t/40 p-4 text-[13px] text-muted">
               <span className="font-semibold text-fg">Webhook URLs can&apos;t be stored yet</span>
               <span>{SECRETS_HELP}.</span>
-              <CodeBlock className="p-3">{`APP_ENCRYPTION_KEY=…   # npm run gen:key\n${禡壍.envKey}=${禡壍.placeholder}`}</CodeBlock>
-              <span className="text-xs text-muted-3">{滔壍.message}</span>
+              <CodeBlock className="p-3">{`APP_ENCRYPTION_KEY=…   # npm run gen:key\n${meta.envKey}=${meta.placeholder}`}</CodeBlock>
+              <span className="text-xs text-muted-3">{error.message}</span>
             </div>) : (<p role="alert" className="text-[13px] text-crit">
-              {滔壍.message}
+              {error.message}
             </p>)) : null}
       </div>
     </Modal>);

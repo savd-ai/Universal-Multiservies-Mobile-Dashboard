@@ -34,213 +34,213 @@ interface Bounds {
     lo: number;
     hi: number;
 }
-function 您壍(羗壍: OptimizerUnit): Bounds {
-    const 麆壍 = 羗壍.boundsBase ?? 羗壍.current;
-    const 歵壍 = Math.max(0, 羗壍.min ?? 麆壍 * DEFAULT_MIN_FACTOR);
-    const 詤壍 = Math.max(歵壍, 羗壍.max ?? 麆壍 * DEFAULT_MAX_FACTOR);
-    return { lo: 歵壍, hi: 詤壍 };
+function boundsOf(u: OptimizerUnit): Bounds {
+    const base = u.boundsBase ?? u.current;
+    const lo = Math.max(0, u.min ?? base * DEFAULT_MIN_FACTOR);
+    const hi = Math.max(lo, u.max ?? base * DEFAULT_MAX_FACTOR);
+    return { lo, hi };
 }
-const 坓壍 = (療壍: OptimizerUnit, 锱壍: number, 戠壍: number) => (療壍.curve ? curveOutcome(療壍.curve, 锱壍, 戠壍) : 0);
-export function allocateMarginal(脏壍: readonly OptimizerUnit[], 鿾壍: readonly Bounds[], 泭壍: number, 诜壍: number, 壋壍: number, 瞺壍: string[]): number[] {
-    const 隩壍 = 脏壍.length;
-    if (!隩壍)
+const outcome = (u: OptimizerUnit, x: number, days: number) => (u.curve ? curveOutcome(u.curve, x, days) : 0);
+export function allocateMarginal(units: readonly OptimizerUnit[], bounds: readonly Bounds[], available: number, step: number, days: number, warnings: string[]): number[] {
+    const n = units.length;
+    if (!n)
         return [];
-    const 掘壍 = 鿾壍.map((芇壍) => 芇壍.lo);
-    const 佶壍 = 掘壍.reduce((湥壍, 赔壍) => 湥壍 + 赔壍, 0);
-    if (佶壍 > 泭壍 + 1e-9) {
-        瞺壍.push("The total is below the sum of the minimum amounts; minimums were scaled down proportionally.");
-        const 婃壍 = 佶壍 > 0 ? 掘壍.map((礲壍) => (礲壍 * 泭壍) / 佶壍) : 掘壍.map(() => 泭壍 / 隩壍);
-        return 櫰壍(roundPreservingTotal(婃壍, 诜壍, 泭壍), 泭壍, 鿾壍.map(() => ({ lo: 0, hi: Number.POSITIVE_INFINITY })));
+    const lo = bounds.map((b) => b.lo);
+    const sumLo = lo.reduce((a, b) => a + b, 0);
+    if (sumLo > available + 1e-9) {
+        warnings.push("The total is below the sum of the minimum amounts; minimums were scaled down proportionally.");
+        const scaled = sumLo > 0 ? lo.map((v) => (v * available) / sumLo) : lo.map(() => available / n);
+        return fixRemainder(roundPreservingTotal(scaled, step, available), available, bounds.map(() => ({ lo: 0, hi: Number.POSITIVE_INFINITY })));
     }
-    const 頡壍 = 鿾壍.map((攐壍) => {
-        const 菿壍 = Math.ceil(攐壍.lo / 诜壍 - 1e-9) * 诜壍;
-        return 菿壍 <= 攐壍.hi + 1e-9 ? 菿壍 : 攐壍.lo;
+    const gLo = bounds.map((b) => {
+        const v = Math.ceil(b.lo / step - 1e-9) * step;
+        return v <= b.hi + 1e-9 ? v : b.lo;
     });
-    const 僮壍 = 鿾壍.map((濝壍, 軌壍) => {
-        const 宻壍 = Math.floor(濝壍.hi / 诜壍 + 1e-9) * 诜壍;
-        return 宻壍 >= (頡壍[軌壍] as number) ? 宻壍 : (頡壍[軌壍] as number);
+    const gHi = bounds.map((b, i) => {
+        const v = Math.floor(b.hi / step + 1e-9) * step;
+        return v >= (gLo[i] as number) ? v : (gLo[i] as number);
     });
-    const 窪壍 = [...頡壍];
-    let 香壍 = 泭壍 - 窪壍.reduce((暈壍, 蕷壍) => 暈壍 + 蕷壍, 0);
-    if (香壍 < -1e-9) {
-        for (let 剦壍 = 0; 剦壍 < 隩壍; 剦壍++)
-            窪壍[剦壍] = 掘壍[剦壍] as number;
-        香壍 = 泭壍 - 佶壍;
+    const x = [...gLo];
+    let rest = available - x.reduce((a, b) => a + b, 0);
+    if (rest < -1e-9) {
+        for (let i = 0; i < n; i++)
+            x[i] = lo[i] as number;
+        rest = available - sumLo;
     }
-    const 煕壍 = (遄壍: number) => Math.max(僮壍[遄壍] as number, 窪壍[遄壍] as number);
-    const 崳壍 = (簢壍: number, 鬑壍: number) => 坓壍(脏壍[簢壍] as OptimizerUnit, (窪壍[簢壍] as number) + 鬑壍, 壋壍) - 坓壍(脏壍[簢壍] as OptimizerUnit, 窪壍[簢壍] as number, 壋壍);
-    const 栀壍 = (蛯壍: number) => {
-        const 叞壍 = 鿾壍[蛯壍] as Bounds;
-        return 叞壍.hi > 叞壍.lo ? ((窪壍[蛯壍] as number) - 叞壍.lo) / (叞壍.hi - 叞壍.lo) : 1;
+    const hiOf = (i: number) => Math.max(gHi[i] as number, x[i] as number);
+    const gain = (i: number, dx: number) => outcome(units[i] as OptimizerUnit, (x[i] as number) + dx, days) - outcome(units[i] as OptimizerUnit, x[i] as number, days);
+    const fill = (i: number) => {
+        const b = bounds[i] as Bounds;
+        return b.hi > b.lo ? ((x[i] as number) - b.lo) / (b.hi - b.lo) : 1;
     };
-    while (香壍 >= 诜壍 - 1e-9) {
-        let 狍壍 = -1;
-        let 醼壍 = -Infinity;
-        for (let 庫壍 = 0; 庫壍 < 隩壍; 庫壍++) {
-            if ((窪壍[庫壍] as number) + 诜壍 > 煕壍(庫壍) + 1e-9)
+    while (rest >= step - 1e-9) {
+        let best = -1;
+        let bestGain = -Infinity;
+        for (let i = 0; i < n; i++) {
+            if ((x[i] as number) + step > hiOf(i) + 1e-9)
                 continue;
-            const 続壍 = 崳壍(庫壍, 诜壍);
-            if (続壍 > 醼壍 + 1e-12 || (Math.abs(続壍 - 醼壍) <= 1e-12 && 狍壍 >= 0 && 栀壍(庫壍) < 栀壍(狍壍))) {
-                狍壍 = 庫壍;
-                醼壍 = 続壍;
+            const g = gain(i, step);
+            if (g > bestGain + 1e-12 || (Math.abs(g - bestGain) <= 1e-12 && best >= 0 && fill(i) < fill(best))) {
+                best = i;
+                bestGain = g;
             }
         }
-        if (狍壍 < 0)
+        if (best < 0)
             break;
-        窪壍[狍壍] = (窪壍[狍壍] as number) + 诜壍;
-        香壍 -= 诜壍;
+        x[best] = (x[best] as number) + step;
+        rest -= step;
     }
-    if (香壍 > 1e-9) {
-        let 鲉壍 = -1;
-        let 楸壍 = -Infinity;
-        for (let 衧壍 = 0; 衧壍 < 隩壍; 衧壍++) {
-            const 啖壍 = (鿾壍[衧壍] as Bounds).hi - (窪壍[衧壍] as number);
-            if (啖壍 + 1e-9 < 香壍)
+    if (rest > 1e-9) {
+        let best = -1;
+        let bestGain = -Infinity;
+        for (let i = 0; i < n; i++) {
+            const room = (bounds[i] as Bounds).hi - (x[i] as number);
+            if (room + 1e-9 < rest)
                 continue;
-            const 瑅壍 = 崳壍(衧壍, 香壍);
-            if (瑅壍 > 楸壍) {
-                鲉壍 = 衧壍;
-                楸壍 = 瑅壍;
+            const g = gain(i, rest);
+            if (g > bestGain) {
+                best = i;
+                bestGain = g;
             }
         }
-        if (鲉壍 >= 0) {
-            窪壍[鲉壍] = (窪壍[鲉壍] as number) + 香壍;
-            香壍 = 0;
+        if (best >= 0) {
+            x[best] = (x[best] as number) + rest;
+            rest = 0;
         }
         else {
-            for (let 錴壍 = 0; 錴壍 < 隩壍 && 香壍 > 1e-9; 錴壍++) {
-                const 怣壍 = Math.max(0, (鿾壍[錴壍] as Bounds).hi - (窪壍[錴壍] as number));
-                const 缒壍 = Math.min(怣壍, 香壍);
-                窪壍[錴壍] = (窪壍[錴壍] as number) + 缒壍;
-                香壍 -= 缒壍;
+            for (let i = 0; i < n && rest > 1e-9; i++) {
+                const room = Math.max(0, (bounds[i] as Bounds).hi - (x[i] as number));
+                const add = Math.min(room, rest);
+                x[i] = (x[i] as number) + add;
+                rest -= add;
             }
-            if (香壍 > 0.005)
-                瞺壍.push(`Maximum limits cap the allocation; ${formatMetricValue("money", 香壍, {})} could not be placed.`);
+            if (rest > 0.005)
+                warnings.push(`Maximum limits cap the allocation; ${formatMetricValue("money", rest, {})} could not be placed.`);
         }
     }
-    return 窪壍.map((鸁壍) => round(鸁壍, 2));
+    return x.map((v) => round(v, 2));
 }
-function 櫰壍(觟壍: number[], 囎壍: number, 疽壍: readonly Bounds[]): number[] {
-    const 钬壍 = round(囎壍 - 觟壍.reduce((憛壍, 肊壍) => 憛壍 + 肊壍, 0), 2);
-    if (Math.abs(钬壍) < 0.005 || !觟壍.length)
-        return 觟壍.map((齹壍) => round(齹壍, 2));
-    const 汨壍 = 觟壍.map((譗壍, 塆壍) => 塆壍).sort((眵壍, 阤壍) => (觟壍[阤壍] as number) - (觟壍[眵壍] as number));
-    const 挓壍 = [...觟壍];
-    for (const 舂壍 of 汨壍) {
-        const 仱壍 = (挓壍[舂壍] as number) + 钬壍;
-        const 淠壍 = 疽壍[舂壍] as Bounds;
-        if (仱壍 >= 淠壍.lo - 1e-9 && 仱壍 <= 淠壍.hi + 1e-9 && 仱壍 >= 0) {
-            挓壍[舂壍] = 仱壍;
-            return 挓壍.map((賏壍) => round(賏壍, 2));
+function fixRemainder(values: number[], total: number, bounds: readonly Bounds[]): number[] {
+    const diff = round(total - values.reduce((a, b) => a + b, 0), 2);
+    if (Math.abs(diff) < 0.005 || !values.length)
+        return values.map((v) => round(v, 2));
+    const order = values.map((v, i2) => i2).sort((a, b) => (values[b] as number) - (values[a] as number));
+    const out = [...values];
+    for (const i2 of order) {
+        const next = (out[i2] as number) + diff;
+        const b = bounds[i2] as Bounds;
+        if (next >= b.lo - 1e-9 && next <= b.hi + 1e-9 && next >= 0) {
+            out[i2] = next;
+            return out.map((v) => round(v, 2));
         }
     }
-    const 妾壍 = 汨壍[0] as number;
-    挓壍[妾壍] = Math.max(0, (挓壍[妾壍] as number) + 钬壍);
-    return 挓壍.map((碭壍) => round(碭壍, 2));
+    const i = order[0] as number;
+    out[i] = Math.max(0, (out[i] as number) + diff);
+    return out.map((v) => round(v, 2));
 }
-export function allocateHeuristic(鞜壍: readonly OptimizerUnit[], 撋壍: readonly Bounds[], 荺壍: number, 偩壍: number, 潘壍: string[]): number[] {
-    const 蹇壍 = 鞜壍.length;
-    if (!蹇壍)
+export function allocateHeuristic(units: readonly OptimizerUnit[], bounds: readonly Bounds[], available: number, step: number, warnings: string[]): number[] {
+    const n = units.length;
+    if (!n)
         return [];
-    const 嬶壍 = 鞜壍.map((稥壍) => Math.max(0, 稥壍.roas ?? 0) ** 0.7);
-    const 餔壍 = (昃壍: number) => 撋壍.map((蓲壍, 凡壍) => Math.min(蓲壍.hi, Math.max(蓲壍.lo, 昃壍 * (嬶壍[凡壍] as number))));
-    const 烐壍 = (辿壍: number) => 餔壍(辿壍).reduce((岮壍, 箝壍) => 岮壍 + 箝壍, 0);
-    const 验壍 = 撋壍.reduce((杻壍, 虪壍) => 杻壍 + 虪壍.lo, 0);
-    const 卙壍 = 撋壍.reduce((版壍, 鄷壍) => 版壍 + 鄷壍.hi, 0);
-    let 带壍: number[];
-    let 紕壍 = 荺壍;
-    if (荺壍 <= 验壍) {
-        if (荺壍 < 验壍 - 0.01)
-            潘壍.push("The total is below the sum of the minimum amounts; minimums were scaled down proportionally.");
-        带壍 = 验壍 > 0 ? 撋壍.map((鰄壍) => (鰄壍.lo * 荺壍) / 验壍) : 撋壍.map(() => 荺壍 / 蹇壍);
+    const w = units.map((u) => Math.max(0, u.roas ?? 0) ** 0.7);
+    const at = (lambda: number) => bounds.map((b, i) => Math.min(b.hi, Math.max(b.lo, lambda * (w[i] as number))));
+    const sumAt = (lambda: number) => at(lambda).reduce((a, b) => a + b, 0);
+    const sumLo = bounds.reduce((s, b) => s + b.lo, 0);
+    const sumHi = bounds.reduce((s, b) => s + b.hi, 0);
+    let x: number[];
+    let target = available;
+    if (available <= sumLo) {
+        if (available < sumLo - 0.01)
+            warnings.push("The total is below the sum of the minimum amounts; minimums were scaled down proportionally.");
+        x = sumLo > 0 ? bounds.map((b) => (b.lo * available) / sumLo) : bounds.map(() => available / n);
     }
-    else if (荺壍 >= 卙壍 || 嬶壍.every((棳壍) => 棳壍 === 0)) {
-        带壍 = 荺壍 >= 卙壍 ? 撋壍.map((蟢壍) => 蟢壍.hi) : 撋壍.map((哑壍) => 哑壍.lo + ((哑壍.hi - 哑壍.lo) * (荺壍 - 验壍)) / Math.max(1e-9, 卙壍 - 验壍));
-        if (荺壍 > 卙壍 + 0.01) {
-            潘壍.push("Maximum limits cap the ROAS rebalance below the requested total.");
-            紕壍 = 卙壍;
+    else if (available >= sumHi || w.every((v) => v === 0)) {
+        x = available >= sumHi ? bounds.map((b) => b.hi) : bounds.map((b) => b.lo + ((b.hi - b.lo) * (available - sumLo)) / Math.max(1e-9, sumHi - sumLo));
+        if (available > sumHi + 0.01) {
+            warnings.push("Maximum limits cap the ROAS rebalance below the requested total.");
+            target = sumHi;
         }
     }
     else {
-        let 珀壍 = 0;
-        let 銯壍 = Math.max(...撋壍.map((從壍, 纍壍) => ((嬶壍[纍壍] as number) > 0 ? 從壍.hi / (嬶壍[纍壍] as number) : 0)), 1);
-        for (let 鵼壍 = 0; 鵼壍 < 200 && 銯壍 - 珀壍 > 1e-9 * 銯壍; 鵼壍++) {
-            const 橫壍 = (珀壍 + 銯壍) / 2;
-            if (烐壍(橫壍) < 荺壍)
-                珀壍 = 橫壍;
+        let lo = 0;
+        let hi = Math.max(...bounds.map((b, i) => ((w[i] as number) > 0 ? b.hi / (w[i] as number) : 0)), 1);
+        for (let iter = 0; iter < 200 && hi - lo > 1e-9 * hi; iter++) {
+            const mid = (lo + hi) / 2;
+            if (sumAt(mid) < available)
+                lo = mid;
             else
-                銯壍 = 橫壍;
+                hi = mid;
         }
-        带壍 = 餔壍((珀壍 + 銯壍) / 2);
+        x = at((lo + hi) / 2);
     }
-    return 櫰壍(roundPreservingTotal(带壍, 偩壍, 紕壍), 紕壍, 撋壍);
+    return fixRemainder(roundPreservingTotal(x, step, target), target, bounds);
 }
-export function optimizeBudget(襚壍: OptimizerInput): OptimizeResult {
-    const 噉壍: string[] = [];
-    const 甸壍 = (鐧壍: number) => formatMetricValue("money", 鐧壍, { currency: 襚壍.currency ?? "USD" });
-    const 愖壍: number[] = [];
-    const 者壍 = 襚壍.units.reduce((黴壍, 毣壍, 諒壍) => {
-        if (毣壍.fixed)
-            return 黴壍 + 毣壍.fixed.value;
-        愖壍.push(諒壍);
-        return 黴壍;
+export function optimizeBudget(input: OptimizerInput): OptimizeResult {
+    const warnings: string[] = [];
+    const money = (v: number) => formatMetricValue("money", v, { currency: input.currency ?? "USD" });
+    const freeIdx: number[] = [];
+    const fixedTotal = input.units.reduce((s, u, i) => {
+        if (u.fixed)
+            return s + u.fixed.value;
+        freeIdx.push(i);
+        return s;
     }, 0);
-    const 埁壍 = 愖壍.map((皰壍) => 襚壍.units[皰壍] as OptimizerUnit);
-    const 閟壍 = 埁壍.map(您壍);
-    let 抎壍 = 襚壍.total - 者壍;
-    if (抎壍 < 0) {
-        噉壍.push(`Locked and excluded amounts (${甸壍(者壍)}) exceed the total; nothing is left to allocate.`);
-        抎壍 = 0;
+    const free = freeIdx.map((i) => input.units[i] as OptimizerUnit);
+    const bounds = free.map(boundsOf);
+    let available = input.total - fixedTotal;
+    if (available < 0) {
+        warnings.push(`Locked and excluded amounts (${money(fixedTotal)}) exceed the total; nothing is left to allocate.`);
+        available = 0;
     }
-    const 腽壍 = 襚壍.strategy === "roas_heuristic" ? allocateHeuristic(埁壍, 閟壍, 抎壍, 襚壍.step, 噉壍) : allocateMarginal(埁壍, 閟壍, 抎壍, 襚壍.step, 襚壍.days, 噉壍);
-    const 乬壍 = new Map<number, number>();
-    愖壍.forEach((浛壍, 豊壍) => 乬壍.set(浛壍, 腽壍[豊壍] ?? 0));
-    const 夹壍: OptimizeResultRow[] = 襚壍.units.map((砨壍, 霗壍) => {
-        const 搆壍 = 砨壍.fixed ? 砨壍.fixed.value : (乬壍.get(霗壍) ?? 0);
-        const 苵壍 = 愖壍.indexOf(霗壍);
-        const 俤壍 = 苵壍 >= 0 ? (閟壍[苵壍] as Bounds) : null;
-        const 滓壍 = 砨壍.curve ? curveMarginal(砨壍.curve, 搆壍, 襚壍.days) : 0;
-        const 跂壍 = Math.max(0.01, 襚壍.step / 2);
-        const 媱壍: OptimizeResultRow["bound"] = 砨壍.fixed ? "locked" : 俤壍 && 搆壍 <= 俤壍.lo + 跂壍 && 俤壍.hi > 俤壍.lo ? "min" : 俤壍 && 搆壍 >= 俤壍.hi - 跂壍 ? "max" : null;
+    const alloc = input.strategy === "roas_heuristic" ? allocateHeuristic(free, bounds, available, input.step, warnings) : allocateMarginal(free, bounds, available, input.step, input.days, warnings);
+    const recommended = new Map<number, number>();
+    freeIdx.forEach((ui, k) => recommended.set(ui, alloc[k] ?? 0));
+    const rows: OptimizeResultRow[] = input.units.map((u, i) => {
+        const rec = u.fixed ? u.fixed.value : (recommended.get(i) ?? 0);
+        const k = freeIdx.indexOf(i);
+        const b = k >= 0 ? (bounds[k] as Bounds) : null;
+        const marginal = u.curve ? curveMarginal(u.curve, rec, input.days) : 0;
+        const tol = Math.max(0.01, input.step / 2);
+        const bound: OptimizeResultRow["bound"] = u.fixed ? "locked" : b && rec <= b.lo + tol && b.hi > b.lo ? "min" : b && rec >= b.hi - tol ? "max" : null;
         return {
-            unitId: 砨壍.unitId,
-            name: 砨壍.name,
-            current: round(砨壍.current, 2),
-            recommended: round(搆壍, 2),
-            delta: round(搆壍 - 砨壍.current, 2),
-            deltaPct: 砨壍.current > 0 ? round(搆壍 / 砨壍.current - 1, 4) : 0,
-            expected: { current: round(坓壍(砨壍, 砨壍.current, 襚壍.days), 2), recommended: round(坓壍(砨壍, 搆壍, 襚壍.days), 2) },
-            marginalCost: 滓壍 > 0 ? round(1 / 滓壍, 4) : null,
-            bound: 媱壍,
-            curveConfidence: 砨壍.curve?.confidence ?? "low",
-            curveSource: 砨壍.curve?.source ?? "model",
-            ...(砨壍.curve?.calibration !== undefined ? { curveCalibration: 砨壍.curve.calibration } : {}),
+            unitId: u.unitId,
+            name: u.name,
+            current: round(u.current, 2),
+            recommended: round(rec, 2),
+            delta: round(rec - u.current, 2),
+            deltaPct: u.current > 0 ? round(rec / u.current - 1, 4) : 0,
+            expected: { current: round(outcome(u, u.current, input.days), 2), recommended: round(outcome(u, rec, input.days), 2) },
+            marginalCost: marginal > 0 ? round(1 / marginal, 4) : null,
+            bound,
+            curveConfidence: u.curve?.confidence ?? "low",
+            curveSource: u.curve?.source ?? "model",
+            ...(u.curve?.calibration !== undefined ? { curveCalibration: u.curve.calibration } : {}),
         };
     });
-    const 禠壍 = 襚壍.units.filter((颏壍) => !颏壍.fixed && (!颏壍.curve || 颏壍.curve.confidence === "low"));
-    if (禠壍.length)
-        噉壍.push(`${禠壍.length === 1 ? "1 campaign has" : `${禠壍.length} campaigns have`} a low-confidence response curve (${禠壍.map((敾壍) => 敾壍.name).slice(0, 4).join(", ")}${禠壍.length > 4 ? ", …" : ""}); treat its expected outcome as a rough guide.`);
-    for (const 葭壍 of 夹壍) {
-        const 兜壍 = 襚壍.units.find((灋壍) => 灋壍.unitId === 葭壍.unitId);
-        const 輺壍 = 兜壍?.curve?.spendRange[1] ?? 0;
-        if (兜壍 && !兜壍.fixed && 輺壍 > 0 && 葭壍.recommended / 襚壍.days > 輺壍 * 1.3) {
-            const 尩壍 = 兜壍.curve?.source === "google_simulator" ? "Google simulated" : "observed";
-            噉壍.push(`${葭壍.name}: ${甸壍(葭壍.recommended / 襚壍.days)}/day is ${EXTRAPOLATION_MARK} ${尩壍} (${甸壍(輺壍)}); the expected outcome is an extrapolation.`);
+    const low = input.units.filter((u) => !u.fixed && (!u.curve || u.curve.confidence === "low"));
+    if (low.length)
+        warnings.push(`${low.length === 1 ? "1 campaign has" : `${low.length} campaigns have`} a low-confidence response curve (${low.map((u) => u.name).slice(0, 4).join(", ")}${low.length > 4 ? ", …" : ""}); treat its expected outcome as a rough guide.`);
+    for (const r of rows) {
+        const u = input.units.find((x) => x.unitId === r.unitId);
+        const maxSeen = u?.curve?.spendRange[1] ?? 0;
+        if (u && !u.fixed && maxSeen > 0 && r.recommended / input.days > maxSeen * 1.3) {
+            const seen = u.curve?.source === "google_simulator" ? "Google simulated" : "observed";
+            warnings.push(`${r.name}: ${money(r.recommended / input.days)}/day is ${EXTRAPOLATION_MARK} ${seen} (${money(maxSeen)}); the expected outcome is an extrapolation.`);
         }
     }
-    const 笘壍 = round(夹壍.reduce((騇壍, 曶壍) => 騇壍 + 曶壍.current, 0), 2);
-    const 藥壍 = round(夹壍.reduce((勔壍, 燃壍) => 勔壍 + 燃壍.recommended, 0), 2);
-    const 邲壍 = round(夹壍.reduce((嶡壍, 粐壍) => 嶡壍 + 粐壍.expected.current, 0), 2);
-    const 魿壍 = round(夹壍.reduce((桮壍, 蝝壍) => 桮壍 + 蝝壍.expected.recommended, 0), 2);
+    const current = round(rows.reduce((s, r) => s + r.current, 0), 2);
+    const recTotal = round(rows.reduce((s, r) => s + r.recommended, 0), 2);
+    const expectedCurrent = round(rows.reduce((s, r) => s + r.expected.current, 0), 2);
+    const expectedRecommended = round(rows.reduce((s, r) => s + r.expected.recommended, 0), 2);
     return {
-        objective: 襚壍.objective,
-        strategy: 襚壍.strategy,
-        period: 襚壍.period,
-        rows: 夹壍,
-        totals: { current: 笘壍, recommended: 藥壍, expectedCurrent: 邲壍, expectedRecommended: 魿壍, liftPct: 邲壍 > 0 ? round(魿壍 / 邲壍 - 1, 4) : 0 },
-        warnings: 噉壍,
+        objective: input.objective,
+        strategy: input.strategy,
+        period: input.period,
+        rows,
+        totals: { current, recommended: recTotal, expectedCurrent, expectedRecommended, liftPct: expectedCurrent > 0 ? round(expectedRecommended / expectedCurrent - 1, 4) : 0 },
+        warnings,
     };
 }
-export function allocationOutcome(呌壍: readonly OptimizerUnit[], 猻壍: readonly number[], 鈪壍: number): number {
-    return 呌壍.reduce((弙壍, 縈壍, 鳷壍) => 弙壍 + 坓壍(縈壍, 猻壍[鳷壍] ?? 0, 鈪壍), 0);
+export function allocationOutcome(units: readonly OptimizerUnit[], amounts: readonly number[], days: number): number {
+    return units.reduce((s, u, i) => s + outcome(u, amounts[i] ?? 0, days), 0);
 }

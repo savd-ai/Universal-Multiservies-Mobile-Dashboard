@@ -11,17 +11,17 @@ import { CHANGE_EVENT_DAYS } from "../google-ads/queries";
 import { log } from "../log";
 import type { Warehouse } from "./index";
 import { isDailyTable, type DailyTableId } from "./tables";
-const 賻壍 = 10 * 60000;
+const WRITE_THROUGH_EVERY_MS = 10 * 60000;
 export interface WarehouseSourceOptions {
     reads: boolean;
     restatementDays: number;
 }
-function 姪壍(磙壍: DateRange | null, 韈壍: DateRange | null): DateRange | null {
-    if (!韈壍)
-        return 磙壍;
-    if (!磙壍)
-        return 韈壍;
-    return { start: minDate(磙壍.start, 韈壍.start), end: maxDate(磙壍.end, 韈壍.end) };
+function extend(google: DateRange | null, stored: DateRange | null): DateRange | null {
+    if (!stored)
+        return google;
+    if (!google)
+        return stored;
+    return { start: minDate(google.start, stored.start), end: maxDate(google.end, stored.end) };
 }
 export class WarehouseSource implements GoogleAdsSource {
     readonly mode: Mode;
@@ -35,26 +35,26 @@ export class WarehouseSource implements GoogleAdsSource {
         this.reason = inner.reason;
         this.apiVersion = inner.apiVersion;
     }
-    private fail(撷壍: string, 莦壍: unknown): void {
+    private fail(what: string, err: unknown): void {
         if (this.warned)
             return;
         this.warned = true;
-        log.warn(`Warehouse ${撷壍} failed; using Google Ads directly`, { error: 莦壍 instanceof Error ? 莦壍.message : String(莦壍) });
+        log.warn(`Warehouse ${what} failed; using Google Ads directly`, { error: err instanceof Error ? err.message : String(err) });
     }
-    private due(傕壍: string): boolean {
-        const 澄壍 = now().getTime();
-        const 蹳壍 = this.lastWrite.get(傕壍);
-        if (蹳壍 !== undefined && 澄壍 - 蹳壍 < 賻壍)
+    private due(key: string): boolean {
+        const t = now().getTime();
+        const last = this.lastWrite.get(key);
+        if (last !== undefined && t - last < WRITE_THROUGH_EVERY_MS)
             return false;
-        this.lastWrite.set(傕壍, 澄壍);
+        this.lastWrite.set(key, t);
         return true;
     }
-    private async ensureAccount(孢壍: string): Promise<void> {
-        if (this.warehouse.knownAccounts.has(孢壍))
+    private async ensureAccount(accountId: string): Promise<void> {
+        if (this.warehouse.knownAccounts.has(accountId))
             return;
-        const 穑壍 = await this.inner.account(孢壍);
-        this.warehouse.repo.upsertAccount(穑壍, now().toISOString());
-        this.warehouse.knownAccounts.add(孢壍);
+        const info = await this.inner.account(accountId);
+        this.warehouse.repo.upsertAccount(info, now().toISOString());
+        this.warehouse.knownAccounts.add(accountId);
     }
     listAccounts(): Promise<AccountInfo[]> {
         return this.inner.listAccounts();
@@ -68,35 +68,35 @@ export class WarehouseSource implements GoogleAdsSource {
     defaultAccountId(): string {
         return this.inner.defaultAccountId();
     }
-    account(饀壍: string): Promise<AccountInfo> {
-        return this.inner.account(饀壍);
+    account(accountId: string): Promise<AccountInfo> {
+        return this.inner.account(accountId);
     }
-    today(是壍: string): Promise<CivilDate> {
-        return this.inner.today(是壍);
+    today(accountId: string): Promise<CivilDate> {
+        return this.inner.today(accountId);
     }
-    dataThrough(蔞壍: string): Promise<CivilDate> {
-        return this.inner.dataThrough(蔞壍);
+    dataThrough(accountId: string): Promise<CivilDate> {
+        return this.inner.dataThrough(accountId);
     }
-    async invalidate(刍壍?: string): Promise<void> {
+    async invalidate(accountId?: string): Promise<void> {
         this.lastWrite.clear();
-        await this.inner.invalidate(刍壍);
+        await this.inner.invalidate(accountId);
     }
-    async coverage(烼壍: string, 迫壍: GoogleTableId): Promise<DateRange | null> {
-        const 峚壍 = await this.inner.coverage(烼壍, 迫壍);
-        if (!this.opts.reads || !isDailyTable(迫壍))
-            return 峚壍;
+    async coverage(accountId: string, table: GoogleTableId): Promise<DateRange | null> {
+        const google = await this.inner.coverage(accountId, table);
+        if (!this.opts.reads || !isDailyTable(table))
+            return google;
         try {
-            return 姪壍(峚壍, this.warehouse.repo.storedSpan(烼壍, 迫壍));
+            return extend(google, this.warehouse.repo.storedSpan(accountId, table));
         }
-        catch (築壍) {
-            this.fail("coverage", 築壍);
-            return 峚壍;
+        catch (err) {
+            this.fail("coverage", err);
+            return google;
         }
     }
-    async getTable(骸壍: string, 枧壍: GoogleTableId, 蚖壍: DateRange): Promise<FactSlice> {
-        if (!this.opts.reads || !isDailyTable(枧壍))
-            return this.inner.getTable(骸壍, 枧壍, 蚖壍);
-        let 厅壍: {
+    async getTable(accountId: string, table: GoogleTableId, range: DateRange): Promise<FactSlice> {
+        if (!this.opts.reads || !isDailyTable(table))
+            return this.inner.getTable(accountId, table, range);
+        let plan: {
             stored: CivilDate[];
             fetch: CivilDate[];
             coverage: DateRange | null;
@@ -104,148 +104,148 @@ export class WarehouseSource implements GoogleAdsSource {
             hotFrom: CivilDate;
         };
         try {
-            厅壍 = await this.plan(骸壍, 枧壍, 蚖壍);
+            plan = await this.plan(accountId, table, range);
         }
-        catch (牴壍) {
-            this.fail("read", 牴壍);
-            return this.inner.getTable(骸壍, 枧壍, 蚖壍);
+        catch (err) {
+            this.fail("read", err);
+            return this.inner.getTable(accountId, table, range);
         }
-        const 酣壍: Record<string, unknown>[] = [];
-        if (厅壍.stored.length) {
+        const rows: Record<string, unknown>[] = [];
+        if (plan.stored.length) {
             try {
-                酣壍.push(...this.warehouse.repo.readDays(骸壍, 枧壍, 厅壍.stored[0] as CivilDate, 厅壍.stored[厅壍.stored.length - 1] as CivilDate, new Set(厅壍.stored)));
+                rows.push(...this.warehouse.repo.readDays(accountId, table, plan.stored[0] as CivilDate, plan.stored[plan.stored.length - 1] as CivilDate, new Set(plan.stored)));
             }
-            catch (幒壍) {
-                this.fail("read", 幒壍);
-                return this.inner.getTable(骸壍, 枧壍, 蚖壍);
+            catch (err) {
+                this.fail("read", err);
+                return this.inner.getTable(accountId, table, range);
             }
         }
-        for (const 絁壍 of 獧壍(厅壍.fetch)) {
-            const 鰰壍 = await this.inner.getTable(骸壍, 枧壍, 絁壍);
-            酣壍.push(...鰰壍.rows);
-            await this.writeThrough(骸壍, 枧壍, 絁壍, 鰰壍.rows, 厅壍.hotFrom);
+        for (const run of runsOf(plan.fetch)) {
+            const slice = await this.inner.getTable(accountId, table, run);
+            rows.push(...slice.rows);
+            await this.writeThrough(accountId, table, run, slice.rows, plan.hotFrom);
         }
-        酣壍.sort((椟壍, 蠎壍) => (String(椟壍.date) < String(蠎壍.date) ? -1 : String(椟壍.date) > String(蠎壍.date) ? 1 : 0));
-        return { rows: 酣壍, grain: "daily", coverage: 厅壍.coverage ?? undefined };
+        rows.sort((a, b) => (String(a.date) < String(b.date) ? -1 : String(a.date) > String(b.date) ? 1 : 0));
+        return { rows, grain: "daily", coverage: plan.coverage ?? undefined };
     }
-    private async plan(哽壍: string, 珬壍: DailyTableId, 鋛壍: DateRange) {
-        const [忊壍, 纹壍] = await Promise.all([this.inner.coverage(哽壍, 珬壍), this.inner.today(哽壍)]);
-        const 鶨壍 = this.warehouse.repo;
-        const 檗壍 = 姪壍(忊壍, 鶨壍.storedSpan(哽壍, 珬壍));
-        const 覆壍 = hotFromOf(纹壍, this.opts.restatementDays);
-        const 噵壍: CivilDate[] = [];
-        const 畤壍: CivilDate[] = [];
-        if (!檗壍)
-            return { stored: 噵壍, fetch: 畤壍, coverage: 檗壍, google: 忊壍, hotFrom: 覆壍 };
-        const 鑓壍 = maxDate(鋛壍.start, 檗壍.start);
-        const 慂壍 = minDate(鋛壍.end, 檗壍.end);
-        if (鑓壍 > 慂壍)
-            return { stored: 噵壍, fetch: 畤壍, coverage: 檗壍, google: 忊壍, hotFrom: 覆壍 };
-        const 耱壍 = 鶨壍.ledger(哽壍, 珬壍, 鑓壍, 慂壍);
-        const 鼠壍 = (氏壍: CivilDate) => !!忊壍 && 氏壍 >= 忊壍.start && 氏壍 <= 忊壍.end;
-        for (const 諾壍 of enumerate(鑓壍, 慂壍)) {
-            const 埭壍 = 耱壍.get(諾壍);
-            if (埭壍?.settled)
-                噵壍.push(諾壍);
-            else if (鼠壍(諾壍))
-                畤壍.push(諾壍);
-            else if (埭壍)
-                噵壍.push(諾壍);
+    private async plan(accountId: string, table: DailyTableId, range: DateRange) {
+        const [google, today] = await Promise.all([this.inner.coverage(accountId, table), this.inner.today(accountId)]);
+        const repo = this.warehouse.repo;
+        const coverage = extend(google, repo.storedSpan(accountId, table));
+        const hotFrom = hotFromOf(today, this.opts.restatementDays);
+        const stored: CivilDate[] = [];
+        const fetch: CivilDate[] = [];
+        if (!coverage)
+            return { stored, fetch, coverage, google, hotFrom };
+        const start = maxDate(range.start, coverage.start);
+        const end = minDate(range.end, coverage.end);
+        if (start > end)
+            return { stored, fetch, coverage, google, hotFrom };
+        const ledger = repo.ledger(accountId, table, start, end);
+        const inGoogle = (d: CivilDate) => !!google && d >= google.start && d <= google.end;
+        for (const d of enumerate(start, end)) {
+            const entry = ledger.get(d);
+            if (entry?.settled)
+                stored.push(d);
+            else if (inGoogle(d))
+                fetch.push(d);
+            else if (entry)
+                stored.push(d);
         }
-        return { stored: 噵壍, fetch: 畤壍, coverage: 檗壍, google: 忊壍, hotFrom: 覆壍 };
+        return { stored, fetch, coverage, google, hotFrom };
     }
-    private async writeThrough(盜壍: string, 闋壍: DailyTableId, 抺壍: DateRange, 膩壍: readonly Record<string, unknown>[], 亘壍: CivilDate): Promise<void> {
-        const 涇壍 = minDate(抺壍.end, addDays(亘壍, -1));
-        if (涇壍 < 抺壍.start)
+    private async writeThrough(accountId: string, table: DailyTableId, run: DateRange, rows: readonly Record<string, unknown>[], hotFrom: CivilDate): Promise<void> {
+        const end = minDate(run.end, addDays(hotFrom, -1));
+        if (end < run.start)
             return;
         try {
-            await this.ensureAccount(盜壍);
-            this.warehouse.repo.replaceDays(盜壍, 闋壍, { start: 抺壍.start, end: 涇壍 }, 膩壍, { fetchedAt: now().toISOString(), hotFrom: 亘壍, runId: null });
+            await this.ensureAccount(accountId);
+            this.warehouse.repo.replaceDays(accountId, table, { start: run.start, end }, rows, { fetchedAt: now().toISOString(), hotFrom, runId: null });
         }
-        catch (豶壍) {
-            this.fail("write-through", 豶壍);
+        catch (err) {
+            this.fail("write-through", err);
         }
     }
-    async getDims(奥壍: string): Promise<EntityDims> {
-        const 硔壍 = await this.inner.getDims(奥壍);
+    async getDims(accountId: string): Promise<EntityDims> {
+        const dims = await this.inner.getDims(accountId);
         if (this.mode !== "live" || !this.opts.reads)
-            return 硔壍;
-        const 靃壍 = this.merged.get(硔壍);
-        if (靃壍)
-            return 靃壍;
+            return dims;
+        const hit = this.merged.get(dims);
+        if (hit)
+            return hit;
         try {
-            const 搲壍 = this.warehouse.repo.storedDims(奥壍);
-            const 茡壍 = (倐壍: Map<string, unknown>, 滿壍: Map<string, unknown>) => [...滿壍.keys()].some((跮壍) => !倐壍.has(跮壍));
-            if (!茡壍(硔壍.campaigns, 搲壍.campaigns) && !茡壍(硔壍.adGroups, 搲壍.adGroups) && !茡壍(硔壍.keywords, 搲壍.keywords))
-                return 硔壍;
-            const 嫝壍: EntityDims = { campaigns: new Map(搲壍.campaigns), adGroups: new Map(搲壍.adGroups), keywords: new Map(搲壍.keywords) };
-            for (const [秌壍, 颻壍] of 硔壍.campaigns)
-                嫝壍.campaigns.set(秌壍, 颻壍);
-            for (const [斪壍, 蒙壍] of 硔壍.adGroups)
-                嫝壍.adGroups.set(斪壍, 蒙壍);
-            for (const [冈壍, 灷壍] of 硔壍.keywords)
-                嫝壍.keywords.set(冈壍, 灷壍);
-            this.merged.set(硔壍, 嫝壍);
-            return 嫝壍;
+            const stored = this.warehouse.repo.storedDims(accountId);
+            const missing = (m: Map<string, unknown>, s: Map<string, unknown>) => [...s.keys()].some((id) => !m.has(id));
+            if (!missing(dims.campaigns, stored.campaigns) && !missing(dims.adGroups, stored.adGroups) && !missing(dims.keywords, stored.keywords))
+                return dims;
+            const out: EntityDims = { campaigns: new Map(stored.campaigns), adGroups: new Map(stored.adGroups), keywords: new Map(stored.keywords) };
+            for (const [id, c] of dims.campaigns)
+                out.campaigns.set(id, c);
+            for (const [id, g] of dims.adGroups)
+                out.adGroups.set(id, g);
+            for (const [id, k] of dims.keywords)
+                out.keywords.set(id, k);
+            this.merged.set(dims, out);
+            return out;
         }
-        catch (车壍) {
-            this.fail("dimension lookup", 车壍);
-            return 硔壍;
+        catch (err) {
+            this.fail("dimension lookup", err);
+            return dims;
         }
     }
-    async getChangeEvents(展壍: string, 筄壍: DateRange): Promise<ChangeEvent[]> {
-        const 騳壍 = await this.inner.getChangeEvents(展壍, 筄壍);
+    async getChangeEvents(accountId: string, range: DateRange): Promise<ChangeEvent[]> {
+        const fresh = await this.inner.getChangeEvents(accountId, range);
         if (this.mode !== "live")
-            return 騳壍;
+            return fresh;
         try {
-            if (騳壍.length && this.due(`events|${展壍}|${筄壍.start}|${筄壍.end}`)) {
-                await this.ensureAccount(展壍);
-                this.warehouse.repo.upsertChangeEvents(展壍, 騳壍, now().toISOString());
+            if (fresh.length && this.due(`events|${accountId}|${range.start}|${range.end}`)) {
+                await this.ensureAccount(accountId);
+                this.warehouse.repo.upsertChangeEvents(accountId, fresh, now().toISOString());
             }
             if (!this.opts.reads)
-                return 騳壍;
-            const 朢壍 = addDays(await this.inner.today(展壍), -(CHANGE_EVENT_DAYS - 1));
-            if (筄壍.start >= 朢壍)
-                return 騳壍;
-            const 蘑壍 = this.warehouse.repo.readChangeEvents(展壍, 筄壍.start, minDate(筄壍.end, addDays(朢壍, -1)));
-            const 匀壍 = new Set(騳壍.map((燯壍) => 燯壍.id));
-            return [...騳壍, ...蘑壍.filter((郞壍) => !匀壍.has(郞壍.id))].sort((巍壍, 粼壍) => (巍壍.ts < 粼壍.ts ? 1 : 巍壍.ts > 粼壍.ts ? -1 : 0));
+                return fresh;
+            const googleFrom = addDays(await this.inner.today(accountId), -(CHANGE_EVENT_DAYS - 1));
+            if (range.start >= googleFrom)
+                return fresh;
+            const older = this.warehouse.repo.readChangeEvents(accountId, range.start, minDate(range.end, addDays(googleFrom, -1)));
+            const seen = new Set(fresh.map((e) => e.id));
+            return [...fresh, ...older.filter((e) => !seen.has(e.id))].sort((a, b) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0));
         }
-        catch (鮫壍) {
-            this.fail("change history", 鮫壍);
-            return 騳壍;
+        catch (err) {
+            this.fail("change history", err);
+            return fresh;
         }
     }
-    async getGoogleEstimates(梚壍: string): Promise<GoogleEstimates> {
-        const 螉壍 = await this.inner.getGoogleEstimates(梚壍);
-        if (this.mode !== "live" || (!螉壍.simulations.length && !螉壍.recommendations.length))
-            return 螉壍;
+    async getGoogleEstimates(accountId: string): Promise<GoogleEstimates> {
+        const est = await this.inner.getGoogleEstimates(accountId);
+        if (this.mode !== "live" || (!est.simulations.length && !est.recommendations.length))
+            return est;
         try {
-            if (this.due(`estimates|${梚壍}`)) {
-                await this.ensureAccount(梚壍);
-                this.warehouse.repo.upsertEstimates(梚壍, 螉壍, await this.inner.today(梚壍), now().toISOString());
+            if (this.due(`estimates|${accountId}`)) {
+                await this.ensureAccount(accountId);
+                this.warehouse.repo.upsertEstimates(accountId, est, await this.inner.today(accountId), now().toISOString());
             }
         }
-        catch (呸壍) {
-            this.fail("estimate snapshot", 呸壍);
+        catch (err) {
+            this.fail("estimate snapshot", err);
         }
-        return 螉壍;
+        return est;
     }
 }
-function 獧壍(鉖壍: readonly CivilDate[]): DateRange[] {
-    const 彅壍: DateRange[] = [];
-    for (const 縴壍 of 鉖壍) {
-        const 鴣壍 = 彅壍[彅壍.length - 1];
-        if (鴣壍 && addDays(鴣壍.end, 1) === 縴壍)
-            鴣壍.end = 縴壍;
+function runsOf(days: readonly CivilDate[]): DateRange[] {
+    const runs: DateRange[] = [];
+    for (const d of days) {
+        const last = runs[runs.length - 1];
+        if (last && addDays(last.end, 1) === d)
+            last.end = d;
         else
-            彅壍.push({ start: 縴壍, end: 縴壍 });
+            runs.push({ start: d, end: d });
     }
-    return 彅壍;
+    return runs;
 }
-export function isWarehouseSource(樒壍: GoogleAdsSource): 樒壍 is WarehouseSource {
-    return 樒壍 instanceof WarehouseSource;
+export function isWarehouseSource(s: GoogleAdsSource): s is WarehouseSource {
+    return s instanceof WarehouseSource;
 }
-export function unwrapSource(褁壍: GoogleAdsSource): GoogleAdsSource {
-    return isWarehouseSource(褁壍) ? 褁壍.inner : 褁壍;
+export function unwrapSource(s: GoogleAdsSource): GoogleAdsSource {
+    return isWarehouseSource(s) ? s.inner : s;
 }

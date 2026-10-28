@@ -20,184 +20,184 @@ export const ENV_CHANNELS: Record<AlertChannelPlugin, EnvChannelDef> = {
     discord: { id: "env-discord", name: "Discord (.env)", urlKey: "DISCORD_WEBHOOK_URL" },
     webhook: { id: "env-webhook", name: "Webhook (.env)", urlKey: "ALERT_WEBHOOK_URL", secretKey: "ALERT_WEBHOOK_SECRET" },
 };
-export const pluginChannelId = (榳壍: AlertChannelPlugin) => `plugin-${榳壍}`;
-const 袢壍 = 20;
-const 喑壍 = "1970-01-01T00:00:00.000Z";
-const 璀壍 = (鍯壍: string) => `alert-channels:${鍯壍}:url`;
-const 恞壍 = (罍壍: string) => `alert-channels:${罍壍}:signingSecret`;
-export const isAlertPluginId = (鸼壍: string): 鸼壍 is AlertChannelPlugin => (ALERT_CHANNEL_PLUGINS as readonly string[]).includes(鸼壍);
+export const pluginChannelId = (pluginId: AlertChannelPlugin) => `plugin-${pluginId}`;
+const MAX_CHANNELS = 20;
+const EPOCH = "1970-01-01T00:00:00.000Z";
+const urlAad = (id: string) => `alert-channels:${id}:url`;
+const signingAad = (id: string) => `alert-channels:${id}:signingSecret`;
+export const isAlertPluginId = (id: string): id is AlertChannelPlugin => (ALERT_CHANNEL_PLUGINS as readonly string[]).includes(id);
 export function envChannels(): AlertChannel[] {
     if (currentWorkspace() !== AGENCY_WORKSPACE)
         return [];
-    return ALERT_CHANNEL_PLUGINS.flatMap((欫壍) => {
-        const 訚壍 = ENV_CHANNELS[欫壍];
-        if (!env.has(訚壍.urlKey))
+    return ALERT_CHANNEL_PLUGINS.flatMap((pluginId) => {
+        const def = ENV_CHANNELS[pluginId];
+        if (!env.has(def.urlKey))
             return [];
-        const 圉壍: AlertChannel = {
-            id: 訚壍.id,
-            pluginId: 欫壍,
-            name: 訚壍.name,
+        const channel: AlertChannel = {
+            id: def.id,
+            pluginId,
+            name: def.name,
             enabled: true,
             origin: "env",
-            url: { env: 訚壍.urlKey },
-            ...(訚壍.secretKey && env.has(訚壍.secretKey) ? { signingSecret: { env: 訚壍.secretKey } } : {}),
+            url: { env: def.urlKey },
+            ...(def.secretKey && env.has(def.secretKey) ? { signingSecret: { env: def.secretKey } } : {}),
             options: { includeLinks: true },
             version: 1,
-            createdAt: 喑壍,
-            updatedAt: 喑壍,
+            createdAt: EPOCH,
+            updatedAt: EPOCH,
         };
-        return [圉壍];
+        return [channel];
     });
 }
 export async function listChannels(): Promise<AlertChannel[]> {
-    const 痸壍 = await getStore().alertChannels.list();
-    痸壍.sort((铧壍, 懖壍) => 铧壍.createdAt.localeCompare(懖壍.createdAt));
-    return [...痸壍, ...envChannels()];
+    const stored = await getStore().alertChannels.list();
+    stored.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    return [...stored, ...envChannels()];
 }
-export async function getChannel(胅壍: string): Promise<AlertChannel | null> {
-    if (胅壍.startsWith("env-"))
-        return envChannels().find((龴壍) => 龴壍.id === 胅壍) ?? null;
-    return getStore().alertChannels.get(胅壍);
+export async function getChannel(id: string): Promise<AlertChannel | null> {
+    if (id.startsWith("env-"))
+        return envChannels().find((c) => c.id === id) ?? null;
+    return getStore().alertChannels.get(id);
 }
-export function channelView(沣壍: AlertChannel, 讒壍?: AlertChannel["lastTest"]): AlertChannelView {
-    const { url: 墁壍, signingSecret: 睰壍, ...陟壍 } = 沣壍;
-    const 捎壍 = 睰壍 ? describeSecret(睰壍, 恞壍(沣壍.id)).hasValue : false;
-    return { ...陟壍, lastTest: 讒壍 ?? 沣壍.lastTest, url: describeSecret(墁壍, 璀壍(沣壍.id)), signing: 捎壍 };
+export function channelView(ch: AlertChannel, lastTest?: AlertChannel["lastTest"]): AlertChannelView {
+    const { url, signingSecret, ...rest } = ch;
+    const signing = signingSecret ? describeSecret(signingSecret, signingAad(ch.id)).hasValue : false;
+    return { ...rest, lastTest: lastTest ?? ch.lastTest, url: describeSecret(url, urlAad(ch.id)), signing };
 }
-export function lastTestFromDeliveries(舽壍: string, 伬壍: readonly AlertDelivery[]): AlertChannel["lastTest"] | undefined {
-    const 減壍 = 伬壍.find((贊壍) => 贊壍.channelId === 舽壍 && 贊壍.kind === "test" && !贊壍.dryRun);
-    if (!減壍)
+export function lastTestFromDeliveries(channelId: string, deliveries: readonly AlertDelivery[]): AlertChannel["lastTest"] | undefined {
+    const d = deliveries.find((x) => x.channelId === channelId && x.kind === "test" && !x.dryRun);
+    if (!d)
         return undefined;
-    return { at: 減壍.sentAt ?? 減壍.ts, ok: 減壍.status === "sent", ...(減壍.httpStatus ? { status: 減壍.httpStatus } : {}), ...(減壍.lastError ? { error: 減壍.lastError } : {}) };
+    return { at: d.sentAt ?? d.ts, ok: d.status === "sent", ...(d.httpStatus ? { status: d.httpStatus } : {}), ...(d.lastError ? { error: d.lastError } : {}) };
 }
-export async function channelViews(姹壍: readonly AlertDelivery[] = []): Promise<AlertChannelView[]> {
-    const 磨壍 = await listChannels();
-    return 磨壍.map((韗壍) => channelView(韗壍, 韗壍.origin === "env" ? lastTestFromDeliveries(韗壍.id, 姹壍) : undefined));
+export async function channelViews(recentDeliveries: readonly AlertDelivery[] = []): Promise<AlertChannelView[]> {
+    const all = await listChannels();
+    return all.map((c) => channelView(c, c.origin === "env" ? lastTestFromDeliveries(c.id, recentDeliveries) : undefined));
 }
-export function resolveChannelConfig(擆壍: AlertChannel): {
+export function resolveChannelConfig(ch: AlertChannel): {
     url?: string;
     signingSecret?: string;
     mention?: string;
     includeLinks: boolean;
     error?: string;
 } {
-    const 莵壍: {
+    const out: {
         url?: string;
         signingSecret?: string;
         mention?: string;
         includeLinks: boolean;
         error?: string;
-    } = { includeLinks: 擆壍.options.includeLinks !== false };
-    if (擆壍.options.mention)
-        莵壍.mention = 擆壍.options.mention;
+    } = { includeLinks: ch.options.includeLinks !== false };
+    if (ch.options.mention)
+        out.mention = ch.options.mention;
     try {
-        莵壍.url = resolveSecret(擆壍.url, 璀壍(擆壍.id));
-        if (擆壍.signingSecret)
-            莵壍.signingSecret = resolveSecret(擆壍.signingSecret, 恞壍(擆壍.id));
+        out.url = resolveSecret(ch.url, urlAad(ch.id));
+        if (ch.signingSecret)
+            out.signingSecret = resolveSecret(ch.signingSecret, signingAad(ch.id));
     }
-    catch (傤壍) {
-        莵壍.url = undefined;
-        莵壍.error = 傤壍 instanceof Error ? 傤壍.message : "The stored webhook URL can't be decrypted — re-enter it.";
+    catch (err) {
+        out.url = undefined;
+        out.error = err instanceof Error ? err.message : "The stored webhook URL can't be decrypted — re-enter it.";
     }
-    if (!莵壍.url && !莵壍.error)
-        莵壍.error = 擆壍.origin === "env" ? `${ENV_CHANNELS[擆壍.pluginId].urlKey} is empty` : "No webhook URL configured";
-    return 莵壍;
+    if (!out.url && !out.error)
+        out.error = ch.origin === "env" ? `${ENV_CHANNELS[ch.pluginId].urlKey} is empty` : "No webhook URL configured";
+    return out;
 }
-export function validateWebhookUrl(澓壍: AlertChannelPlugin, 躂壍: string): string {
-    const 孱壍 = assertSafeUrl(躂壍);
-    const 穠壍 = 孱壍.hostname.toLowerCase();
-    if (澓壍 === "teams" && (/(^|\.)webhook\.office\.com$/.test(穠壍) || (/^outlook\.office(365)?\.com$/.test(穠壍) && 孱壍.pathname.startsWith("/webhook")))) {
+export function validateWebhookUrl(pluginId: AlertChannelPlugin, raw: string): string {
+    const url = assertSafeUrl(raw);
+    const host = url.hostname.toLowerCase();
+    if (pluginId === "teams" && (/(^|\.)webhook\.office\.com$/.test(host) || (/^outlook\.office(365)?\.com$/.test(host) && url.pathname.startsWith("/webhook")))) {
         throw new AppError("VALIDATION_ERROR", "Office 365 connector webhooks were retired. In Teams, create a Workflows webhook (“Post to a channel when a webhook request is received”) and paste its URL.");
     }
-    return 孱壍.toString();
+    return url.toString();
 }
-function 饏壍(显壍: AlertChannelPlugin): AppError {
-    return new AppError("SECRETS_DISABLED", `APP_ENCRYPTION_KEY is not set, so webhook URLs can't be saved from the UI. Put it in .env as ${ENV_CHANNELS[显壍].urlKey} instead — it appears here as a read-only channel.`);
+function secretsOff(pluginId: AlertChannelPlugin): AppError {
+    return new AppError("SECRETS_DISABLED", `APP_ENCRYPTION_KEY is not set, so webhook URLs can't be saved from the UI. Put it in .env as ${ENV_CHANNELS[pluginId].urlKey} instead — it appears here as a read-only channel.`);
 }
-function 蔭壍(刜壍: AlertChannelPlugin, 焋壍: string, 迺壍: string): {
+function encrypt(pluginId: AlertChannelPlugin, value: string, aad: string): {
     enc: string;
 } {
     if (!secretsEnabled())
-        throw 饏壍(刜壍);
-    return { enc: encryptSecret(焋壍, 迺壍) };
+        throw secretsOff(pluginId);
+    return { enc: encryptSecret(value, aad) };
 }
-export async function createChannel(峩壍: AlertChannelBody, 篘壍: {
+export async function createChannel(body: AlertChannelBody, opts: {
     id?: string;
 } = {}): Promise<AlertChannel> {
-    const 髇壍 = getStore().alertChannels;
-    if ((await 髇壍.list()).length >= 袢壍)
-        throw conflict(`At most ${袢壍} channels — delete one first`);
-    if (!峩壍.url)
+    const store = getStore().alertChannels;
+    if ((await store.list()).length >= MAX_CHANNELS)
+        throw conflict(`At most ${MAX_CHANNELS} channels — delete one first`);
+    if (!body.url)
         throw new AppError("VALIDATION_ERROR", "A webhook URL is required");
-    const 架壍 = validateWebhookUrl(峩壍.pluginId, 峩壍.url);
-    const 蚥壍 = 篘壍.id ?? `ch-${randomUUID().slice(0, 8)}`;
+    const url = validateWebhookUrl(body.pluginId, body.url);
+    const id = opts.id ?? `ch-${randomUUID().slice(0, 8)}`;
     if (!secretsEnabled())
-        throw 饏壍(峩壍.pluginId);
-    const 厔壍: Omit<AlertChannel, "createdAt" | "updatedAt" | "version"> = {
-        id: 蚥壍,
-        pluginId: 峩壍.pluginId,
-        name: 峩壍.name,
-        enabled: 峩壍.enabled,
+        throw secretsOff(body.pluginId);
+    const record: Omit<AlertChannel, "createdAt" | "updatedAt" | "version"> = {
+        id,
+        pluginId: body.pluginId,
+        name: body.name,
+        enabled: body.enabled,
         origin: "stored",
-        url: 蔭壍(峩壍.pluginId, 架壍, 璀壍(蚥壍)),
-        ...(峩壍.signingSecret ? { signingSecret: 蔭壍(峩壍.pluginId, 峩壍.signingSecret, 恞壍(蚥壍)) } : {}),
-        options: { includeLinks: 峩壍.options.includeLinks, ...(峩壍.options.mention ? { mention: 峩壍.options.mention } : {}) },
+        url: encrypt(body.pluginId, url, urlAad(id)),
+        ...(body.signingSecret ? { signingSecret: encrypt(body.pluginId, body.signingSecret, signingAad(id)) } : {}),
+        options: { includeLinks: body.options.includeLinks, ...(body.options.mention ? { mention: body.options.mention } : {}) },
     };
-    return 髇壍.create(厔壍);
+    return store.create(record);
 }
-export async function updateChannel(犃壍: string, 酲壍: AlertChannelUpdate): Promise<AlertChannel> {
-    if (犃壍.startsWith("env-"))
+export async function updateChannel(id: string, patch: AlertChannelUpdate): Promise<AlertChannel> {
+    if (id.startsWith("env-"))
         throw conflict("Channels defined in .env are read-only — change the environment variable instead.");
-    const 幡壍 = getStore().alertChannels;
-    const 結壍 = await 幡壍.get(犃壍);
-    if (!結壍)
+    const store = getStore().alertChannels;
+    const prev = await store.get(id);
+    if (!prev)
         throw notFound("Channel");
-    const 鰿壍 = 酲壍.pluginId ?? 結壍.pluginId;
-    if (鰿壍 !== 結壍.pluginId && !酲壍.url)
+    const pluginId = patch.pluginId ?? prev.pluginId;
+    if (pluginId !== prev.pluginId && !patch.url)
         throw new AppError("VALIDATION_ERROR", "Changing the channel type needs the new service's webhook URL");
-    if (酲壍.url === "")
+    if (patch.url === "")
         throw new AppError("VALIDATION_ERROR", "A stored channel needs a webhook URL — delete the channel instead");
-    const 椮壍 = 酲壍.url ? 蔭壍(鰿壍, validateWebhookUrl(鰿壍, 酲壍.url), 璀壍(犃壍)) : undefined;
-    const 蠝壍 = 酲壍.signingSecret ? 蔭壍(鰿壍, 酲壍.signingSecret, 恞壍(犃壍)) : undefined;
-    return 幡壍.update(犃壍, (唌壍) => {
-        const 珻壍: AlertChannel = { ...唌壍, pluginId: 鰿壍 };
-        if (酲壍.name !== undefined)
-            珻壍.name = 酲壍.name;
-        if (酲壍.enabled !== undefined)
-            珻壍.enabled = 酲壍.enabled;
-        if (椮壍)
-            珻壍.url = 椮壍;
-        if (酲壍.signingSecret === "")
-            delete 珻壍.signingSecret;
-        else if (蠝壍)
-            珻壍.signingSecret = 蠝壍;
-        if (酲壍.options) {
-            const 鋪壍 = 酲壍.options.mention !== undefined ? 酲壍.options.mention : 唌壍.options.mention;
-            珻壍.options = { includeLinks: 酲壍.options.includeLinks ?? 唌壍.options.includeLinks, ...(鋪壍 ? { mention: 鋪壍 } : {}) };
+    const url = patch.url ? encrypt(pluginId, validateWebhookUrl(pluginId, patch.url), urlAad(id)) : undefined;
+    const signing = patch.signingSecret ? encrypt(pluginId, patch.signingSecret, signingAad(id)) : undefined;
+    return store.update(id, (p) => {
+        const next: AlertChannel = { ...p, pluginId };
+        if (patch.name !== undefined)
+            next.name = patch.name;
+        if (patch.enabled !== undefined)
+            next.enabled = patch.enabled;
+        if (url)
+            next.url = url;
+        if (patch.signingSecret === "")
+            delete next.signingSecret;
+        else if (signing)
+            next.signingSecret = signing;
+        if (patch.options) {
+            const mention = patch.options.mention !== undefined ? patch.options.mention : p.options.mention;
+            next.options = { includeLinks: patch.options.includeLinks ?? p.options.includeLinks, ...(mention ? { mention } : {}) };
         }
-        return 珻壍;
-    }, { expectedVersion: 酲壍.version });
+        return next;
+    }, { expectedVersion: patch.version });
 }
-export async function deleteChannel(忙壍: string): Promise<{
+export async function deleteChannel(id: string): Promise<{
     updatedRoutes: string[];
 }> {
-    if (忙壍.startsWith("env-"))
+    if (id.startsWith("env-"))
         throw conflict("Channels defined in .env are read-only — remove the environment variable instead.");
-    const 终壍 = getStore();
-    if (!(await 终壍.alertChannels.delete(忙壍)))
+    const store = getStore();
+    if (!(await store.alertChannels.delete(id)))
         throw notFound("Channel");
-    const 鶷壍: string[] = [];
-    for (const 檦壍 of await 终壍.alertRoutes.list((覕壍) => 覕壍.channelIds.includes(忙壍))) {
-        const 嚄壍 = 檦壍.channelIds.filter((畳壍) => 畳壍 !== 忙壍);
-        await 终壍.alertRoutes.update(檦壍.id, { channelIds: 嚄壍, enabled: 嚄壍.length ? 檦壍.enabled : false });
-        鶷壍.push(檦壍.id);
+    const updatedRoutes: string[] = [];
+    for (const r of await store.alertRoutes.list((x) => x.channelIds.includes(id))) {
+        const channelIds = r.channelIds.filter((c) => c !== id);
+        await store.alertRoutes.update(r.id, { channelIds, enabled: channelIds.length ? r.enabled : false });
+        updatedRoutes.push(r.id);
     }
-    return { updatedRoutes: 鶷壍 };
+    return { updatedRoutes };
 }
-export async function recordChannelTest(鑢壍: string, 慑壍: NonNullable<AlertChannel["lastTest"]>): Promise<void> {
-    if (鑢壍.startsWith("env-"))
+export async function recordChannelTest(id: string, lastTest: NonNullable<AlertChannel["lastTest"]>): Promise<void> {
+    if (id.startsWith("env-"))
         return;
-    const 聀壍 = getStore().alertChannels;
-    if (await 聀壍.get(鑢壍))
-        await 聀壍.update(鑢壍, { lastTest: 慑壍 });
+    const store = getStore().alertChannels;
+    if (await store.get(id))
+        await store.update(id, { lastTest });
 }

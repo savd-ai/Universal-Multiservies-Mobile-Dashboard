@@ -20,79 +20,79 @@ interface StepCardProps {
     children: React.ReactNode;
     tone?: "default" | "warn";
 }
-export function StepCard({ num: 鄤壍, title: 帓壍, summary: 紂壍, hint: 鯱壍, collapsed: 棠壍, onToggle: 蟏壍, onRemove: 咾壍, removeLabel: 玭壍, aside: 銜壍, children: 律壍, tone: 繺壍 = "default" }: StepCardProps) {
-    const 鵩壍 = `step-${帓壍.toLowerCase().replace(/[^a-z]+/g, "-")}`;
-    return (<section className={cn("rounded-card border bg-card shadow-card animate-fade-up", 繺壍 === "warn" ? "border-warn/40" : "border-line")} aria-label={帓壍}>
+export function StepCard({ num, title, summary, hint, collapsed, onToggle, onRemove, removeLabel, aside, children, tone = "default" }: StepCardProps) {
+    const bodyId = `step-${title.toLowerCase().replace(/[^a-z]+/g, "-")}`;
+    return (<section className={cn("rounded-card border bg-card shadow-card animate-fade-up", tone === "warn" ? "border-warn/40" : "border-line")} aria-label={title}>
       <div className="flex items-center gap-3 px-[18px] py-3.5">
         <span className="font-mono text-meta text-accent tabular" aria-hidden>
-          {String(鄤壍).padStart(2, "0")}
+          {String(num).padStart(2, "0")}
         </span>
-        <button type="button" onClick={蟏壍} aria-expanded={!棠壍} aria-controls={鵩壍} className="flex min-w-0 flex-1 items-baseline gap-3 text-left">
-          <span className="shrink-0 font-display text-base font-semibold tracking-title">{帓壍}</span>
-          {棠壍 ? <span className="min-w-0 truncate text-xs text-muted-3">{紂壍}</span> : 鯱壍 ? <span className="min-w-0 truncate font-mono text-micro tracking-label text-faint uppercase">{鯱壍}</span> : null}
+        <button type="button" onClick={onToggle} aria-expanded={!collapsed} aria-controls={bodyId} className="flex min-w-0 flex-1 items-baseline gap-3 text-left">
+          <span className="shrink-0 font-display text-base font-semibold tracking-title">{title}</span>
+          {collapsed ? <span className="min-w-0 truncate text-xs text-muted-3">{summary}</span> : hint ? <span className="min-w-0 truncate font-mono text-micro tracking-label text-faint uppercase">{hint}</span> : null}
         </button>
-        {銜壍}
-        <IconButton label={棠壍 ? `Expand ${帓壍}` : `Collapse ${帓壍}`} onClick={蟏壍}>
-          <span aria-hidden className={cn("inline-block transition-transform", !棠壍 && "rotate-180")}>
+        {aside}
+        <IconButton label={collapsed ? `Expand ${title}` : `Collapse ${title}`} onClick={onToggle}>
+          <span aria-hidden className={cn("inline-block transition-transform", !collapsed && "rotate-180")}>
             ▾
           </span>
         </IconButton>
-        {咾壍 ? (<IconButton label={玭壍 ?? `Remove ${帓壍}`} onClick={咾壍}>
+        {onRemove ? (<IconButton label={removeLabel ?? `Remove ${title}`} onClick={onRemove}>
             ×
           </IconButton>) : null}
       </div>
-      {!棠壍 ? (<div id={鵩壍} className="flex flex-col gap-4 border-t border-line-soft px-[18px] pt-4 pb-[18px]">
-          {律壍}
+      {!collapsed ? (<div id={bodyId} className="flex flex-col gap-4 border-t border-line-soft px-[18px] pt-4 pb-[18px]">
+          {children}
         </div>) : null}
     </section>);
 }
 type DraftInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange"> & {
     value: string;
-    onCommit: (橘壍: string) => void;
+    onCommit: (value: string) => void;
     delay?: number;
     variant?: "pill" | "field";
 };
-export const DraftInput = forwardRef<HTMLInputElement, DraftInputProps>(function DraftInput({ value: 襇壍, onCommit: 嘶壍, delay: 甥壍 = 500, variant: 鐔壍 = "field", onBlur: 愃壍, onFocus: 翲壍, onKeyDown: 黡壍, ...毐壍 }, 調壍) {
-    const [垮壍, 皝壍] = useState<string | null>(null);
-    const 閌壍 = useRef<ReturnType<typeof setTimeout> | null>(null);
+export const DraftInput = forwardRef<HTMLInputElement, DraftInputProps>(function DraftInput({ value, onCommit, delay = 500, variant = "field", onBlur, onFocus, onKeyDown, ...rest }, ref) {
+    const [draft, setDraft] = useState<string | null>(null);
+    const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
     useEffect(() => () => {
-        if (閌壍.current)
-            clearTimeout(閌壍.current);
+        if (timer.current)
+            clearTimeout(timer.current);
     }, []);
-    const 扻壍 = (腪壍: string) => {
-        if (閌壍.current)
-            clearTimeout(閌壍.current);
-        閌壍.current = null;
-        if (腪壍 !== 襇壍)
-            嘶壍(腪壍);
+    const commit = (v: string) => {
+        if (timer.current)
+            clearTimeout(timer.current);
+        timer.current = null;
+        if (v !== value)
+            onCommit(v);
     };
-    return (<Input ref={調壍} variant={鐔壍} value={垮壍 ?? 襇壍} onFocus={(乙壍) => {
-            皝壍(襇壍);
-            翲壍?.(乙壍);
-        }} onChange={(浈壍) => {
-            const 谷壍 = 浈壍.target.value;
-            皝壍(谷壍);
-            if (閌壍.current)
-                clearTimeout(閌壍.current);
-            閌壍.current = setTimeout(() => {
-                閌壍.current = null;
-                嘶壍(谷壍);
-            }, 甥壍);
-        }} onBlur={(夦壍) => {
-            if (垮壍 !== null)
-                扻壍(垮壍);
-            皝壍(null);
-            愃壍?.(夦壍);
-        }} onKeyDown={(砕壍) => {
-            if (砕壍.key === "Enter" && 垮壍 !== null)
-                扻壍(垮壍);
-            黡壍?.(砕壍);
-        }} {...毐壍}/>);
+    return (<Input ref={ref} variant={variant} value={draft ?? value} onFocus={(e) => {
+            setDraft(value);
+            onFocus?.(e);
+        }} onChange={(e) => {
+            const v = e.target.value;
+            setDraft(v);
+            if (timer.current)
+                clearTimeout(timer.current);
+            timer.current = setTimeout(() => {
+                timer.current = null;
+                onCommit(v);
+            }, delay);
+        }} onBlur={(e) => {
+            if (draft !== null)
+                commit(draft);
+            setDraft(null);
+            onBlur?.(e);
+        }} onKeyDown={(e) => {
+            if (e.key === "Enter" && draft !== null)
+                commit(draft);
+            onKeyDown?.(e);
+        }} {...rest}/>);
 });
-export function formatGlyph(霄壍: string, 揳壍 = "USD"): string {
-    switch (霄壍 as MetricFormat) {
+export function formatGlyph(format: string, currency = "USD"): string {
+    switch (format as MetricFormat) {
         case "money":
-            return currencySymbol(揳壍).trim();
+            return currencySymbol(currency).trim();
         case "percent":
             return "%";
         case "ratio":
@@ -112,19 +112,19 @@ interface OptionChipProps {
     onClick: () => void;
     className?: string;
 }
-export function OptionChip({ label: 苢壍, active: 俑壍, disabledReason: 滀壍, hint: 趯壍, title: 媞壍, onClick: 禍壍, className: 顼壍 }: OptionChipProps) {
-    const 敫壍 = !!滀壍 && !俑壍;
-    const 葚壍 = (<button type="button" aria-pressed={!!俑壍} aria-disabled={敫壍 || undefined} onClick={() => (敫壍 ? toast(滀壍, { tone: "warn", ms: 3600 }) : 禍壍())} className={cn("inline-flex items-center gap-2 rounded-pill border px-3 py-1.5 text-xs whitespace-nowrap transition-colors", 俑壍 ? "border-accent bg-teal-t text-fg" : 敫壍 ? "cursor-not-allowed border-line-soft text-faint" : "border-line text-muted hover:border-tone/25 hover:text-fg", 顼壍)}>
-      <span className={cn(敫壍 && "line-through decoration-tone/30")}>{苢壍}</span>
-      {趯壍 ? <span className={cn("font-mono text-micro", 俑壍 ? "text-accent" : "text-faint")}>{趯壍}</span> : null}
-      {俑壍 ? (<span aria-hidden className="text-[11px] leading-none text-accent">
+export function OptionChip({ label, active, disabledReason, hint, title, onClick, className }: OptionChipProps) {
+    const disabled = !!disabledReason && !active;
+    const chip = (<button type="button" aria-pressed={!!active} aria-disabled={disabled || undefined} onClick={() => (disabled ? toast(disabledReason, { tone: "warn", ms: 3600 }) : onClick())} className={cn("inline-flex items-center gap-2 rounded-pill border px-3 py-1.5 text-xs whitespace-nowrap transition-colors", active ? "border-accent bg-teal-t text-fg" : disabled ? "cursor-not-allowed border-line-soft text-faint" : "border-line text-muted hover:border-tone/25 hover:text-fg", className)}>
+      <span className={cn(disabled && "line-through decoration-tone/30")}>{label}</span>
+      {hint ? <span className={cn("font-mono text-micro", active ? "text-accent" : "text-faint")}>{hint}</span> : null}
+      {active ? (<span aria-hidden className="text-[11px] leading-none text-accent">
           ✓
         </span>) : null}
     </button>);
-    const 光壍 = 滀壍 && !俑壍 ? 滀壍 : 媞壍;
-    return 光壍 ? <Tooltip content={光壍}>{葚壍}</Tooltip> : 葚壍;
+    const tip = disabledReason && !active ? disabledReason : title;
+    return tip ? <Tooltip content={tip}>{chip}</Tooltip> : chip;
 }
-export function SelectedPill({ label: 瀸壍, hint: 輧壍, onRemove: 尖壍, onMoveLeft: 笅壍, warn: 駴壍, warnText: 曣壍 }: {
+export function SelectedPill({ label, hint, onRemove, onMoveLeft, warn, warnText }: {
     label: React.ReactNode;
     hint?: React.ReactNode;
     onRemove: () => void;
@@ -132,37 +132,37 @@ export function SelectedPill({ label: 瀸壍, hint: 輧壍, onRemove: 尖壍, on
     warn?: boolean;
     warnText?: string;
 }) {
-    const 藒壍 = (<span className={cn("inline-flex items-center gap-1.5 rounded-pill border py-1 pr-1 pl-3 text-xs", 駴壍 ? "border-warn/50 bg-warn-t text-fg" : "border-teal/30 bg-teal/6 text-fg")}>
-      {駴壍 ? (<span aria-hidden className="text-[10px] text-warn">
+    const body = (<span className={cn("inline-flex items-center gap-1.5 rounded-pill border py-1 pr-1 pl-3 text-xs", warn ? "border-warn/50 bg-warn-t text-fg" : "border-teal/30 bg-teal/6 text-fg")}>
+      {warn ? (<span aria-hidden className="text-[10px] text-warn">
           ▲
         </span>) : null}
-      <span className="font-medium">{瀸壍}</span>
-      {輧壍 ? <span className="font-mono text-micro text-muted-3">{輧壍}</span> : null}
-      {笅壍 ? (<button type="button" onClick={笅壍} aria-label={`Move ${typeof 瀸壍 === "string" ? 瀸壍 : "item"} earlier`} className="grid size-5 place-items-center rounded-full text-[11px] text-muted-3 hover:bg-tone/8 hover:text-fg">
+      <span className="font-medium">{label}</span>
+      {hint ? <span className="font-mono text-micro text-muted-3">{hint}</span> : null}
+      {onMoveLeft ? (<button type="button" onClick={onMoveLeft} aria-label={`Move ${typeof label === "string" ? label : "item"} earlier`} className="grid size-5 place-items-center rounded-full text-[11px] text-muted-3 hover:bg-tone/8 hover:text-fg">
           ←
         </button>) : null}
-      <button type="button" onClick={尖壍} aria-label={`Remove ${typeof 瀸壍 === "string" ? 瀸壍 : "item"}`} className="grid size-5 place-items-center rounded-full text-[13px] text-muted-3 hover:bg-tone/8 hover:text-fg">
+      <button type="button" onClick={onRemove} aria-label={`Remove ${typeof label === "string" ? label : "item"}`} className="grid size-5 place-items-center rounded-full text-[13px] text-muted-3 hover:bg-tone/8 hover:text-fg">
         ×
       </button>
     </span>);
-    return 曣壍 ? <Tooltip content={曣壍}>{藒壍}</Tooltip> : 藒壍;
+    return warnText ? <Tooltip content={warnText}>{body}</Tooltip> : body;
 }
-export function GroupLabel({ children: 勁壍, aside: 熰壍 }: {
+export function GroupLabel({ children, aside }: {
     children: React.ReactNode;
     aside?: React.ReactNode;
 }) {
     return (<div className="flex items-center gap-3">
-      <span className="label-mono">{勁壍}</span>
+      <span className="label-mono">{children}</span>
       <span className="h-px flex-1 bg-line-soft" aria-hidden/>
-      {熰壍}
+      {aside}
     </div>);
 }
-export function AddRow({ children: 邟壍, onClick: 嶎壍, disabled: 籽壍 }: {
+export function AddRow({ children, onClick, disabled }: {
     children: React.ReactNode;
     onClick: () => void;
     disabled?: boolean;
 }) {
-    return (<button type="button" onClick={嶎壍} disabled={籽壍} className="self-start rounded-pill border border-dashed border-teal/30 px-3.5 py-1.5 text-xs text-accent transition-colors hover:border-teal/60 disabled:cursor-not-allowed disabled:opacity-40">
-      + {邟壍}
+    return (<button type="button" onClick={onClick} disabled={disabled} className="self-start rounded-pill border border-dashed border-teal/30 px-3.5 py-1.5 text-xs text-accent transition-colors hover:border-teal/60 disabled:cursor-not-allowed disabled:opacity-40">
+      + {children}
     </button>);
 }

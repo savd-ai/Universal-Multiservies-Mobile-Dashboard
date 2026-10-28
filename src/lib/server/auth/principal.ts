@@ -11,65 +11,65 @@ import { bearerToken, readCookie, SESSION_COOKIE, validateSession } from "./sess
 import { requiresMfa } from "./users";
 export const ACCOUNT_HEADER = "x-savd-account";
 export const ACCOUNT_COOKIE = "savd-acct";
-export function toPrincipal(刮壍: UserRecord, 焝壍: SessionRecord | null): Principal {
+export function toPrincipal(user: UserRecord, session: SessionRecord | null): Principal {
     return {
         kind: "user",
-        userId: 刮壍.id,
-        email: 刮壍.email,
-        name: 刮壍.name,
-        role: 刮壍.role,
-        clientId: 刮壍.clientId,
-        sessionId: 焝壍?.id ?? null,
-        mfaSetupRequired: requiresMfa(刮壍) && !刮壍.mfa,
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        clientId: user.clientId,
+        sessionId: session?.id ?? null,
+        mfaSetupRequired: requiresMfa(user) && !user.mfa,
     };
 }
-export async function principalFromToken(逌壍: string | null): Promise<Principal | null> {
+export async function principalFromToken(token: string | null): Promise<Principal | null> {
     if (authConfig().mode === "off")
         return LOCAL_PRINCIPAL;
-    const 峻壍 = await validateSession(逌壍);
-    return 峻壍 ? toPrincipal(峻壍.user, 峻壍.session) : null;
+    const hit = await validateSession(token);
+    return hit ? toPrincipal(hit.user, hit.session) : null;
 }
-export async function principalFromRequest(篪壍: Request): Promise<Principal | null> {
+export async function principalFromRequest(req: Request): Promise<Principal | null> {
     // The mobile app sends its session token as a bearer token; browsers use the HttpOnly cookie.
-    return principalFromToken(bearerToken(篪壍.headers.get("authorization")) ?? readCookie(篪壍.headers.get("cookie"), SESSION_COOKIE));
+    return principalFromToken(bearerToken(req.headers.get("authorization")) ?? readCookie(req.headers.get("cookie"), SESSION_COOKIE));
 }
 export async function principalFromCookies(): Promise<Principal | null> {
-    const 髙壍 = await cookies();
-    return principalFromToken(髙壍.get(SESSION_COOKIE)?.value ?? null);
+    const jar = await cookies();
+    return principalFromToken(jar.get(SESSION_COOKIE)?.value ?? null);
 }
-export function requestedAccount(柈壍?: Request): {
+export function requestedAccount(req?: Request): {
     id: string;
     explicit: boolean;
 } | null {
-    if (!柈壍)
+    if (!req)
         return null;
-    const 蚷壍 = 柈壍.headers.get(ACCOUNT_HEADER);
-    if (蚷壍)
-        return { id: 蚷壍.replace(/\D/g, ""), explicit: true };
-    const 厦壍 = readCookie(柈壍.headers.get("cookie"), ACCOUNT_COOKIE);
-    return 厦壍 ? { id: 厦壍.replace(/\D/g, ""), explicit: false } : null;
+    const h = req.headers.get(ACCOUNT_HEADER);
+    if (h)
+        return { id: h.replace(/\D/g, ""), explicit: true };
+    const c = readCookie(req.headers.get("cookie"), ACCOUNT_COOKIE);
+    return c ? { id: c.replace(/\D/g, ""), explicit: false } : null;
 }
-export async function lastAccountOf(犕壍: Principal): Promise<string | null> {
-    if (!犕壍.userId)
+export async function lastAccountOf(principal: Principal): Promise<string | null> {
+    if (!principal.userId)
         return null;
-    return (await getGlobalStore().users.get(犕壍.userId))?.lastAccountId ?? null;
+    return (await getGlobalStore().users.get(principal.userId))?.lastAccountId ?? null;
 }
-async function 醄壍(平壍: Principal, 絢壍: string | null): Promise<string | null> {
+async function likelyAccount(principal: Principal, hint: string | null): Promise<string | null> {
     try {
-        const { source: 鱑壍 } = await resolveGoogleAds();
-        const 楀壍 = (await 鱑壍.listAccounts()).map((蠯壍) => 蠯壍.id);
-        const 唞壍 = 絢壍 ?? (await lastAccountOf(平壍)) ?? (await getWorkspaceStore(AGENCY_WORKSPACE).settings.get()).activeAccountId ?? 鱑壍.defaultAccountId();
-        if (楀壍.includes(唞壍))
-            return 唞壍;
-        return 楀壍.includes(鱑壍.defaultAccountId()) ? 鱑壍.defaultAccountId() : (楀壍[0] ?? null);
+        const { source } = await resolveGoogleAds();
+        const listed = (await source.listAccounts()).map((a) => a.id);
+        const wanted = hint ?? (await lastAccountOf(principal)) ?? (await getWorkspaceStore(AGENCY_WORKSPACE).settings.get()).activeAccountId ?? source.defaultAccountId();
+        if (listed.includes(wanted))
+            return wanted;
+        return listed.includes(source.defaultAccountId()) ? source.defaultAccountId() : (listed[0] ?? null);
     }
     catch {
-        return 絢壍;
+        return hint;
     }
 }
-export async function scopeFor(琍壍: Principal, 鋼壍: string | null): Promise<RequestScope> {
-    const 快壍 = await listClientRecords();
-    if (!isAgencyRole(琍壍.role))
-        return { principal: 琍壍, workspaceId: workspaceFor(琍壍, 快壍, null) };
-    return { principal: 琍壍, workspaceId: workspaceFor(琍壍, 快壍, await 醄壍(琍壍, 鋼壍)) };
+export async function scopeFor(principal: Principal, accountHint: string | null): Promise<RequestScope> {
+    const clients = await listClientRecords();
+    if (!isAgencyRole(principal.role))
+        return { principal, workspaceId: workspaceFor(principal, clients, null) };
+    return { principal, workspaceId: workspaceFor(principal, clients, await likelyAccount(principal, accountHint)) };
 }

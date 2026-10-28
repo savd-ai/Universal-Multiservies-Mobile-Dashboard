@@ -16,80 +16,80 @@ export interface ChangeEventsQuery {
     end: string;
     campaignId?: string;
 }
-const 裶壍 = (嗥壍: number, 瓔壍: unknown) => !(瓔壍 instanceof ApiError && 瓔壍.status >= 400 && 瓔壍.status < 500) && 嗥壍 < 2;
-const 鏃壍: CampaignRangeQuery = { compare: "none" };
+const noRetry4xx = (count: number, err: unknown) => !(err instanceof ApiError && err.status >= 400 && err.status < 500) && count < 2;
+const NONE: CampaignRangeQuery = { compare: "none" };
 export const campaignKeys = {
-    all: (悲壍: string) => ["acct", 悲壍, "campaigns"] as const,
-    list: (羡壍: string, 麐壍: CampaignRangeQuery) => ["acct", 羡壍, "campaigns", "list", 麐壍] as const,
-    detail: (歿壍: string, 詮壍: string, 坝壍: CampaignRangeQuery) => ["acct", 歿壍, "campaigns", "detail", 詮壍, 坝壍] as const,
-    impact: (癌壍: string, 锻壍: string, 截壍: string) => ["acct", 癌壍, "campaigns", "impact", 锻壍, 截壍] as const,
-    changes: (脙壍: string, 丈壍: ChangeEventsQuery) => ["acct", 脙壍, "campaigns", "changes", 丈壍] as const,
+    all: (acct: string) => ["acct", acct, "campaigns"] as const,
+    list: (acct: string, q: CampaignRangeQuery) => ["acct", acct, "campaigns", "list", q] as const,
+    detail: (acct: string, id: string, q: CampaignRangeQuery) => ["acct", acct, "campaigns", "detail", id, q] as const,
+    impact: (acct: string, id: string, eventId: string) => ["acct", acct, "campaigns", "impact", id, eventId] as const,
+    changes: (acct: string, q: ChangeEventsQuery) => ["acct", acct, "campaigns", "changes", q] as const,
 };
-const 泷壍 = (详壍: CampaignRangeQuery | null) => ({ range: 详壍?.range, start: 详壍?.start, end: 详壍?.end, compare: 详壍?.compare });
-export function useCampaigns(壕壍: CampaignRangeQuery | null) {
-    const 矄壍 = useAccountId();
+const rangeParams = (q: CampaignRangeQuery | null) => ({ range: q?.range, start: q?.start, end: q?.end, compare: q?.compare });
+export function useCampaigns(q: CampaignRangeQuery | null) {
+    const acct = useAccountId();
     return useQuery({
-        queryKey: campaignKeys.list(矄壍, 壕壍 ?? 鏃壍),
-        queryFn: ({ signal: 隳壍 }) => request<CampaignListResponse>("/api/campaigns", { query: 泷壍(壕壍), signal: 隳壍 }),
-        enabled: !!矄壍 && !!壕壍,
-        placeholderData: (探壍, 芑壍) => (芑壍?.queryKey[1] === 矄壍 ? 探壍 : undefined),
+        queryKey: campaignKeys.list(acct, q ?? NONE),
+        queryFn: ({ signal }) => request<CampaignListResponse>("/api/campaigns", { query: rangeParams(q), signal }),
+        enabled: !!acct && !!q,
+        placeholderData: (prev, prevQuery) => (prevQuery?.queryKey[1] === acct ? prev : undefined),
         staleTime: 30000,
-        retry: 裶壍,
+        retry: noRetry4xx,
     });
 }
-export function useCampaignDetail(侀壍: string | null, 湯壍: CampaignRangeQuery | null) {
-    const 赞壍 = useAccountId();
-    const 婍壍 = 侀壍 ?? "";
+export function useCampaignDetail(id: string | null, q: CampaignRangeQuery | null) {
+    const acct = useAccountId();
+    const cid = id ?? "";
     return useQuery({
-        queryKey: campaignKeys.detail(赞壍, 婍壍, 湯壍 ?? 鏃壍),
-        queryFn: ({ signal: 礼壍 }) => request<CampaignDetail>(`/api/campaigns/${encodeURIComponent(婍壍)}`, { query: 泷壍(湯壍), signal: 礼壍 }),
-        enabled: !!赞壍 && !!侀壍 && !!湯壍,
-        placeholderData: (頫壍, 攚壍) => (攚壍?.queryKey[1] === 赞壍 && 攚壍.queryKey[4] === 婍壍 ? 頫壍 : undefined),
+        queryKey: campaignKeys.detail(acct, cid, q ?? NONE),
+        queryFn: ({ signal }) => request<CampaignDetail>(`/api/campaigns/${encodeURIComponent(cid)}`, { query: rangeParams(q), signal }),
+        enabled: !!acct && !!id && !!q,
+        placeholderData: (prev, prevQuery) => (prevQuery?.queryKey[1] === acct && prevQuery.queryKey[4] === cid ? prev : undefined),
         staleTime: 30000,
-        retry: 裶壍,
+        retry: noRetry4xx,
     });
 }
-export function useChangeImpact(萉壍: string, 僸壍: string | null) {
-    const 濧壍 = useAccountId();
+export function useChangeImpact(campaignId: string, eventId: string | null) {
+    const acct = useAccountId();
     return useQuery({
-        queryKey: campaignKeys.impact(濧壍, 萉壍, 僸壍 ?? ""),
-        queryFn: ({ signal: 軖壍 }) => request<ChangeImpactResult>(`/api/campaigns/${encodeURIComponent(萉壍)}/impact`, { query: { eventId: 僸壍 }, signal: 軖壍 }),
-        enabled: !!濧壍 && !!僸壍,
+        queryKey: campaignKeys.impact(acct, campaignId, eventId ?? ""),
+        queryFn: ({ signal }) => request<ChangeImpactResult>(`/api/campaigns/${encodeURIComponent(campaignId)}/impact`, { query: { eventId }, signal }),
+        enabled: !!acct && !!eventId,
         staleTime: 5 * 60000,
-        retry: 裶壍,
+        retry: noRetry4xx,
     });
 }
-export function useChangeEvents(寅壍: ChangeEventsQuery | null) {
-    const 窴壍 = useAccountId();
+export function useChangeEvents(q: ChangeEventsQuery | null) {
+    const acct = useAccountId();
     return useQuery({
-        queryKey: campaignKeys.changes(窴壍, 寅壍 ?? { start: "", end: "" }),
-        queryFn: ({ signal: 馣壍 }) => request<ChangeEventsResponse>("/api/change-events", { query: { start: 寅壍?.start, end: 寅壍?.end, campaignId: 寅壍?.campaignId }, signal: 馣壍 }),
-        enabled: !!窴壍 && !!寅壍,
-        placeholderData: (暒壍, 薁壍) => (薁壍?.queryKey[1] === 窴壍 ? 暒壍 : undefined),
+        queryKey: campaignKeys.changes(acct, q ?? { start: "", end: "" }),
+        queryFn: ({ signal }) => request<ChangeEventsResponse>("/api/change-events", { query: { start: q?.start, end: q?.end, campaignId: q?.campaignId }, signal }),
+        enabled: !!acct && !!q,
+        placeholderData: (prev, prevQuery) => (prevQuery?.queryKey[1] === acct ? prev : undefined),
         staleTime: 60000,
-        retry: 裶壍,
+        retry: noRetry4xx,
     });
 }
 export function useInvalidateCampaigns(): () => Promise<void> {
-    const 剰壍 = useQueryClient();
-    const 煟壍 = useAccountId();
-    return () => 剰壍.invalidateQueries({ queryKey: campaignKeys.all(煟壍) }, { cancelRefetch: false });
+    const qc = useQueryClient();
+    const acct = useAccountId();
+    return () => qc.invalidateQueries({ queryKey: campaignKeys.all(acct) }, { cancelRefetch: false });
 }
 export function useCreateAnnotation() {
-    const 過壍 = useQueryClient();
-    const 崽壍 = useAccountId();
+    const qc = useQueryClient();
+    const acct = useAccountId();
     return useMutation({
-        mutationFn: (簬壍: AnnotationBody) => request<Annotation>("/api/annotations", { body: 簬壍 }),
-        onSuccess: () => void 過壍.invalidateQueries({ queryKey: ["acct", 崽壍, "annotations"] }),
+        mutationFn: (body: AnnotationBody) => request<Annotation>("/api/annotations", { body }),
+        onSuccess: () => void qc.invalidateQueries({ queryKey: ["acct", acct, "annotations"] }),
     });
 }
 export function useDeleteAnnotation() {
-    const 鬛壍 = useQueryClient();
-    const 栊壍 = useAccountId();
+    const qc = useQueryClient();
+    const acct = useAccountId();
     return useMutation({
-        mutationFn: (蛹壍: string) => request<{
+        mutationFn: (id: string) => request<{
             ok: boolean;
-        }>(`/api/annotations/${encodeURIComponent(蛹壍)}`, { method: "DELETE" }),
-        onSuccess: () => void 鬛壍.invalidateQueries({ queryKey: ["acct", 栊壍, "annotations"] }),
+        }>(`/api/annotations/${encodeURIComponent(id)}`, { method: "DELETE" }),
+        onSuccess: () => void qc.invalidateQueries({ queryKey: ["acct", acct, "annotations"] }),
     });
 }

@@ -1,41 +1,41 @@
-const 衤壍 = 60000;
-const 啓壍 = 60 * 衤壍;
-const 瑂壍 = 24 * 啓壍;
-export function relativeTime(錱壍: string | null | undefined, 怠壍: number | null): string {
-    if (!錱壍 || 怠壍 === null)
+const MIN = 60000;
+const HOUR = 60 * MIN;
+const DAY = 24 * HOUR;
+export function relativeTime(iso: string | null | undefined, nowMs: number | null): string {
+    if (!iso || nowMs === null)
         return "";
-    const 缏壍 = Date.parse(錱壍.includes("T") ? 錱壍 : 錱壍.replace(" ", "T"));
-    if (!Number.isFinite(缏壍))
+    const t = Date.parse(iso.includes("T") ? iso : iso.replace(" ", "T"));
+    if (!Number.isFinite(t))
         return "";
-    const 鷾壍 = 怠壍 - 缏壍;
-    const 櫭壍 = Math.abs(鷾壍);
-    const 觜壍 = 鷾壍 < 0;
-    if (櫭壍 < 衤壍)
-        return 觜壍 ? "in under a minute" : "just now";
-    const 囋壍 = 櫭壍 < 啓壍 ? `${Math.round(櫭壍 / 衤壍)} min` : 櫭壍 < 瑂壍 ? `${Math.round(櫭壍 / 啓壍)} h` : `${Math.round(櫭壍 / 瑂壍)} d`;
-    return 觜壍 ? `in ${囋壍}` : `${囋壍} ago`;
+    const diff = nowMs - t;
+    const abs = Math.abs(diff);
+    const future = diff < 0;
+    if (abs < MIN)
+        return future ? "in under a minute" : "just now";
+    const body = abs < HOUR ? `${Math.round(abs / MIN)} min` : abs < DAY ? `${Math.round(abs / HOUR)} h` : `${Math.round(abs / DAY)} d`;
+    return future ? `in ${body}` : `${body} ago`;
 }
-const 疺壍 = new Map<string, Intl.DateTimeFormat>();
-export function formatDateTime(钩壍: string | null | undefined, 憘壍 = "UTC"): string {
-    if (!钩壍)
+const dtCache = new Map<string, Intl.DateTimeFormat>();
+export function formatDateTime(iso: string | null | undefined, timeZone = "UTC"): string {
+    if (!iso)
         return "—";
-    const 肇壍 = Date.parse(钩壍.includes("T") ? 钩壍 : 钩壍.replace(" ", "T"));
-    if (!Number.isFinite(肇壍))
+    const t = Date.parse(iso.includes("T") ? iso : iso.replace(" ", "T"));
+    if (!Number.isFinite(t))
         return "—";
-    let 齶壍 = 疺壍.get(憘壍);
-    if (!齶壍) {
+    let f = dtCache.get(timeZone);
+    if (!f) {
         try {
-            齶壍 = new Intl.DateTimeFormat("en-US", { timeZone: 憘壍, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+            f = new Intl.DateTimeFormat("en-US", { timeZone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
         }
         catch {
-            齶壍 = new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+            f = new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
         }
-        疺壍.set(憘壍, 齶壍);
+        dtCache.set(timeZone, f);
     }
-    return 齶壍.format(new Date(肇壍));
+    return f.format(new Date(t));
 }
-export function hoursLabel(汥壍: number): string {
-    if (汥壍 % 24 === 0 && 汥壍 >= 48)
-        return `${汥壍 / 24} days`;
-    return `${汥壍} hour${汥壍 === 1 ? "" : "s"}`;
+export function hoursLabel(hours: number): string {
+    if (hours % 24 === 0 && hours >= 48)
+        return `${hours / 24} days`;
+    return `${hours} hour${hours === 1 ? "" : "s"}`;
 }

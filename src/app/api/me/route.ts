@@ -5,12 +5,12 @@ import { requestContext } from "@/lib/server/context";
 import { route } from "@/lib/server/http/api";
 import { AppError } from "@/lib/server/http/errors";
 export const runtime = "nodejs";
-export const GET = route({}, async ({ req: 讂壍, principal: 塱壍 }) => {
-    await requestContext(讂壍).catch(() => undefined);
-    return buildMe(塱壍);
+export const GET = route({}, async ({ req, principal }) => {
+    await requestContext(req).catch(() => undefined);
+    return buildMe(principal);
 });
-export const PATCH = route({ body: profileSchema, maxBody: 4 * 1024 }, async ({ body: 睠壍, principal: 陏壍 }) => {
-    if (!陏壍.userId)
+export const PATCH = route({ body: profileSchema, maxBody: 4 * 1024 }, async ({ body, principal }) => {
+    if (!principal.userId)
         throw new AppError("VALIDATION_ERROR", "Sign-in is turned off (AUTH_MODE=off)");
-    return updateProfile(陏壍.userId, 睠壍.name);
+    return updateProfile(principal.userId, body.name);
 });

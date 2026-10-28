@@ -5,18 +5,18 @@ interface UiState {
     shortcutsOpen: boolean;
     notificationsOpen: boolean;
     mobileNavOpen: boolean;
-    setPalette: (霬壍: boolean) => void;
-    setShortcuts: (搛壍: boolean) => void;
-    setNotifications: (茊壍: boolean) => void;
-    setMobileNav: (俹壍: boolean) => void;
+    setPalette: (open: boolean) => void;
+    setShortcuts: (open: boolean) => void;
+    setNotifications: (open: boolean) => void;
+    setMobileNav: (open: boolean) => void;
 }
-export const useUi = create<UiState>((滨壍) => ({
+export const useUi = create<UiState>((value) => ({
     paletteOpen: false,
     shortcutsOpen: false,
     notificationsOpen: false,
     mobileNavOpen: false,
-    setPalette: (跗壍) => 滨壍({ paletteOpen: 跗壍 }),
-    setShortcuts: (嫆壍) => 滨壍({ shortcutsOpen: 嫆壍 }),
-    setNotifications: (禵壍) => 滨壍({ notificationsOpen: 禵壍 }),
-    setMobileNav: (颤壍) => 滨壍({ mobileNavOpen: 颤壍 }),
+    setPalette: (open) => value({ paletteOpen: open }),
+    setShortcuts: (open) => value({ shortcutsOpen: open }),
+    setNotifications: (open) => value({ notificationsOpen: open }),
+    setMobileNav: (open) => value({ mobileNavOpen: open }),
 }));

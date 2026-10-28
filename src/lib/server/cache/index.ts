@@ -5,32 +5,32 @@ export class Lru<V> {
         exp: number;
     }>();
     constructor(private readonly max: number, private readonly ttlMs: number) { }
-    get(湖壍: string): V | undefined {
-        const 赅壍 = this.map.get(湖壍);
-        if (!赅壍)
+    get(key: string): V | undefined {
+        const e = this.map.get(key);
+        if (!e)
             return undefined;
-        if (赅壍.exp < Date.now()) {
-            this.map.delete(湖壍);
+        if (e.exp < Date.now()) {
+            this.map.delete(key);
             return undefined;
         }
-        this.map.delete(湖壍);
-        this.map.set(湖壍, 赅壍);
-        return 赅壍.v;
+        this.map.delete(key);
+        this.map.set(key, e);
+        return e.v;
     }
-    set(娴壍: string, 礣壍: V, 頒壍 = this.ttlMs): void {
-        this.map.delete(娴壍);
-        this.map.set(娴壍, { v: 礣壍, exp: Date.now() + 頒壍 });
+    set(key: string, v: V, ttlMs = this.ttlMs): void {
+        this.map.delete(key);
+        this.map.set(key, { v, exp: Date.now() + ttlMs });
         while (this.map.size > this.max) {
-            const 攁壍 = this.map.keys().next().value;
-            if (攁壍 === undefined)
+            const oldest = this.map.keys().next().value;
+            if (oldest === undefined)
                 break;
-            this.map.delete(攁壍);
+            this.map.delete(oldest);
         }
     }
-    delete(菰壍: string): void {
-        for (const 僟壍 of [...this.map.keys()])
-            if (僟壍.startsWith(菰壍))
-                this.map.delete(僟壍);
+    delete(prefix: string): void {
+        for (const k of [...this.map.keys()])
+            if (k.startsWith(prefix))
+                this.map.delete(k);
     }
     clear(): void {
         this.map.clear();
@@ -38,25 +38,25 @@ export class Lru<V> {
 }
 export class SingleFlight<V> {
     private inflight = new Map<string, Promise<V>>();
-    run(濎壍: string, 躽壍: () => Promise<V>): Promise<V> {
-        const 宬壍 = this.inflight.get(濎壍);
-        if (宬壍)
-            return 宬壍;
-        const 窛壍 = 躽壍().finally(() => this.inflight.delete(濎壍));
-        this.inflight.set(濎壍, 窛壍);
-        return 窛壍;
+    run(key: string, fn: () => Promise<V>): Promise<V> {
+        const existing = this.inflight.get(key);
+        if (existing)
+            return existing;
+        const p = fn().finally(() => this.inflight.delete(key));
+        this.inflight.set(key, p);
+        return p;
     }
 }
 export class Semaphore {
     private active = 0;
     private queue: (() => void)[] = [];
     constructor(private readonly limit: number) { }
-    async use<T>(馊壍: () => Promise<T>): Promise<T> {
+    async use<T>(fn: () => Promise<T>): Promise<T> {
         if (this.active >= this.limit)
-            await new Promise<void>((晹壍) => this.queue.push(晹壍));
+            await new Promise<void>((resolve) => this.queue.push(resolve));
         this.active++;
         try {
-            return await 馊壍();
+            return await fn();
         }
         finally {
             this.active--;
@@ -64,17 +64,17 @@ export class Semaphore {
         }
     }
 }
-const 蕨壍 = globalThis as unknown as {
+const g = globalThis as unknown as {
     __savdSingletons?: Map<string, unknown>;
 };
-const 剗壍 = (蕨壍.__savdSingletons ??= new Map());
-export function singleton<T>(煆壍: string, 逵壍: () => T): T {
-    if (!剗壍.has(煆壍))
-        剗壍.set(煆壍, 逵壍());
-    return 剗壍.get(煆壍) as T;
+const singletons = (g.__savdSingletons ??= new Map());
+export function singleton<T>(key: string, create: () => T): T {
+    if (!singletons.has(key))
+        singletons.set(key, create());
+    return singletons.get(key) as T;
 }
-export function resetSingletonsForTests(崤壍 = ""): void {
-    for (const 簓壍 of [...剗壍.keys()])
-        if (簓壍.startsWith(崤壍))
-            剗壍.delete(簓壍);
+export function resetSingletonsForTests(prefix = ""): void {
+    for (const k of [...singletons.keys()])
+        if (k.startsWith(prefix))
+            singletons.delete(k);
 }

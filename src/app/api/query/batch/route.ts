@@ -5,18 +5,18 @@ import { requestContext } from "@/lib/server/context";
 import { route } from "@/lib/server/http/api";
 import { runQuery } from "@/lib/server/query/service";
 export const runtime = "nodejs";
-const 椞壍 = z.object({ specs: z.array(querySpecSchema).min(1).max(40) });
-export const POST = route({ body: 椞壍, maxBody: 512 * 1024, rateLimit: { key: "query-batch", perMinute: 240, burst: 60 } }, async ({ req: 蠍壍, body: 哼壍 }) => {
-    const 珫壍 = await requestContext(蠍壍, 哼壍.specs[0]?.accountId);
-    const 鋚壍 = await Promise.all(哼壍.specs.map(async (忉壍) => {
+const bodySchema = z.object({ specs: z.array(querySpecSchema).min(1).max(40) });
+export const POST = route({ body: bodySchema, maxBody: 512 * 1024, rateLimit: { key: "query-batch", perMinute: 240, burst: 60 } }, async ({ req, body }) => {
+    const ctx = await requestContext(req, body.specs[0]?.accountId);
+    const results = await Promise.all(body.specs.map(async (spec) => {
         try {
-            return { ok: true as const, result: await runQuery(忉壍, 珫壍) };
+            return { ok: true as const, result: await runQuery(spec, ctx) };
         }
-        catch (纸壍) {
-            if (纸壍 instanceof QueryError)
-                return { ok: false as const, error: { code: 纸壍.code, message: 纸壍.message } };
-            throw 纸壍;
+        catch (err) {
+            if (err instanceof QueryError)
+                return { ok: false as const, error: { code: err.code, message: err.message } };
+            throw err;
         }
     }));
-    return { results: 鋚壍 };
+    return { results };
 });

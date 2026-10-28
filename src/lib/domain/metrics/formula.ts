@@ -21,81 +21,81 @@ export type Node = {
 };
 type BinOp = "+" | "-" | "*" | "/" | "<" | "<=" | ">" | ">=" | "==" | "!=" | "and" | "or";
 export class FormulaError extends Error {
-    constructor(穥壍: string, public readonly position: number) {
-        super(穥壍);
+    constructor(message: string, public readonly position: number) {
+        super(message);
         this.name = "FormulaError";
     }
 }
 export const FORMULA_FUNCTIONS = ["if", "safe_div", "coalesce", "min", "max", "abs", "round", "floor", "ceil"] as const;
-const 饔壍 = new Set<string>(FORMULA_FUNCTIONS);
-const 晃壍 = new Set(["__proto__", "constructor", "prototype"]);
+const FUNCTION_SET = new Set<string>(FORMULA_FUNCTIONS);
+const FORBIDDEN_IDENTIFIERS = new Set(["__proto__", "constructor", "prototype"]);
 export const FORMULA_LIMITS = { maxLength: 500, maxDepth: 32, maxNodes: 200 } as const;
 interface Token {
     kind: "num" | "id" | "op" | "lparen" | "rparen" | "comma" | "eof";
     value: string;
     pos: number;
 }
-function 蔲壍(刡壍: string): Token[] {
-    const 焐壍: Token[] = [];
-    let 迿壍 = 0;
-    while (迿壍 < 刡壍.length) {
-        const 峮壍 = 刡壍[迿壍] as string;
-        if (/\s/.test(峮壍)) {
-            迿壍++;
+function tokenize(src: string): Token[] {
+    const out: Token[] = [];
+    let i = 0;
+    while (i < src.length) {
+        const ch = src[i] as string;
+        if (/\s/.test(ch)) {
+            i++;
             continue;
         }
-        if (/[0-9.]/.test(峮壍)) {
-            const 篝壍 = 迿壍;
-            while (迿壍 < 刡壍.length && /[0-9._]/.test(刡壍[迿壍] as string))
-                迿壍++;
-            const 髌壍 = 刡壍.slice(篝壍, 迿壍).replace(/_/g, "");
-            if (!/^(\d+\.?\d*|\.\d+)$/.test(髌壍))
-                throw new FormulaError(`Invalid number "${髌壍}"`, 篝壍);
-            焐壍.push({ kind: "num", value: 髌壍, pos: 篝壍 });
+        if (/[0-9.]/.test(ch)) {
+            const start = i;
+            while (i < src.length && /[0-9._]/.test(src[i] as string))
+                i++;
+            const raw = src.slice(start, i).replace(/_/g, "");
+            if (!/^(\d+\.?\d*|\.\d+)$/.test(raw))
+                throw new FormulaError(`Invalid number "${raw}"`, start);
+            out.push({ kind: "num", value: raw, pos: start });
             continue;
         }
-        if (/[A-Za-z_]/.test(峮壍)) {
-            const 枻壍 = 迿壍;
-            while (迿壍 < 刡壍.length && /[A-Za-z0-9_]/.test(刡壍[迿壍] as string))
-                迿壍++;
-            焐壍.push({ kind: "id", value: 刡壍.slice(枻壍, 迿壍), pos: 枻壍 });
+        if (/[A-Za-z_]/.test(ch)) {
+            const start = i;
+            while (i < src.length && /[A-Za-z0-9_]/.test(src[i] as string))
+                i++;
+            out.push({ kind: "id", value: src.slice(start, i), pos: start });
             continue;
         }
-        const 蚪壍 = 刡壍.slice(迿壍, 迿壍 + 2);
-        if (["<=", ">=", "==", "!=", "&&", "||"].includes(蚪壍)) {
-            焐壍.push({ kind: "op", value: 蚪壍 === "&&" ? "and" : 蚪壍 === "||" ? "or" : 蚪壍, pos: 迿壍 });
-            迿壍 += 2;
+        const two = src.slice(i, i + 2);
+        if (["<=", ">=", "==", "!=", "&&", "||"].includes(two)) {
+            out.push({ kind: "op", value: two === "&&" ? "and" : two === "||" ? "or" : two, pos: i });
+            i += 2;
             continue;
         }
-        if ("+-*/<>".includes(峮壍)) {
-            焐壍.push({ kind: "op", value: 峮壍, pos: 迿壍 });
-            迿壍++;
+        if ("+-*/<>".includes(ch)) {
+            out.push({ kind: "op", value: ch, pos: i });
+            i++;
             continue;
         }
-        if (峮壍 === "×") {
-            焐壍.push({ kind: "op", value: "*", pos: 迿壍 });
-            迿壍++;
+        if (ch === "×") {
+            out.push({ kind: "op", value: "*", pos: i });
+            i++;
             continue;
         }
-        if (峮壍 === "÷") {
-            焐壍.push({ kind: "op", value: "/", pos: 迿壍 });
-            迿壍++;
+        if (ch === "÷") {
+            out.push({ kind: "op", value: "/", pos: i });
+            i++;
             continue;
         }
-        if (峮壍 === "(")
-            焐壍.push({ kind: "lparen", value: 峮壍, pos: 迿壍 });
-        else if (峮壍 === ")")
-            焐壍.push({ kind: "rparen", value: 峮壍, pos: 迿壍 });
-        else if (峮壍 === ",")
-            焐壍.push({ kind: "comma", value: 峮壍, pos: 迿壍 });
+        if (ch === "(")
+            out.push({ kind: "lparen", value: ch, pos: i });
+        else if (ch === ")")
+            out.push({ kind: "rparen", value: ch, pos: i });
+        else if (ch === ",")
+            out.push({ kind: "comma", value: ch, pos: i });
         else
-            throw new FormulaError(`Unexpected character "${峮壍}"`, 迿壍);
-        迿壍++;
+            throw new FormulaError(`Unexpected character "${ch}"`, i);
+        i++;
     }
-    焐壍.push({ kind: "eof", value: "", pos: 刡壍.length });
-    return 焐壍;
+    out.push({ kind: "eof", value: "", pos: src.length });
+    return out;
 }
-const 厙壍: Record<string, number> = {
+const BINDING: Record<string, number> = {
     or: 1,
     and: 2,
     "==": 3,
@@ -109,104 +109,104 @@ const 厙壍: Record<string, number> = {
     "*": 6,
     "/": 6,
 };
-export function parseFormula(犈壍: string): Node {
-    if (犈壍.length > FORMULA_LIMITS.maxLength)
+export function parseFormula(src: string): Node {
+    if (src.length > FORMULA_LIMITS.maxLength)
         throw new FormulaError(`Formula is longer than ${FORMULA_LIMITS.maxLength} characters`, FORMULA_LIMITS.maxLength);
-    if (!犈壍.trim())
+    if (!src.trim())
         throw new FormulaError("Formula is empty", 0);
-    const 酷壍 = 蔲壍(犈壍);
-    let 幦壍 = 0;
-    let 絕壍 = 0;
-    const 鱄壍 = () => 酷壍[幦壍] as Token;
-    const 椳壍 = () => 酷壍[幦壍++] as Token;
-    const 蠢壍 = (唑壍: number) => {
-        絕壍++;
-        if (絕壍 > FORMULA_LIMITS.maxNodes)
-            throw new FormulaError(`Formula has more than ${FORMULA_LIMITS.maxNodes} parts`, 唑壍);
+    const tokens = tokenize(src);
+    let p = 0;
+    let nodes = 0;
+    const peek = () => tokens[p] as Token;
+    const next = () => tokens[p++] as Token;
+    const count = (pos: number) => {
+        nodes++;
+        if (nodes > FORMULA_LIMITS.maxNodes)
+            throw new FormulaError(`Formula has more than ${FORMULA_LIMITS.maxNodes} parts`, pos);
     };
-    function 琀壍(鋯壍: Token): string | null {
-        if (鋯壍.kind === "op")
-            return 鋯壍.value;
-        if (鋯壍.kind === "id" && (鋯壍.value === "and" || 鋯壍.value === "or"))
-            return 鋯壍.value;
+    function binOpOf(tok: Token): string | null {
+        if (tok.kind === "op")
+            return tok.value;
+        if (tok.kind === "id" && (tok.value === "and" || tok.value === "or"))
+            return tok.value;
         return null;
     }
-    function 忞壍(绍壍: number, 鶼壍: number): Node {
-        if (鶼壍 > FORMULA_LIMITS.maxDepth)
-            throw new FormulaError("Formula is nested too deeply", 鱄壍().pos);
-        let 檫壍 = 慖壍(鶼壍);
+    function parseExpr(minBp: number, depth: number): Node {
+        if (depth > FORMULA_LIMITS.maxDepth)
+            throw new FormulaError("Formula is nested too deeply", peek().pos);
+        let left = parsePrefix(depth);
         for (;;) {
-            const 覚壍 = 鱄壍();
-            const 嚉壍 = 琀壍(覚壍);
-            if (!嚉壍)
+            const tok = peek();
+            const op = binOpOf(tok);
+            if (!op)
                 break;
-            const 畸壍 = 厙壍[嚉壍];
-            if (畸壍 === undefined || 畸壍 < 绍壍)
+            const bp = BINDING[op];
+            if (bp === undefined || bp < minBp)
                 break;
-            椳壍();
-            const 鑧壍 = 忞壍(畸壍 + 1, 鶼壍 + 1);
-            蠢壍(覚壍.pos);
-            檫壍 = { t: "bin", op: 嚉壍 as BinOp, left: 檫壍, right: 鑧壍 };
+            next();
+            const right = parseExpr(bp + 1, depth + 1);
+            count(tok.pos);
+            left = { t: "bin", op: op as BinOp, left, right };
         }
-        return 檫壍;
+        return left;
     }
-    function 慖壍(聅壍: number): Node {
-        const 鼴壍 = 椳壍();
-        蠢壍(鼴壍.pos);
-        if (鼴壍.kind === "num")
-            return { t: "num", v: Number(鼴壍.value) };
-        if (鼴壍.kind === "op" && 鼴壍.value === "-")
-            return { t: "unary", op: "-", arg: 忞壍(7, 聅壍 + 1) };
-        if (鼴壍.kind === "op" && 鼴壍.value === "+")
-            return 忞壍(7, 聅壍 + 1);
-        if (鼴壍.kind === "lparen") {
-            const 氣壍 = 忞壍(0, 聅壍 + 1);
-            const 謒壍 = 椳壍();
-            if (謒壍.kind !== "rparen")
-                throw new FormulaError("Missing closing parenthesis", 謒壍.pos);
-            return 氣壍;
+    function parsePrefix(depth: number): Node {
+        const tok = next();
+        count(tok.pos);
+        if (tok.kind === "num")
+            return { t: "num", v: Number(tok.value) };
+        if (tok.kind === "op" && tok.value === "-")
+            return { t: "unary", op: "-", arg: parseExpr(7, depth + 1) };
+        if (tok.kind === "op" && tok.value === "+")
+            return parseExpr(7, depth + 1);
+        if (tok.kind === "lparen") {
+            const inner = parseExpr(0, depth + 1);
+            const close = next();
+            if (close.kind !== "rparen")
+                throw new FormulaError("Missing closing parenthesis", close.pos);
+            return inner;
         }
-        if (鼴壍.kind === "id") {
-            const 堁壍 = 鼴壍.value;
-            if (晃壍.has(堁壍))
-                throw new FormulaError(`"${堁壍}" is not allowed`, 鼴壍.pos);
-            if (堁壍 === "not")
-                return { t: "unary", op: "not", arg: 忞壍(3, 聅壍 + 1) };
-            if (鱄壍().kind === "lparen") {
-                if (!饔壍.has(堁壍))
-                    throw new FormulaError(`Unknown function "${堁壍}"`, 鼴壍.pos);
-                椳壍();
-                const 盰壍: Node[] = [];
-                if (鱄壍().kind !== "rparen") {
+        if (tok.kind === "id") {
+            const name = tok.value;
+            if (FORBIDDEN_IDENTIFIERS.has(name))
+                throw new FormulaError(`"${name}" is not allowed`, tok.pos);
+            if (name === "not")
+                return { t: "unary", op: "not", arg: parseExpr(3, depth + 1) };
+            if (peek().kind === "lparen") {
+                if (!FUNCTION_SET.has(name))
+                    throw new FormulaError(`Unknown function "${name}"`, tok.pos);
+                next();
+                const args: Node[] = [];
+                if (peek().kind !== "rparen") {
                     for (;;) {
-                        盰壍.push(忞壍(0, 聅壍 + 1));
-                        if (鱄壍().kind === "comma") {
-                            椳壍();
+                        args.push(parseExpr(0, depth + 1));
+                        if (peek().kind === "comma") {
+                            next();
                             continue;
                         }
                         break;
                     }
                 }
-                const 闟壍 = 椳壍();
-                if (闟壍.kind !== "rparen")
-                    throw new FormulaError(`Missing ")" after arguments of ${堁壍}`, 闟壍.pos);
-                京壍(堁壍, 盰壍.length, 鼴壍.pos);
-                return { t: "call", fn: 堁壍, args: 盰壍 };
+                const close = next();
+                if (close.kind !== "rparen")
+                    throw new FormulaError(`Missing ")" after arguments of ${name}`, close.pos);
+                checkArity(name, args.length, tok.pos);
+                return { t: "call", fn: name, args };
             }
-            return { t: "id", name: 堁壍 };
+            return { t: "id", name };
         }
-        if (鼴壍.kind === "eof")
-            throw new FormulaError("Formula ends unexpectedly", 鼴壍.pos);
-        throw new FormulaError(`Unexpected "${鼴壍.value}"`, 鼴壍.pos);
+        if (tok.kind === "eof")
+            throw new FormulaError("Formula ends unexpectedly", tok.pos);
+        throw new FormulaError(`Unexpected "${tok.value}"`, tok.pos);
     }
-    const 拎壍 = 忞壍(0, 0);
-    const 膽壍 = 鱄壍();
-    if (膽壍.kind !== "eof")
-        throw new FormulaError(`Unexpected "${膽壍.value}"`, 膽壍.pos);
-    return 拎壍;
+    const ast = parseExpr(0, 0);
+    const tail = peek();
+    if (tail.kind !== "eof")
+        throw new FormulaError(`Unexpected "${tail.value}"`, tail.pos);
+    return ast;
 }
-function 京壍(涛壍: string, 貊壍: number, 她壍: number): void {
-    const 硨壍: Record<string, [
+function checkArity(fn: string, n: number, pos: number): void {
+    const ranges: Record<string, [
         number,
         number
     ]> = {
@@ -220,133 +220,133 @@ function 京壍(涛壍: string, 貊壍: number, 她壍: number): void {
         floor: [1, 1],
         ceil: [1, 1],
     };
-    const [靗壍, 摆壍] = 硨壍[涛壍] ?? [0, 0];
-    if (貊壍 < 靗壍 || 貊壍 > 摆壍)
-        throw new FormulaError(`${涛壍}() takes ${靗壍 === 摆壍 ? 靗壍 : `${靗壍}–${摆壍}`} argument${摆壍 === 1 ? "" : "s"}`, 她壍);
+    const [lo, hi] = ranges[fn] ?? [0, 0];
+    if (n < lo || n > hi)
+        throw new FormulaError(`${fn}() takes ${lo === hi ? lo : `${lo}–${hi}`} argument${hi === 1 ? "" : "s"}`, pos);
 }
-export function formulaIdentifiers(茵壍: Node, 値壍 = new Set<string>()): Set<string> {
-    switch (茵壍.t) {
+export function formulaIdentifiers(ast: Node, out = new Set<string>()): Set<string> {
+    switch (ast.t) {
         case "id":
-            値壍.add(茵壍.name);
+            out.add(ast.name);
             break;
         case "unary":
-            formulaIdentifiers(茵壍.arg, 値壍);
+            formulaIdentifiers(ast.arg, out);
             break;
         case "bin":
-            formulaIdentifiers(茵壍.left, 値壍);
-            formulaIdentifiers(茵壍.right, 値壍);
+            formulaIdentifiers(ast.left, out);
+            formulaIdentifiers(ast.right, out);
             break;
         case "call":
-            茵壍.args.forEach((漓壍) => formulaIdentifiers(漓壍, 値壍));
+            ast.args.forEach((a) => formulaIdentifiers(a, out));
             break;
         case "num":
             break;
     }
-    return 値壍;
+    return out;
 }
-export type Resolver = (踂壍: string) => FormulaValue;
-const 嫱壍 = (秠壍: FormulaValue): 秠壍 is number => 秠壍 !== null && Number.isFinite(秠壍);
-export function evaluate(飏壍: Node, 斾壍: Resolver): FormulaValue {
-    switch (飏壍.t) {
+export type Resolver = (name: string) => FormulaValue;
+const isNum = (v: FormulaValue): v is number => v !== null && Number.isFinite(v);
+export function evaluate(ast: Node, resolve: Resolver): FormulaValue {
+    switch (ast.t) {
         case "num":
-            return 飏壍.v;
+            return ast.v;
         case "id":
-            return 斾壍(飏壍.name);
+            return resolve(ast.name);
         case "unary": {
-            const 蒭壍 = evaluate(飏壍.arg, 斾壍);
-            if (飏壍.op === "not")
-                return 蒭壍 === null ? null : 蒭壍 ? 0 : 1;
-            return 嫱壍(蒭壍) ? -蒭壍 : null;
+            const v = evaluate(ast.arg, resolve);
+            if (ast.op === "not")
+                return v === null ? null : v ? 0 : 1;
+            return isNum(v) ? -v : null;
         }
         case "bin": {
-            if (飏壍.op === "and") {
-                const 农壍 = evaluate(飏壍.left, 斾壍);
-                if (农壍 === null)
+            if (ast.op === "and") {
+                const l2 = evaluate(ast.left, resolve);
+                if (l2 === null)
                     return null;
-                if (!农壍)
+                if (!l2)
                     return 0;
-                const 炋壍 = evaluate(飏壍.right, 斾壍);
-                return 炋壍 === null ? null : 炋壍 ? 1 : 0;
+                const r2 = evaluate(ast.right, resolve);
+                return r2 === null ? null : r2 ? 1 : 0;
             }
-            if (飏壍.op === "or") {
-                const 轺壍 = evaluate(飏壍.left, 斾壍);
-                if (轺壍)
+            if (ast.op === "or") {
+                const l2 = evaluate(ast.left, resolve);
+                if (l2)
                     return 1;
-                const 屩壍 = evaluate(飏壍.right, 斾壍);
-                if (轺壍 === null || 屩壍 === null)
-                    return 屩壍 ? 1 : null;
-                return 屩壍 ? 1 : 0;
+                const r2 = evaluate(ast.right, resolve);
+                if (l2 === null || r2 === null)
+                    return r2 ? 1 : null;
+                return r2 ? 1 : 0;
             }
-            const 筘壍 = evaluate(飏壍.left, 斾壍);
-            const 驇壍 = evaluate(飏壍.right, 斾壍);
-            if (!嫱壍(筘壍) || !嫱壍(驇壍))
+            const l = evaluate(ast.left, resolve);
+            const r = evaluate(ast.right, resolve);
+            if (!isNum(l) || !isNum(r))
                 return null;
-            switch (飏壍.op) {
+            switch (ast.op) {
                 case "+":
-                    return 筘壍 + 驇壍;
+                    return l + r;
                 case "-":
-                    return 筘壍 - 驇壍;
+                    return l - r;
                 case "*":
-                    return 筘壍 * 驇壍;
+                    return l * r;
                 case "/":
-                    return 驇壍 === 0 ? null : 筘壍 / 驇壍;
+                    return r === 0 ? null : l / r;
                 case "<":
-                    return 筘壍 < 驇壍 ? 1 : 0;
+                    return l < r ? 1 : 0;
                 case "<=":
-                    return 筘壍 <= 驇壍 ? 1 : 0;
+                    return l <= r ? 1 : 0;
                 case ">":
-                    return 筘壍 > 驇壍 ? 1 : 0;
+                    return l > r ? 1 : 0;
                 case ">=":
-                    return 筘壍 >= 驇壍 ? 1 : 0;
+                    return l >= r ? 1 : 0;
                 case "==":
-                    return 筘壍 === 驇壍 ? 1 : 0;
+                    return l === r ? 1 : 0;
                 case "!=":
-                    return 筘壍 !== 驇壍 ? 1 : 0;
+                    return l !== r ? 1 : 0;
             }
             return null;
         }
         case "call": {
-            const 朶壍 = 飏壍.args;
-            switch (飏壍.fn) {
+            const args = ast.args;
+            switch (ast.fn) {
                 case "if": {
-                    const 蘥壍 = evaluate(朶壍[0] as Node, 斾壍);
-                    if (蘥壍 === null)
+                    const c = evaluate(args[0] as Node, resolve);
+                    if (c === null)
                         return null;
-                    return evaluate((蘥壍 ? 朶壍[1] : 朶壍[2]) as Node, 斾壍);
+                    return evaluate((c ? args[1] : args[2]) as Node, resolve);
                 }
                 case "coalesce": {
-                    for (const 匔壍 of 朶壍) {
-                        const 爃壍 = evaluate(匔壍, 斾壍);
-                        if (嫱壍(爃壍))
-                            return 爃壍;
+                    for (const a of args) {
+                        const v = evaluate(a, resolve);
+                        if (isNum(v))
+                            return v;
                     }
                     return null;
                 }
                 case "safe_div": {
-                    const 郲壍 = evaluate(朶壍[0] as Node, 斾壍);
-                    const 巡壍 = evaluate(朶壍[1] as Node, 斾壍);
-                    return 嫱壍(郲壍) && 嫱壍(巡壍) && 巡壍 !== 0 ? 郲壍 / 巡壍 : null;
+                    const a = evaluate(args[0] as Node, resolve);
+                    const b = evaluate(args[1] as Node, resolve);
+                    return isNum(a) && isNum(b) && b !== 0 ? a / b : null;
                 }
                 default: {
-                    const 糐壍 = 朶壍.map((鮿壍) => evaluate(鮿壍, 斾壍));
-                    if (!糐壍.every(嫱壍))
+                    const vals = args.map((a) => evaluate(a, resolve));
+                    if (!vals.every(isNum))
                         return null;
-                    const 梮壍 = 糐壍 as number[];
-                    switch (飏壍.fn) {
+                    const nums = vals as number[];
+                    switch (ast.fn) {
                         case "min":
-                            return Math.min(...梮壍);
+                            return Math.min(...nums);
                         case "max":
-                            return Math.max(...梮壍);
+                            return Math.max(...nums);
                         case "abs":
-                            return Math.abs(梮壍[0] as number);
+                            return Math.abs(nums[0] as number);
                         case "floor":
-                            return Math.floor(梮壍[0] as number);
+                            return Math.floor(nums[0] as number);
                         case "ceil":
-                            return Math.ceil(梮壍[0] as number);
+                            return Math.ceil(nums[0] as number);
                         case "round": {
-                            const 螝壍 = Math.max(0, Math.min(6, Math.trunc(梮壍[1] ?? 0)));
-                            const 和壍 = 10 ** 螝壍;
-                            return Math.round((梮壍[0] as number) * 和壍) / 和壍;
+                            const d = Math.max(0, Math.min(6, Math.trunc(nums[1] ?? 0)));
+                            const f = 10 ** d;
+                            return Math.round((nums[0] as number) * f) / f;
                         }
                     }
                     return null;
@@ -355,14 +355,14 @@ export function evaluate(飏壍: Node, 斾壍: Resolver): FormulaValue {
         }
     }
 }
-export function compileFormula(獻壍: string): {
+export function compileFormula(src: string): {
     ast: Node;
     identifiers: string[];
-    run: (鉪壍: Resolver) => FormulaValue;
+    run: (resolve: Resolver) => FormulaValue;
 } {
-    const 彙壍 = parseFormula(獻壍);
-    const 繈壍 = [...formulaIdentifiers(彙壍)];
-    return { ast: 彙壍, identifiers: 繈壍, run: (鴷壍) => evaluate(彙壍, 鴷壍) };
+    const ast = parseFormula(src);
+    const identifiers = [...formulaIdentifiers(ast)];
+    return { ast, identifiers, run: (resolve) => evaluate(ast, resolve) };
 }
 export interface FormulaCheck {
     ok: boolean;
@@ -373,20 +373,20 @@ export interface FormulaCheck {
     identifiers: string[];
     unknown: string[];
 }
-export function checkFormula(樦壍: string, 褕壍: ReadonlySet<string>): FormulaCheck {
+export function checkFormula(src: string, known: ReadonlySet<string>): FormulaCheck {
     try {
-        const 嘄壍 = parseFormula(樦壍);
-        const 瓳壍 = [...formulaIdentifiers(嘄壍)];
-        const 鏢壍 = 瓳壍.filter((惑壍) => !褕壍.has(惑壍) && 惑壍 !== "and" && 惑壍 !== "or");
-        if (鏢壍.length) {
-            const 翀壍 = 樦壍.indexOf(鏢壍[0] as string);
-            return { ok: false, identifiers: 瓳壍, unknown: 鏢壍, error: { message: `Unknown metric "${鏢壍[0]}"`, position: Math.max(0, 翀壍) } };
+        const ast = parseFormula(src);
+        const identifiers = [...formulaIdentifiers(ast)];
+        const unknown = identifiers.filter((id) => !known.has(id) && id !== "and" && id !== "or");
+        if (unknown.length) {
+            const pos = src.indexOf(unknown[0] as string);
+            return { ok: false, identifiers, unknown, error: { message: `Unknown metric "${unknown[0]}"`, position: Math.max(0, pos) } };
         }
-        return { ok: true, identifiers: 瓳壍, unknown: [] };
+        return { ok: true, identifiers, unknown: [] };
     }
-    catch (麯壍) {
-        if (麯壍 instanceof FormulaError)
-            return { ok: false, identifiers: [], unknown: [], error: { message: 麯壍.message, position: 麯壍.position } };
-        throw 麯壍;
+    catch (e) {
+        if (e instanceof FormulaError)
+            return { ok: false, identifiers: [], unknown: [], error: { message: e.message, position: e.position } };
+        throw e;
     }
 }

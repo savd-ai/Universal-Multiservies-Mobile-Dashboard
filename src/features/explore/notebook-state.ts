@@ -23,57 +23,57 @@ export type StepKey = "data" | "metrics" | "groupBy" | "filters" | "having" | "s
 export type OptionalStep = "groupBy" | "filters" | "having" | "sort";
 export const OPTIONAL_STEPS: readonly OptionalStep[] = ["groupBy", "filters", "having", "sort"];
 export const SINGLE_VALUE_OPS = new Set<QueryFilter["op"]>(["eq", "neq", "contains", "ncontains", "starts_with"]);
-export const isMultiOp = (誳壍: QueryFilter["op"]) => 誳壍 === "in" || 誳壍 === "nin";
-export function emptySpec(垢壍: Partial<ExploreSpec> = {}): ExploreSpec {
-    return { source: "google_ads", metrics: [], dimensions: [], filters: [], having: [], compare: "none", ...垢壍 };
+export const isMultiOp = (op: QueryFilter["op"]) => op === "in" || op === "nin";
+export function emptySpec(over: Partial<ExploreSpec> = {}): ExploreSpec {
+    return { source: "google_ads", metrics: [], dimensions: [], filters: [], having: [], compare: "none", ...over };
 }
 export function defaultState(): ExploreState {
     return { spec: emptySpec({ metrics: ["cost", "conversions"], dimensions: ["date"] }) };
 }
-const 皑壍 = <T>(門壍: readonly T[]): T[] => [...new Set(門壍)];
-export function sortableKeys(扯壍: Pick<ExploreSpec, "dimensions" | "metrics" | "compare">): string[] {
-    const 腞壍: string[] = [...扯壍.dimensions, ...扯壍.metrics];
-    if (扯壍.compare !== "none")
-        for (const 乍壍 of 扯壍.metrics)
-            腞壍.push(`${乍壍}__pct`, `${乍壍}__delta`);
-    return 腞壍;
+const uniq = <T>(xs: readonly T[]): T[] => [...new Set(xs)];
+export function sortableKeys(spec: Pick<ExploreSpec, "dimensions" | "metrics" | "compare">): string[] {
+    const keys: string[] = [...spec.dimensions, ...spec.metrics];
+    if (spec.compare !== "none")
+        for (const m of spec.metrics)
+            keys.push(`${m}__pct`, `${m}__delta`);
+    return keys;
 }
-export function normalizeSpec(洼壍: ExploreSpec): ExploreSpec {
-    const 谫壍 = 皑壍(洼壍.metrics).slice(0, MAX_METRICS);
-    const 多壍 = 皑壍(洼壍.dimensions).slice(0, MAX_DIMENSIONS);
-    const 砉壍: ExploreSpec = { ...洼壍, metrics: 谫壍, dimensions: 多壍, filters: 洼壍.filters.slice(0, MAX_FILTERS), having: 洼壍.having.slice(0, MAX_HAVING) };
-    const 雸壍 = new Set(sortableKeys(砉壍));
-    const 揧壍: SortItem[] = [];
-    for (const 苖壍 of 洼壍.sort ?? [])
-        if (雸壍.has(苖壍.key) && !揧壍.some((俅壍) => 俅壍.key === 苖壍.key))
-            揧壍.push(苖壍);
-    if (揧壍.length)
-        砉壍.sort = 揧壍.slice(0, MAX_SORT);
+export function normalizeSpec(spec: ExploreSpec): ExploreSpec {
+    const metrics = uniq(spec.metrics).slice(0, MAX_METRICS);
+    const dimensions = uniq(spec.dimensions).slice(0, MAX_DIMENSIONS);
+    const next: ExploreSpec = { ...spec, metrics, dimensions, filters: spec.filters.slice(0, MAX_FILTERS), having: spec.having.slice(0, MAX_HAVING) };
+    const valid = new Set(sortableKeys(next));
+    const sort: SortItem[] = [];
+    for (const s of spec.sort ?? [])
+        if (valid.has(s.key) && !sort.some((x) => x.key === s.key))
+            sort.push(s);
+    if (sort.length)
+        next.sort = sort.slice(0, MAX_SORT);
     else
-        delete 砉壍.sort;
-    if (砉壍.limit !== undefined) {
-        const 溴壍 = Math.round(Number(砉壍.limit));
-        if (Number.isFinite(溴壍) && 溴壍 >= 1)
-            砉壍.limit = Math.min(10000, 溴壍);
+        delete next.sort;
+    if (next.limit !== undefined) {
+        const n = Math.round(Number(next.limit));
+        if (Number.isFinite(n) && n >= 1)
+            next.limit = Math.min(10000, n);
         else
-            delete 砉壍.limit;
+            delete next.limit;
     }
-    return 砉壍;
+    return next;
 }
-function 趣壍(媒壍: QueryFilter["value"], 禁壍: boolean): QueryFilter["value"] {
-    if (禁壍) {
-        if (Array.isArray(媒壍))
-            return 媒壍;
-        return 媒壍 === "" ? [] : [媒壍];
+function convertFilterValue(value: QueryFilter["value"], toMulti: boolean): QueryFilter["value"] {
+    if (toMulti) {
+        if (Array.isArray(value))
+            return value;
+        return value === "" ? [] : [value];
     }
-    if (Array.isArray(媒壍))
-        return 媒壍[0] ?? "";
-    return 媒壍;
+    if (Array.isArray(value))
+        return value[0] ?? "";
+    return value;
 }
-function 顰壍(敟壍: QueryHaving["value"], 葎壍: QueryHaving["op"]): QueryHaving["value"] {
-    if (葎壍 === "between")
-        return Array.isArray(敟壍) ? 敟壍 : [敟壍, 敟壍];
-    return Array.isArray(敟壍) ? 敟壍[0] : 敟壍;
+function convertHavingValue(value: QueryHaving["value"], op: QueryHaving["op"]): QueryHaving["value"] {
+    if (op === "between")
+        return Array.isArray(value) ? value : [value, value];
+    return Array.isArray(value) ? value[0] : value;
 }
 export type NotebookAction = {
     type: "replace";
@@ -148,193 +148,193 @@ export type NotebookAction = {
     type: "clearStep";
     step: OptionalStep | "date" | "viz";
 };
-function 儽壍<T>(瀬壍: readonly T[], 輛壍: T, 尊壍: number): T[] {
-    const 竹壍 = 瀬壍.indexOf(輛壍);
-    if (竹壍 < 0)
-        return [...瀬壍];
-    const 駨壍 = 瀬壍.filter((曗壍) => 曗壍 !== 輛壍);
-    駨壍.splice(Math.max(0, Math.min(駨壍.length, 尊壍)), 0, 輛壍);
-    return 駨壍;
+function move<T>(list: readonly T[], item: T, to: number): T[] {
+    const indexOf = list.indexOf(item);
+    if (indexOf < 0)
+        return [...list];
+    const next = list.filter((x) => x !== item);
+    next.splice(Math.max(0, Math.min(next.length, to)), 0, item);
+    return next;
 }
-export function notebookReducer(藆壍: ExploreState, 劵壍: NotebookAction): ExploreState {
-    const 熤壍 = 藆壍.spec;
-    const 邓壍 = (嶂壍: Partial<ExploreSpec>): ExploreState => ({ ...藆壍, spec: normalizeSpec({ ...熤壍, ...嶂壍 }) });
-    switch (劵壍.type) {
+export function notebookReducer(state: ExploreState, action: NotebookAction): ExploreState {
+    const spec = state.spec;
+    const withSpec = (patch: Partial<ExploreSpec>): ExploreState => ({ ...state, spec: normalizeSpec({ ...spec, ...patch }) });
+    switch (action.type) {
         case "replace":
-            return { ...劵壍.state, spec: normalizeSpec(劵壍.state.spec) };
+            return { ...action.state, spec: normalizeSpec(action.state.spec) };
         case "setSpec":
-            return { ...藆壍, spec: normalizeSpec(劵壍.spec) };
+            return { ...state, spec: normalizeSpec(action.spec) };
         case "setSource":
-            return 邓壍({ source: 劵壍.source });
+            return withSpec({ source: action.source });
         case "toggleMetric": {
-            if (熤壍.metrics.includes(劵壍.key))
-                return 邓壍({ metrics: 熤壍.metrics.filter((籱壍) => 籱壍 !== 劵壍.key) });
-            if (熤壍.metrics.length >= MAX_METRICS)
-                return 藆壍;
-            return 邓壍({ metrics: [...熤壍.metrics, 劵壍.key] });
+            if (spec.metrics.includes(action.key))
+                return withSpec({ metrics: spec.metrics.filter((m) => m !== action.key) });
+            if (spec.metrics.length >= MAX_METRICS)
+                return state;
+            return withSpec({ metrics: [...spec.metrics, action.key] });
         }
         case "removeMetric":
-            return 邓壍({ metrics: 熤壍.metrics.filter((魠壍) => 魠壍 !== 劵壍.key) });
+            return withSpec({ metrics: spec.metrics.filter((m) => m !== action.key) });
         case "moveMetric":
-            return 邓壍({ metrics: 儽壍(熤壍.metrics, 劵壍.key, 劵壍.to) });
+            return withSpec({ metrics: move(spec.metrics, action.key, action.to) });
         case "toggleDimension": {
-            if (熤壍.dimensions.includes(劵壍.key))
-                return 邓壍({ dimensions: 熤壍.dimensions.filter((桏壍) => 桏壍 !== 劵壍.key) });
-            if (熤壍.dimensions.length >= MAX_DIMENSIONS)
-                return 藆壍;
-            return 邓壍({ dimensions: [...熤壍.dimensions, 劵壍.key] });
+            if (spec.dimensions.includes(action.key))
+                return withSpec({ dimensions: spec.dimensions.filter((d) => d !== action.key) });
+            if (spec.dimensions.length >= MAX_DIMENSIONS)
+                return state;
+            return withSpec({ dimensions: [...spec.dimensions, action.key] });
         }
         case "moveDimension":
-            return 邓壍({ dimensions: 儽壍(熤壍.dimensions, 劵壍.key, 劵壍.to) });
+            return withSpec({ dimensions: move(spec.dimensions, action.key, action.to) });
         case "addFilter":
-            if (熤壍.filters.length >= MAX_FILTERS)
-                return 藆壍;
-            return 邓壍({ filters: [...熤壍.filters, 劵壍.filter] });
+            if (spec.filters.length >= MAX_FILTERS)
+                return state;
+            return withSpec({ filters: [...spec.filters, action.filter] });
         case "updateFilter": {
-            const 蜾壍 = 熤壍.filters.map((吭壍, 猜壍) => {
-                if (猜壍 !== 劵壍.index)
-                    return 吭壍;
-                const 鈋壍 = { ...吭壍, ...劵壍.patch } as QueryFilter;
-                if (劵壍.patch.dim && 劵壍.patch.dim !== 吭壍.dim && 劵壍.patch.value === undefined)
-                    鈋壍.value = isMultiOp(鈋壍.op) ? [] : "";
-                else if (劵壍.patch.op && 劵壍.patch.value === undefined && isMultiOp(劵壍.patch.op) !== isMultiOp(吭壍.op))
-                    鈋壍.value = 趣壍(吭壍.value, isMultiOp(劵壍.patch.op));
-                return 鈋壍;
+            const filters = spec.filters.map((f, i) => {
+                if (i !== action.index)
+                    return f;
+                const next = { ...f, ...action.patch } as QueryFilter;
+                if (action.patch.dim && action.patch.dim !== f.dim && action.patch.value === undefined)
+                    next.value = isMultiOp(next.op) ? [] : "";
+                else if (action.patch.op && action.patch.value === undefined && isMultiOp(action.patch.op) !== isMultiOp(f.op))
+                    next.value = convertFilterValue(f.value, isMultiOp(action.patch.op));
+                return next;
             });
-            return 邓壍({ filters: 蜾壍 });
+            return withSpec({ filters });
         }
         case "removeFilter":
-            return 邓壍({ filters: 熤壍.filters.filter((建壍, 緩壍) => 緩壍 !== 劵壍.index) });
+            return withSpec({ filters: spec.filters.filter((_, i) => i !== action.index) });
         case "toggleFilterValue": {
-            const 鳘壍 = 劵壍.exclude ? "nin" : "in";
-            const 槇壍 = 熤壍.filters.findIndex((袶壍) => 袶壍.dim === 劵壍.dim && 袶壍.op === 鳘壍);
-            if (槇壍 < 0) {
-                if (熤壍.filters.length >= MAX_FILTERS)
-                    return 藆壍;
-                return 邓壍({ filters: [...熤壍.filters, { dim: 劵壍.dim, op: 鳘壍, value: [劵壍.value] }] });
+            const op = action.exclude ? "nin" : "in";
+            const i = spec.filters.findIndex((f2) => f2.dim === action.dim && f2.op === op);
+            if (i < 0) {
+                if (spec.filters.length >= MAX_FILTERS)
+                    return state;
+                return withSpec({ filters: [...spec.filters, { dim: action.dim, op, value: [action.value] }] });
             }
-            const 喥壍 = 熤壍.filters[槇壍] as QueryFilter;
-            const 璔壍 = (Array.isArray(喥壍.value) ? 喥壍.value : [喥壍.value]).map(String);
-            const 鎃壍 = 璔壍.includes(劵壍.value) ? 璔壍.filter((恲壍) => 恲壍 !== 劵壍.value) : [...璔壍, 劵壍.value];
-            return 邓壍({ filters: 鎃壍.length ? 熤壍.filters.map((罡壍, 鹐壍) => (鹐壍 === 槇壍 ? { ...罡壍, value: 鎃壍 } : 罡壍)) : 熤壍.filters.filter((欿壍, 訮壍) => 訮壍 !== 槇壍) });
+            const f = spec.filters[i] as QueryFilter;
+            const values = (Array.isArray(f.value) ? f.value : [f.value]).map(String);
+            const nextValues = values.includes(action.value) ? values.filter((v) => v !== action.value) : [...values, action.value];
+            return withSpec({ filters: nextValues.length ? spec.filters.map((x, j) => (j === i ? { ...x, value: nextValues } : x)) : spec.filters.filter((_, j) => j !== i) });
         }
         case "addHaving":
-            if (熤壍.having.length >= MAX_HAVING)
-                return 藆壍;
-            return 邓壍({ having: [...熤壍.having, 劵壍.having] });
+            if (spec.having.length >= MAX_HAVING)
+                return state;
+            return withSpec({ having: [...spec.having, action.having] });
         case "updateHaving": {
-            const 圝壍 = 熤壍.having.map((瘌壍, 铻壍) => {
-                if (铻壍 !== 劵壍.index)
-                    return 瘌壍;
-                const 懪壍 = { ...瘌壍, ...劵壍.patch } as QueryHaving;
-                if (劵壍.patch.op && 劵壍.patch.value === undefined)
-                    懪壍.value = 顰壍(瘌壍.value, 劵壍.patch.op);
-                return 懪壍;
+            const having = spec.having.map((h, i) => {
+                if (i !== action.index)
+                    return h;
+                const next = { ...h, ...action.patch } as QueryHaving;
+                if (action.patch.op && action.patch.value === undefined)
+                    next.value = convertHavingValue(h.value, action.patch.op);
+                return next;
             });
-            return 邓壍({ having: 圝壍 });
+            return withSpec({ having });
         }
         case "removeHaving":
-            return 邓壍({ having: 熤壍.having.filter((胙壍, 鿈壍) => 鿈壍 !== 劵壍.index) });
+            return withSpec({ having: spec.having.filter((_, i) => i !== action.index) });
         case "setSort":
-            return 邓壍({ sort: 劵壍.sort });
+            return withSpec({ sort: action.sort });
         case "setLimit":
-            return 邓壍({ limit: 劵壍.limit });
+            return withSpec({ limit: action.limit });
         case "setTotals":
-            return 邓壍({ totals: 劵壍.totals ? undefined : false });
+            return withSpec({ totals: action.totals ? undefined : false });
         case "setDateRange":
-            return 邓壍({ dateRange: 劵壍.dateRange });
+            return withSpec({ dateRange: action.dateRange });
         case "setCompare":
-            return 邓壍({ compare: 劵壍.compare });
+            return withSpec({ compare: action.compare });
         case "setViz":
-            return { ...藆壍, viz: 劵壍.viz };
+            return { ...state, viz: action.viz };
         case "clearStep":
-            switch (劵壍.step) {
+            switch (action.step) {
                 case "groupBy":
-                    return 邓壍({ dimensions: [] });
+                    return withSpec({ dimensions: [] });
                 case "filters":
-                    return 邓壍({ filters: [] });
+                    return withSpec({ filters: [] });
                 case "having":
-                    return 邓壍({ having: [] });
+                    return withSpec({ having: [] });
                 case "sort":
-                    return 邓壍({ sort: undefined, limit: undefined });
+                    return withSpec({ sort: undefined, limit: undefined });
                 case "date":
-                    return 邓壍({ dateRange: undefined, compare: "none" });
+                    return withSpec({ dateRange: undefined, compare: "none" });
                 case "viz":
-                    return { ...藆壍, viz: undefined };
+                    return { ...state, viz: undefined };
             }
     }
 }
-export function stepHasContent(沷壍: OptionalStep, 讦壍: ExploreSpec): boolean {
-    switch (沷壍) {
+export function stepHasContent(step: OptionalStep, spec: ExploreSpec): boolean {
+    switch (step) {
         case "groupBy":
-            return 讦壍.dimensions.length > 0;
+            return spec.dimensions.length > 0;
         case "filters":
-            return 讦壍.filters.length > 0;
+            return spec.filters.length > 0;
         case "having":
-            return 讦壍.having.length > 0;
+            return spec.having.length > 0;
         case "sort":
-            return !!讦壍.sort?.length || 讦壍.limit !== undefined;
+            return !!spec.sort?.length || spec.limit !== undefined;
     }
 }
-function 墕壍(瞄壍: QueryFilter): boolean {
-    if (Array.isArray(瞄壍.value))
-        return 瞄壍.value.length > 0;
-    return String(瞄壍.value).trim() !== "";
+function filterIsComplete(f: QueryFilter): boolean {
+    if (Array.isArray(f.value))
+        return f.value.length > 0;
+    return String(f.value).trim() !== "";
 }
-function 陳壍(换壍: QueryHaving): boolean {
-    if (换壍.op === "between")
-        return Array.isArray(换壍.value) && 换壍.value.every((艑壍) => Number.isFinite(艑壍));
-    return typeof 换壍.value === "number" && Number.isFinite(换壍.value);
+function havingIsComplete(h: QueryHaving): boolean {
+    if (h.op === "between")
+        return Array.isArray(h.value) && h.value.every((v) => Number.isFinite(v));
+    return typeof h.value === "number" && Number.isFinite(h.value);
 }
-export function runnableSpec(佀壍: ExploreSpec, 港壍: DateRangeSpec): QuerySpecInput | null {
-    const 贞壍 = normalizeSpec(佀壍);
-    if (!贞壍.metrics.length)
+export function runnableSpec(spec: ExploreSpec, pageRange: DateRangeSpec): QuerySpecInput | null {
+    const s = normalizeSpec(spec);
+    if (!s.metrics.length)
         return null;
-    const 娍壍: QuerySpecInput = {
-        source: 贞壍.source,
-        metrics: 贞壍.metrics,
-        dimensions: 贞壍.dimensions,
-        filters: 贞壍.filters.filter(墕壍).map((磼壍) => (typeof 磼壍.value === "string" ? { ...磼壍, value: 磼壍.value.trim() } : 磼壍)),
-        having: 贞壍.having.filter(陳壍),
-        dateRange: 贞壍.dateRange ?? 港壍,
-        compare: 贞壍.compare,
+    const out: QuerySpecInput = {
+        source: s.source,
+        metrics: s.metrics,
+        dimensions: s.dimensions,
+        filters: s.filters.filter(filterIsComplete).map((f) => (typeof f.value === "string" ? { ...f, value: f.value.trim() } : f)),
+        having: s.having.filter(havingIsComplete),
+        dateRange: s.dateRange ?? pageRange,
+        compare: s.compare,
     };
-    if (贞壍.sort?.length)
-        娍壍.sort = 贞壍.sort;
-    if (贞壍.limit !== undefined)
-        娍壍.limit = 贞壍.limit;
-    if (贞壍.totals === false)
-        娍壍.totals = false;
-    if (贞壍.fillGaps)
-        娍壍.fillGaps = true;
-    return 娍壍;
+    if (s.sort?.length)
+        out.sort = s.sort;
+    if (s.limit !== undefined)
+        out.limit = s.limit;
+    if (s.totals === false)
+        out.totals = false;
+    if (s.fillGaps)
+        out.fillGaps = true;
+    return out;
 }
-export function compactSpec(韫壍: ExploreSpec): QuerySpecInput {
-    const 據壍: QuerySpecInput = { source: 韫壍.source, metrics: 韫壍.metrics };
-    if (韫壍.dimensions.length)
-        據壍.dimensions = 韫壍.dimensions;
-    if (韫壍.filters.length)
-        據壍.filters = 韫壍.filters;
-    if (韫壍.having.length)
-        據壍.having = 韫壍.having;
-    if (韫壍.dateRange)
-        據壍.dateRange = 韫壍.dateRange;
-    if (韫壍.compare !== "none")
-        據壍.compare = 韫壍.compare;
-    if (韫壍.sort?.length)
-        據壍.sort = 韫壍.sort;
-    if (韫壍.limit !== undefined)
-        據壍.limit = 韫壍.limit;
-    if (韫壍.totals === false)
-        據壍.totals = false;
-    if (韫壍.fillGaps)
-        據壍.fillGaps = true;
-    return 據壍;
+export function compactSpec(spec: ExploreSpec): QuerySpecInput {
+    const out: QuerySpecInput = { source: spec.source, metrics: spec.metrics };
+    if (spec.dimensions.length)
+        out.dimensions = spec.dimensions;
+    if (spec.filters.length)
+        out.filters = spec.filters;
+    if (spec.having.length)
+        out.having = spec.having;
+    if (spec.dateRange)
+        out.dateRange = spec.dateRange;
+    if (spec.compare !== "none")
+        out.compare = spec.compare;
+    if (spec.sort?.length)
+        out.sort = spec.sort;
+    if (spec.limit !== undefined)
+        out.limit = spec.limit;
+    if (spec.totals === false)
+        out.totals = false;
+    if (spec.fillGaps)
+        out.fillGaps = true;
+    return out;
 }
-export function widgetQueryFor(菉壍: ExploreSpec, 傸壍: DateRangeSpec | null): QuerySpecInput {
-    const 澧壍 = normalizeSpec(菉壍);
-    const 躖壍 = compactSpec({ ...澧壍, dateRange: 傸壍 ?? undefined, filters: 澧壍.filters.filter(墕壍), having: 澧壍.having.filter(陳壍) });
-    if (!傸壍)
-        delete 躖壍.dateRange;
-    return 躖壍;
+export function widgetQueryFor(spec: ExploreSpec, pin: DateRangeSpec | null): QuerySpecInput {
+    const s = normalizeSpec(spec);
+    const q = compactSpec({ ...s, dateRange: pin ?? undefined, filters: s.filters.filter(filterIsComplete), having: s.having.filter(havingIsComplete) });
+    if (!pin)
+        delete q.dateRange;
+    return q;
 }

@@ -3,20 +3,20 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { WarehouseStatus, WarehouseSyncBody, WarehouseSyncResponse } from "@/lib/domain/contracts/warehouse";
 import { request } from "./client";
 import { qk } from "./query-keys";
-const 頔壍 = (攃壍: string) => [...qk.acct(攃壍), "warehouse"] as const;
-export function useWarehouse(菲壍: string) {
+const key = (accountId: string) => [...qk.acct(accountId), "warehouse"] as const;
+export function useWarehouse(accountId: string) {
     return useQuery({
-        queryKey: 頔壍(菲壍),
-        queryFn: ({ signal: 僡壍 }) => request<WarehouseStatus>("/api/warehouse", { signal: 僡壍 }),
-        enabled: !!菲壍,
+        queryKey: key(accountId),
+        queryFn: ({ signal }) => request<WarehouseStatus>("/api/warehouse", { signal }),
+        enabled: !!accountId,
         staleTime: 15000,
-        refetchInterval: (濐壍) => (濐壍.state.data?.running ? 2000 : false),
+        refetchInterval: (q) => (q.state.data?.running ? 2000 : false),
     });
 }
-export function useWarehouseSync(躿壍: string) {
-    const 宮壍 = useQueryClient();
+export function useWarehouseSync(accountId: string) {
+    const qc = useQueryClient();
     return useMutation({
-        mutationFn: (窝壍: WarehouseSyncBody) => request<WarehouseSyncResponse>("/api/warehouse/sync", { body: 窝壍 }),
-        onSettled: () => void 宮壍.invalidateQueries({ queryKey: 頔壍(躿壍) }),
+        mutationFn: (body: WarehouseSyncBody) => request<WarehouseSyncResponse>("/api/warehouse/sync", { body }),
+        onSettled: () => void qc.invalidateQueries({ queryKey: key(accountId) }),
     });
 }

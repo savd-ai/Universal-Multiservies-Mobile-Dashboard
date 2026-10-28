@@ -1,28 +1,28 @@
 "use client";
 import { useSyncExternalStore } from "react";
-let 鲁壍 = 0;
-let 楰壍: ReturnType<typeof setInterval> | null = null;
-const 衟壍 = new Set<() => void>();
-function 啎壍(琽壍: () => void): () => void {
-    衟壍.add(琽壍);
-    if (!楰壍) {
-        鲁壍 = Date.now();
-        楰壍 = setInterval(() => {
-            鲁壍 = Date.now();
-            for (const 錬壍 of 衟壍)
-                錬壍();
+let now = 0;
+let timer: ReturnType<typeof setInterval> | null = null;
+const listeners = new Set<() => void>();
+function subscribe(cb: () => void): () => void {
+    listeners.add(cb);
+    if (!timer) {
+        now = Date.now();
+        timer = setInterval(() => {
+            now = Date.now();
+            for (const l of listeners)
+                l();
         }, 30000);
     }
     return () => {
-        衟壍.delete(琽壍);
-        if (!衟壍.size && 楰壍) {
-            clearInterval(楰壍);
-            楰壍 = null;
+        listeners.delete(cb);
+        if (!listeners.size && timer) {
+            clearInterval(timer);
+            timer = null;
         }
     };
 }
-const 怛壍 = (): number | null => (鲁壍 ||= Date.now());
-const 缊壍 = (): number | null => null;
+const getSnapshot = (): number | null => (now ||= Date.now());
+const getServerSnapshot = (): number | null => null;
 export function useNow(): number | null {
-    return useSyncExternalStore(啎壍, 怛壍, 缊壍);
+    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }

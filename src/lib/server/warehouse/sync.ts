@@ -12,9 +12,9 @@ import { CHANGE_EVENT_DAYS, TABLE_QUERIES } from "../google-ads/queries";
 import { log } from "../log";
 import type { Warehouse } from "./index";
 import { DAILY_TABLE_IDS, SEARCH_TERMS } from "./tables";
-const 濲壍 = 60 * 60000;
-const 軡壍 = 6;
-const 寐壍 = 6 * 3600000;
+const HOT_REFRESH_MS = 60 * 60000;
+const EXTRA_REQUESTS = 6;
+const STALE_LOCK_MS = 6 * 3600000;
 export interface SyncOptions {
     source: GoogleAdsSource;
     warehouse: Warehouse;
@@ -41,10 +41,10 @@ interface TableTally {
     fetches: number;
     rows: number;
 }
-const 窿壍 = () => singleton("warehouse:sync-lock", () => ({ runId: null as string | null, startedAt: 0 }));
+const lock = () => singleton("warehouse:sync-lock", () => ({ runId: null as string | null, startedAt: 0 }));
 export function syncInProgress(): string | null {
-    const 馮壍 = 窿壍();
-    return 馮壍.runId && Date.now() - 馮壍.startedAt < 寐壍 ? 馮壍.runId : null;
+    const l = lock();
+    return l.runId && Date.now() - l.startedAt < STALE_LOCK_MS ? l.runId : null;
 }
 export type StartedSync = {
     started: true;
@@ -54,149 +54,149 @@ export type StartedSync = {
     started: false;
     reason: string;
 };
-export function startSync(暝壍: SyncOptions): StartedSync {
-    const 薌壍 = syncInProgress();
-    if (薌壍)
-        return { started: false, reason: `A warehouse sync is already running (${薌壍}).` };
-    const 剻壍 = now().toISOString();
-    const 煪壍 = `sync_${剻壍.replace(/\D/g, "").slice(0, 14)}_${randomUUID().slice(0, 6)}`;
-    const 遙壍: WarehouseRun = { id: 煪壍, mode: 暝壍.source.mode, trigger: 暝壍.trigger, scope: 暝壍.scope, startedAt: 剻壍, finishedAt: null, status: "running", accounts: 0, requests: 0, rowsWritten: 0, budgetExhausted: false, error: null };
+export function startSync(o: SyncOptions): StartedSync {
+    const busy = syncInProgress();
+    if (busy)
+        return { started: false, reason: `A warehouse sync is already running (${busy}).` };
+    const startedAt = now().toISOString();
+    const id = `sync_${startedAt.replace(/\D/g, "").slice(0, 14)}_${randomUUID().slice(0, 6)}`;
+    const run: WarehouseRun = { id, mode: o.source.mode, trigger: o.trigger, scope: o.scope, startedAt, finishedAt: null, status: "running", accounts: 0, requests: 0, rowsWritten: 0, budgetExhausted: false, error: null };
     try {
-        暝壍.warehouse.repo.startRun(遙壍);
+        o.warehouse.repo.startRun(run);
     }
-    catch (嵈壍) {
-        return { started: false, reason: `The warehouse could not record a sync: ${嵈壍 instanceof Error ? 嵈壍.message : String(嵈壍)}` };
+    catch (err) {
+        return { started: false, reason: `The warehouse could not record a sync: ${err instanceof Error ? err.message : String(err)}` };
     }
-    const 簷壍 = 窿壍();
-    簷壍.runId = 煪壍;
-    簷壍.startedAt = Date.now();
-    const 鬦壍 = 栕壍(暝壍, 遙壍).finally(() => {
-        if (窿壍().runId === 煪壍)
-            窿壍().runId = null;
+    const l = lock();
+    l.runId = id;
+    l.startedAt = Date.now();
+    const done = execute(o, run).finally(() => {
+        if (lock().runId === id)
+            lock().runId = null;
     });
-    return { started: true, run: 遙壍, done: 鬦壍 };
+    return { started: true, run, done };
 }
-async function 栕壍(蜄壍: SyncOptions, 右壍: WarehouseRun): Promise<WarehouseRun> {
-    const 狢壍 = 蜄壍.warehouse.repo;
-    const 金壍: string[] = [];
-    const 廀壍 = new Map<string, Record<string, TableTally>>();
-    let 綯壍 = 0;
-    let 鲞壍 = 0;
-    let 榍壍 = false;
-    const 衼壍 = (啫壍: string, 瑚壍: string, 鍉壍: number) => {
-        const 怸壍 = 廀壍.get(啫壍) ?? {};
-        const 缧壍 = 怸壍[瑚壍] ?? { fetches: 0, rows: 0 };
-        怸壍[瑚壍] = { fetches: 缧壍.fetches + 1, rows: 缧壍.rows + 鍉壍 };
-        廀壍.set(啫壍, 怸壍);
+async function execute(o: SyncOptions, run: WarehouseRun): Promise<WarehouseRun> {
+    const repo = o.warehouse.repo;
+    const errors: string[] = [];
+    const tally = new Map<string, Record<string, TableTally>>();
+    let requests = 0;
+    let rowsWritten = 0;
+    let budgetExhausted = false;
+    const count = (accountId: string, table: string, rows: number) => {
+        const t = tally.get(accountId) ?? {};
+        const cur = t[table] ?? { fetches: 0, rows: 0 };
+        t[table] = { fetches: cur.fetches + 1, rows: cur.rows + rows };
+        tally.set(accountId, t);
     };
-    const 鸖壍 = (欅壍: string, 觴壍: string, 団壍: unknown) => {
-        const 痒壍 = 団壍 instanceof Error ? 団壍.message : String(団壍);
-        金壍.push(`${mask(欅壍, false)} ${觴壍}: ${痒壍}`);
-        log.warn("Warehouse sync step failed", { account: mask(欅壍, false), what: 觴壍, error: 痒壍 });
+    const fail = (accountId: string, what: string, err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err);
+        errors.push(`${mask(accountId, false)} ${what}: ${message}`);
+        log.warn("Warehouse sync step failed", { account: mask(accountId, false), what, error: message });
     };
     try {
-        const 铁壍: AccountPlan[] = [];
-        const 憰壍: Item[] = [];
-        const 肟壍 = now().getTime();
-        for (const 龎壍 of 蜄壍.accountIds) {
+        const accounts: AccountPlan[] = [];
+        const items: Item[] = [];
+        const nowMs = now().getTime();
+        for (const id of o.accountIds) {
             try {
-                const 汽壍 = await 蜄壍.source.account(龎壍);
-                if (汽壍.isManager)
+                const info = await o.source.account(id);
+                if (info.isManager)
                     continue;
-                const [譬壍, 塛壍] = await Promise.all([蜄壍.source.today(龎壍), 蜄壍.source.dataThrough(龎壍)]);
-                狢壍.upsertAccount(汽壍, now().toISOString());
-                蜄壍.warehouse.knownAccounts.add(龎壍);
-                const 睊壍 = hotFromOf(譬壍, 蜄壍.restatementDays);
-                铁壍.push({ id: 龎壍, today: 譬壍, hotFrom: 睊壍 });
-                for (const 阹壍 of DAILY_TABLE_IDS) {
-                    const 挨壍 = syncWindow(await 蜄壍.source.coverage(龎壍, 阹壍), 譬壍, 塛壍, 蜄壍.backfillDays);
-                    const 舗壍 = 挨壍 ? 狢壍.ledger(龎壍, 阹壍, 挨壍.start, 挨壍.end) : new Map();
-                    for (const 伆壍 of planDailyTable({ window: 挨壍, ledger: 舗壍, hotFrom: 睊壍, nowMs: 肟壍, hotRefreshMs: 濲壍, spanDays: TABLE_QUERIES[阹壍].spanDays }))
-                        憰壍.push({ ...伆壍, accountId: 龎壍, table: 阹壍, monthly: false, hotFrom: 睊壍 });
+                const [today, dataThrough] = await Promise.all([o.source.today(id), o.source.dataThrough(id)]);
+                repo.upsertAccount(info, now().toISOString());
+                o.warehouse.knownAccounts.add(id);
+                const hotFrom = hotFromOf(today, o.restatementDays);
+                accounts.push({ id, today, hotFrom });
+                for (const table of DAILY_TABLE_IDS) {
+                    const window = syncWindow(await o.source.coverage(id, table), today, dataThrough, o.backfillDays);
+                    const ledger = window ? repo.ledger(id, table, window.start, window.end) : new Map();
+                    for (const f of planDailyTable({ window, ledger, hotFrom, nowMs, hotRefreshMs: HOT_REFRESH_MS, spanDays: TABLE_QUERIES[table].spanDays }))
+                        items.push({ ...f, accountId: id, table, monthly: false, hotFrom });
                 }
-                const 淵壍 = syncWindow(await 蜄壍.source.coverage(龎壍, SEARCH_TERMS.table), 譬壍, 塛壍, 蜄壍.backfillDays);
-                const 賤壍 = 淵壍 ? 狢壍.ledger(龎壍, SEARCH_TERMS.table, 淵壍.start, 淵壍.end) : new Map();
-                for (const 姓壍 of planMonths({ window: 淵壍, ledger: 賤壍, hotFrom: 睊壍 }))
-                    憰壍.push({ ...姓壍, accountId: 龎壍, table: SEARCH_TERMS.table, monthly: true, hotFrom: 睊壍 });
+                const stWindow = syncWindow(await o.source.coverage(id, SEARCH_TERMS.table), today, dataThrough, o.backfillDays);
+                const stLedger = stWindow ? repo.ledger(id, SEARCH_TERMS.table, stWindow.start, stWindow.end) : new Map();
+                for (const f of planMonths({ window: stWindow, ledger: stLedger, hotFrom }))
+                    items.push({ ...f, accountId: id, table: SEARCH_TERMS.table, monthly: true, hotFrom });
             }
-            catch (磂壍) {
-                鸖壍(龎壍, "planning", 磂壍);
+            catch (err) {
+                fail(id, "planning", err);
             }
         }
-        const 鞱壍 = 铁壍.length * 軡壍;
-        for (const 撠壍 of orderPlan(憰壍)) {
-            if (蜄壍.maxRequests - 綯壍 - 鞱壍 < 1) {
-                榍壍 = true;
+        const reserve = accounts.length * EXTRA_REQUESTS;
+        for (const item of orderPlan(items)) {
+            if (o.maxRequests - requests - reserve < 1) {
+                budgetExhausted = true;
                 break;
             }
-            綯壍++;
+            requests++;
             try {
-                const 莏壍 = await 蜄壍.source.getTable(撠壍.accountId, 撠壍.table, 撠壍.range);
-                const 偾壍 = { fetchedAt: now().toISOString(), hotFrom: 撠壍.hotFrom, runId: 右壍.id };
-                const 潭壍 = 撠壍.monthly ? 狢壍.replaceMonth(撠壍.accountId, 撠壍.range, 莏壍.rows, 偾壍) : 狢壍.replaceDays(撠壍.accountId, 撠壍.table as Exclude<GoogleTableId, "search_term_daily">, 撠壍.range, 莏壍.rows, 偾壍);
-                鲞壍 += 潭壍;
-                衼壍(撠壍.accountId, 撠壍.table, 潭壍);
+                const slice = await o.source.getTable(item.accountId, item.table, item.range);
+                const opts = { fetchedAt: now().toISOString(), hotFrom: item.hotFrom, runId: run.id };
+                const written = item.monthly ? repo.replaceMonth(item.accountId, item.range, slice.rows, opts) : repo.replaceDays(item.accountId, item.table as Exclude<GoogleTableId, "search_term_daily">, item.range, slice.rows, opts);
+                rowsWritten += written;
+                count(item.accountId, item.table, written);
             }
-            catch (蹜壍) {
-                鸖壍(撠壍.accountId, `${撠壍.table} ${撠壍.range.start}…${撠壍.range.end}`, 蹜壍);
+            catch (err) {
+                fail(item.accountId, `${item.table} ${item.range.start}…${item.range.end}`, err);
             }
         }
-        for (const 孋壍 of 铁壍) {
-            if (蜄壍.maxRequests - 綯壍 < 軡壍) {
-                榍壍 = true;
+        for (const a of accounts) {
+            if (o.maxRequests - requests < EXTRA_REQUESTS) {
+                budgetExhausted = true;
                 break;
             }
-            綯壍 += 3;
+            requests += 3;
             try {
-                const 稺壍 = await 蜄壍.source.getDims(孋壍.id);
-                const 餩壍 = 狢壍.upsertDims(孋壍.id, 稺壍, 孋壍.today, now().toISOString());
-                衼壍(孋壍.id, "dimensions", 餩壍.campaigns);
+                const dims = await o.source.getDims(a.id);
+                const r = repo.upsertDims(a.id, dims, a.today, now().toISOString());
+                count(a.id, "dimensions", r.campaigns);
             }
-            catch (昘壍) {
-                鸖壍(孋壍.id, "dimensions", 昘壍);
+            catch (err) {
+                fail(a.id, "dimensions", err);
             }
-            綯壍 += 1;
+            requests += 1;
             try {
-                const 蔇壍 = 蜄壍.source.mode === "live" ? CHANGE_EVENT_DAYS - 1 : Math.max(CHANGE_EVENT_DAYS - 1, 蜄壍.backfillDays);
-                const 凶壍: DateRange = { start: addDays(孋壍.today, -蔇壍), end: 孋壍.today };
-                const 烥壍 = (await 蜄壍.source.getChangeEvents(孋壍.id, 凶壍)).filter((返壍) => !返壍.id.startsWith("sim-"));
-                衼壍(孋壍.id, "change_event", 狢壍.upsertChangeEvents(孋壍.id, 烥壍, now().toISOString()));
+                const back = o.source.mode === "live" ? CHANGE_EVENT_DAYS - 1 : Math.max(CHANGE_EVENT_DAYS - 1, o.backfillDays);
+                const range: DateRange = { start: addDays(a.today, -back), end: a.today };
+                const events = (await o.source.getChangeEvents(a.id, range)).filter((e) => !e.id.startsWith("sim-"));
+                count(a.id, "change_event", repo.upsertChangeEvents(a.id, events, now().toISOString()));
             }
-            catch (峃壍) {
-                鸖壍(孋壍.id, "change history", 峃壍);
+            catch (err) {
+                fail(a.id, "change history", err);
             }
-            綯壍 += 2;
+            requests += 2;
             try {
-                const 箲壍 = await 蜄壍.source.getGoogleEstimates(孋壍.id);
-                const 骡壍 = 狢壍.upsertEstimates(孋壍.id, 箲壍, 孋壍.today, now().toISOString());
-                衼壍(孋壍.id, "estimates", 骡壍.simulations + 骡壍.recommendations);
+                const est = await o.source.getGoogleEstimates(a.id);
+                const r = repo.upsertEstimates(a.id, est, a.today, now().toISOString());
+                count(a.id, "estimates", r.simulations + r.recommendations);
             }
-            catch (析壍) {
-                鸖壍(孋壍.id, "Google's estimates", 析壍);
+            catch (err) {
+                fail(a.id, "Google's estimates", err);
             }
         }
-        if (蜄壍.retentionDays > 0 && 铁壍.length) {
-            const 虿壍 = 铁壍.map((卮壍) => 卮壍.today).sort()[铁壍.length - 1] as CivilDate;
-            狢壍.prune(addDays(虿壍, -蜄壍.retentionDays));
+        if (o.retentionDays > 0 && accounts.length) {
+            const latest = accounts.map((a) => a.today).sort()[accounts.length - 1] as CivilDate;
+            repo.prune(addDays(latest, -o.retentionDays));
         }
-        const 牝壍 = 金壍.length ? (鲞壍 > 0 || 铁壍.length > 0 ? "partial" : "failed") : 榍壍 ? "partial" : "ok";
-        const 酌壍 = [...金壍];
-        if (榍壍)
-            酌壍.push(`Request budget of ${蜄壍.maxRequests} reached; the next sync continues where this one stopped.`);
-        const 帻壍: WarehouseRun = { ...右壍, finishedAt: now().toISOString(), status: 牝壍, accounts: 铁壍.length, requests: 綯壍, rowsWritten: 鲞壍, budgetExhausted: 榍壍, error: 酌壍.length ? 酌壍.join(" · ").slice(0, 2000) : null };
-        狢壍.finishRun(右壍.id, { ...帻壍, finishedAt: 帻壍.finishedAt as string, details: { accounts: [...廀壍].map(([紪壍, 鰙壍]) => ({ accountId: 紪壍, tables: 鰙壍 })), errors: 金壍 } });
-        log.info("Warehouse sync finished", { run: 右壍.id, status: 牝壍, accounts: 铁壍.length, requests: 綯壍, rows: 鲞壍 });
-        return 帻壍;
+        const status = errors.length ? (rowsWritten > 0 || accounts.length > 0 ? "partial" : "failed") : budgetExhausted ? "partial" : "ok";
+        const notes = [...errors];
+        if (budgetExhausted)
+            notes.push(`Request budget of ${o.maxRequests} reached; the next sync continues where this one stopped.`);
+        const finished: WarehouseRun = { ...run, finishedAt: now().toISOString(), status, accounts: accounts.length, requests, rowsWritten, budgetExhausted, error: notes.length ? notes.join(" · ").slice(0, 2000) : null };
+        repo.finishRun(run.id, { ...finished, finishedAt: finished.finishedAt as string, details: { accounts: [...tally].map(([accountId, tables]) => ({ accountId, tables })), errors } });
+        log.info("Warehouse sync finished", { run: run.id, status, accounts: accounts.length, requests, rows: rowsWritten });
+        return finished;
     }
-    catch (椈壍) {
-        const 蟷壍 = 椈壍 instanceof Error ? 椈壍.message : String(椈壍);
-        log.error("Warehouse sync failed", { run: 右壍.id, error: 蟷壍 });
-        const 哦壍: WarehouseRun = { ...右壍, finishedAt: now().toISOString(), status: "failed", requests: 綯壍, rowsWritten: 鲞壍, budgetExhausted: 榍壍, error: 蟷壍 };
+    catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        log.error("Warehouse sync failed", { run: run.id, error: message });
+        const failed: WarehouseRun = { ...run, finishedAt: now().toISOString(), status: "failed", requests, rowsWritten, budgetExhausted, error: message };
         try {
-            狢壍.finishRun(右壍.id, { ...哦壍, finishedAt: 哦壍.finishedAt as string, details: { errors: [...金壍, 蟷壍] } });
+            repo.finishRun(run.id, { ...failed, finishedAt: failed.finishedAt as string, details: { errors: [...errors, message] } });
         }
         catch {
         }
-        return 哦壍;
+        return failed;
     }
 }

@@ -21,39 +21,39 @@ export interface ClientDeps {
     sleep?: Sleep;
     random?: () => number;
 }
-const 侾壍 = (溭壍: number) => singleton(`gads:semaphore:${溭壍}`, () => new Semaphore(溭壍));
-const 趜壍 = () => singleton("gads:query-flights", () => new SingleFlight<GoogleAdsRow[]>());
-export function assertReadOnlyUrl(媋壍: string): void {
-    const 祺壍 = new URL(媋壍);
-    const 顩壍 = 祺壍.pathname.split("/").pop() ?? "";
-    const 敘壍 = (READ_ONLY_METHODS as readonly string[]).includes(顩壍);
-    if (祺壍.origin !== API_ORIGIN || !敘壍 || 祺壍.search !== "")
-        throw new Error(`Blocked non-read-only Google Ads request: ${祺壍.origin}${祺壍.pathname}`);
+const semaphore = (limit: number) => singleton(`gads:semaphore:${limit}`, () => new Semaphore(limit));
+const queryFlights = () => singleton("gads:query-flights", () => new SingleFlight<GoogleAdsRow[]>());
+export function assertReadOnlyUrl(url: string): void {
+    const u = new URL(url);
+    const method = u.pathname.split("/").pop() ?? "";
+    const allowed = (READ_ONLY_METHODS as readonly string[]).includes(method);
+    if (u.origin !== API_ORIGIN || !allowed || u.search !== "")
+        throw new Error(`Blocked non-read-only Google Ads request: ${u.origin}${u.pathname}`);
 }
-function 葇壍(儶壍: string): string {
-    if (!/^\d{1,20}$/.test(儶壍)) {
-        throw new GoogleAdsApiError({ code: "INVALID_CUSTOMER_ID", message: `Customer id must be digits only (got ${JSON.stringify(儶壍).slice(0, 24)})`, httpStatus: 0, category: "requestError" });
+function customerDigits(customerId: string): string {
+    if (!/^\d{1,20}$/.test(customerId)) {
+        throw new GoogleAdsApiError({ code: "INVALID_CUSTOMER_ID", message: `Customer id must be digits only (got ${JSON.stringify(customerId).slice(0, 24)})`, httpStatus: 0, category: "requestError" });
     }
-    return 儶壍;
+    return customerId;
 }
-export function flattenStream(瀥壍: unknown): {
+export function flattenStream(json: unknown): {
     rows: GoogleAdsRow[];
     requestId?: string;
 } {
-    const 輔壍 = Array.isArray(瀥壍) ? 瀥壍 : [瀥壍];
-    const 尃壍: GoogleAdsRow[] = [];
-    let 竲壍: string | undefined;
-    for (const 駡壍 of 輔壍) {
-        if (!isRecord(駡壍))
+    const batches = Array.isArray(json) ? json : [json];
+    const rows: GoogleAdsRow[] = [];
+    let requestId: string | undefined;
+    for (const batch of batches) {
+        if (!isRecord(batch))
             continue;
-        if (!竲壍 && typeof 駡壍.requestId === "string")
-            竲壍 = 駡壍.requestId;
-        if (Array.isArray(駡壍.results))
-            for (const 曐壍 of 駡壍.results)
-                if (isRecord(曐壍))
-                    尃壍.push(曐壍);
+        if (!requestId && typeof batch.requestId === "string")
+            requestId = batch.requestId;
+        if (Array.isArray(batch.results))
+            for (const r of batch.results)
+                if (isRecord(r))
+                    rows.push(r);
     }
-    return { rows: 尃壍, requestId: 竲壍 };
+    return { rows, requestId };
 }
 export class GoogleAdsClient {
     constructor(private readonly cfg: GoogleAdsClientConfig, private readonly deps: ClientDeps = {}) {
@@ -63,91 +63,91 @@ export class GoogleAdsClient {
     get apiVersion(): string {
         return this.cfg.apiVersion;
     }
-    async search(薿壍: string, 劮壍: string, 熝壍 = "query"): Promise<GoogleAdsRow[]> {
-        const 邌壍 = 葇壍(薿壍);
-        const 嵻壍 = `${this.cfg.apiVersion}|${this.cfg.loginCustomerId ?? "-"}|${邌壍}|${劮壍}`;
-        return 趜壍().run(嵻壍, async () => {
-            const 籪壍 = Date.now();
-            const 魙壍 = await this.send(`${API_ORIGIN}/${this.cfg.apiVersion}/customers/${邌壍}/googleAds:searchStream`, "POST", JSON.stringify({ query: 劮壍 }), true);
-            const { rows: 案壍, requestId: 蜷壍 } = flattenStream(魙壍);
-            log.debug("Google Ads query", { label: 熝壍, customer: mask(邌壍, false), rows: 案壍.length, ms: Date.now() - 籪壍, requestId: 蜷壍 });
-            return 案壍;
+    async search(customerId: string, query: string, label = "query"): Promise<GoogleAdsRow[]> {
+        const cid = customerDigits(customerId);
+        const key = `${this.cfg.apiVersion}|${this.cfg.loginCustomerId ?? "-"}|${cid}|${query}`;
+        return queryFlights().run(key, async () => {
+            const started = Date.now();
+            const json = await this.send(`${API_ORIGIN}/${this.cfg.apiVersion}/customers/${cid}/googleAds:searchStream`, "POST", JSON.stringify({ query }), true);
+            const { rows, requestId } = flattenStream(json);
+            log.debug("Google Ads query", { label, customer: mask(cid, false), rows: rows.length, ms: Date.now() - started, requestId });
+            return rows;
         });
     }
     async listAccessibleCustomers(): Promise<string[]> {
-        const 否壍 = await this.send(`${API_ORIGIN}/${this.cfg.apiVersion}/customers:listAccessibleCustomers`, "GET", undefined, false);
-        const 猕壍 = isRecord(否壍) && Array.isArray(否壍.resourceNames) ? 否壍.resourceNames : [];
-        return 猕壍
-            .map((鈄壍) => (typeof 鈄壍 === "string" ? /^customers\/(\d+)$/.exec(鈄壍)?.[1] : undefined))
-            .filter((廳壍): 廳壍 is string => 廳壍 !== undefined);
+        const json = await this.send(`${API_ORIGIN}/${this.cfg.apiVersion}/customers:listAccessibleCustomers`, "GET", undefined, false);
+        const names = isRecord(json) && Array.isArray(json.resourceNames) ? json.resourceNames : [];
+        return names
+            .map((n) => (typeof n === "string" ? /^customers\/(\d+)$/.exec(n)?.[1] : undefined))
+            .filter((id): id is string => id !== undefined);
     }
-    private async send(緢壍: string, 鳑壍: "GET" | "POST", 槀壍: string | undefined, 袯壍: boolean): Promise<unknown> {
-        assertReadOnlyUrl(緢壍);
-        const 喞壍 = this.deps.fetch ?? globalThis.fetch;
-        const 璍壍 = this.deps.sleep ?? realSleep;
-        const 鍼壍 = { fetch: this.deps.fetch, sleep: this.deps.sleep, random: this.deps.random, timeoutMs: this.cfg.timeoutMs };
-        let 恫壍 = 0;
-        let 罚壍 = false;
+    private async send(url: string, method: "GET" | "POST", body: string | undefined, withLogin: boolean): Promise<unknown> {
+        assertReadOnlyUrl(url);
+        const doFetch = this.deps.fetch ?? globalThis.fetch;
+        const wait = this.deps.sleep ?? realSleep;
+        const oauthDeps = { fetch: this.deps.fetch, sleep: this.deps.sleep, random: this.deps.random, timeoutMs: this.cfg.timeoutMs };
+        let retries = 0;
+        let refreshedToken = false;
         for (;;) {
-            const 鹉壍 = await getAccessToken(this.cfg.credentials, 鍼壍);
-            const 欸壍: Record<string, string> = { authorization: `Bearer ${鹉壍}`, accept: "application/json" };
+            const token = await getAccessToken(this.cfg.credentials, oauthDeps);
+            const headers: Record<string, string> = { authorization: `Bearer ${token}`, accept: "application/json" };
             if (this.cfg.developerToken)
-                欸壍["developer-token"] = this.cfg.developerToken;
-            if (槀壍 !== undefined)
-                欸壍["content-type"] = "application/json";
-            if (袯壍 && this.cfg.loginCustomerId)
-                欸壍["login-customer-id"] = this.cfg.loginCustomerId;
-            let 訧壍: GoogleAdsApiError;
+                headers["developer-token"] = this.cfg.developerToken;
+            if (body !== undefined)
+                headers["content-type"] = "application/json";
+            if (withLogin && this.cfg.loginCustomerId)
+                headers["login-customer-id"] = this.cfg.loginCustomerId;
+            let failure: GoogleAdsApiError;
             try {
-                const 圖壍 = await 侾壍(this.cfg.maxConcurrency).use(async () => {
-                    const 瘅壍 = await 喞壍(緢壍, { method: 鳑壍, headers: 欸壍, body: 槀壍, cache: "no-store", signal: AbortSignal.timeout(this.cfg.timeoutMs) });
-                    return { status: 瘅壍.status, ok: 瘅壍.ok, headers: 瘅壍.headers, text: await 瘅壍.text() };
+                const res = await semaphore(this.cfg.maxConcurrency).use(async () => {
+                    const r = await doFetch(url, { method, headers, body, cache: "no-store", signal: AbortSignal.timeout(this.cfg.timeoutMs) });
+                    return { status: r.status, ok: r.ok, headers: r.headers, text: await r.text() };
                 });
-                if (圖壍.ok) {
-                    const 铴壍 = 沰壍(圖壍.text);
-                    if (铴壍 === undefined) {
-                        訧壍 = new GoogleAdsApiError({ code: "INVALID_RESPONSE", message: "Google Ads API returned a non-JSON body", httpStatus: 圖壍.status, category: "http", retryable: true });
+                if (res.ok) {
+                    const json = parseJson(res.text);
+                    if (json === undefined) {
+                        failure = new GoogleAdsApiError({ code: "INVALID_RESPONSE", message: "Google Ads API returned a non-JSON body", httpStatus: res.status, category: "http", retryable: true });
                     }
                     else {
-                        const 懣壍 = failureFromJson(200, 铴壍, 圖壍.headers);
-                        if (!懣壍)
-                            return 铴壍;
-                        訧壍 = 懣壍;
+                        const streamError = failureFromJson(200, json, res.headers);
+                        if (!streamError)
+                            return json;
+                        failure = streamError;
                     }
                 }
                 else {
-                    訧壍 = parseGoogleAdsFailure(圖壍.status, 圖壍.text, 圖壍.headers);
-                    if (圖壍.status === 401 && !罚壍) {
-                        罚壍 = true;
+                    failure = parseGoogleAdsFailure(res.status, res.text, res.headers);
+                    if (res.status === 401 && !refreshedToken) {
+                        refreshedToken = true;
                         invalidateAccessToken(this.cfg.credentials);
                         continue;
                     }
                 }
             }
-            catch (胒壍) {
-                訧壍 = transportError(胒壍, this.cfg.timeoutMs);
+            catch (err) {
+                failure = transportError(err, this.cfg.timeoutMs);
             }
-            const 鿁壍 = 墎壍(訧壍, 恫壍, this.deps.random);
-            if (鿁壍 === null)
-                throw 訧壍;
-            恫壍++;
-            log.warn("Google Ads request failed; retrying", { code: 訧壍.code, status: 訧壍.httpStatus, retry: 恫壍, delayMs: 鿁壍, requestId: 訧壍.requestId });
-            await 璍壍(鿁壍);
+            const delay = retryDelay(failure, retries, this.deps.random);
+            if (delay === null)
+                throw failure;
+            retries++;
+            log.warn("Google Ads request failed; retrying", { code: failure.code, status: failure.httpStatus, retry: retries, delayMs: delay, requestId: failure.requestId });
+            await wait(delay);
         }
     }
 }
-function 沰壍(讟壍: string): unknown {
+function parseJson(text: string): unknown {
     try {
-        return JSON.parse(讟壍);
+        return JSON.parse(text);
     }
     catch {
         return undefined;
     }
 }
-function 墎壍(睽壍: GoogleAdsApiError, 陬壍: number, 捛壍?: () => number): number | null {
-    if (!睽壍.retryable || 陬壍 >= MAX_RETRIES)
+function retryDelay(err: GoogleAdsApiError, retries: number, random?: () => number): number | null {
+    if (!err.retryable || retries >= MAX_RETRIES)
         return null;
-    if (睽壍.retryAfterMs !== undefined)
-        return 睽壍.retryAfterMs <= MAX_HONORED_RETRY_DELAY_MS ? 睽壍.retryAfterMs : null;
-    return backoffDelay(陬壍, 捛壍);
+    if (err.retryAfterMs !== undefined)
+        return err.retryAfterMs <= MAX_HONORED_RETRY_DELAY_MS ? err.retryAfterMs : null;
+    return backoffDelay(retries, random);
 }

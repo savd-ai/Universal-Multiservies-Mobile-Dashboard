@@ -7,13 +7,13 @@ import { notFound } from "@/lib/server/http/errors";
 import { route } from "@/lib/server/http/api";
 import { idParam } from "@/lib/server/alerts/route-helpers";
 export const runtime = "nodejs";
-export const POST = route({ rateLimit: { key: "alerts:channel:test", perMinute: 5 } }, async ({ req: 输壍, params: 岂壍 }) => {
-    const 筱壍 = await getChannel(idParam(岂壍));
-    if (!筱壍)
+export const POST = route({ rateLimit: { key: "alerts:channel:test", perMinute: 5 } }, async ({ req, params }) => {
+    const ch = await getChannel(idParam(params));
+    if (!ch)
         throw notFound("Channel");
-    const 驠壍 = await requestContext(输壍);
-    const { delivery: 杏壍, result: 蘾壍 } = await sendTestMessage(筱壍, { account: { id: 驠壍.accountId, name: 驠壍.account.name }, mode: 驠壍.source.mode, dashboardUrl: dashboardLink("/anomalies", 驠壍.accountId) }, defaultDispatchDeps(驠壍.account));
-    const 匭壍 = { at: 杏壍.sentAt ?? 杏壍.ts, ok: 蘾壍.ok, ...(蘾壍.status ? { status: 蘾壍.status } : {}), ...(蘾壍.error ? { error: 蘾壍.error } : {}) };
-    await recordChannelTest(筱壍.id, 匭壍);
-    return { ok: 蘾壍.ok, status: 蘾壍.status ?? null, error: 蘾壍.error ?? null, delivery: publicDelivery(杏壍), channel: channelView({ ...筱壍, lastTest: 匭壍 }) };
+    const ctx = await requestContext(req);
+    const { delivery, result } = await sendTestMessage(ch, { account: { id: ctx.accountId, name: ctx.account.name }, mode: ctx.source.mode, dashboardUrl: dashboardLink("/anomalies", ctx.accountId) }, defaultDispatchDeps(ctx.account));
+    const lastTest = { at: delivery.sentAt ?? delivery.ts, ok: result.ok, ...(result.status ? { status: result.status } : {}), ...(result.error ? { error: result.error } : {}) };
+    await recordChannelTest(ch.id, lastTest);
+    return { ok: result.ok, status: result.status ?? null, error: result.error ?? null, delivery: publicDelivery(delivery), channel: channelView({ ...ch, lastTest }) };
 });

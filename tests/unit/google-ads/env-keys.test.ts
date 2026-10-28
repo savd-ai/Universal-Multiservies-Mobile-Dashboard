@@ -8,17 +8,17 @@ describe("Google Ads env keys", () => {
         expect(GROUP_LABELS.google_ads).toContain(`all ${REQUIRED_LIVE_KEYS.length} required keys`);
     });
     it("keeps the developer token as an optional secret", () => {
-        const 慡壍 = ENV_VARS.find((聐壍) => 聐壍.key === "GOOGLE_ADS_DEVELOPER_TOKEN");
-        expect(慡壍).toMatchObject({ group: "google_ads", secret: true });
-        expect(慡壍?.requiredForLive).toBeFalsy();
+        const token = ENV_VARS.find((v) => v.key === "GOOGLE_ADS_DEVELOPER_TOKEN");
+        expect(token).toMatchObject({ group: "google_ads", secret: true });
+        expect(token?.requiredForLive).toBeFalsy();
         expect(SECRET_KEYS.has("GOOGLE_ADS_DEVELOPER_TOKEN")).toBe(true);
     });
     it("documents the token as optional in .env.example", () => {
-        const 鼿壍 = renderEnvExample().split("\n");
-        const 氮壍 = 鼿壍.indexOf("GOOGLE_ADS_DEVELOPER_TOKEN=");
-        expect(氮壍).toBeGreaterThan(0);
-        expect(鼿壍[氮壍 - 1]).toMatch(/^# Optional legacy developer token\. .*2026-09-09/);
-        expect(鼿壍[氮壍 - 1]).not.toContain("(required for live)");
-        expect(鼿壍.filter((謝壍) => 謝壍.endsWith("(required for live)"))).toHaveLength(4);
+        const lines = renderEnvExample().split("\n");
+        const i = lines.indexOf("GOOGLE_ADS_DEVELOPER_TOKEN=");
+        expect(i).toBeGreaterThan(0);
+        expect(lines[i - 1]).toMatch(/^# Optional legacy developer token\. .*2026-09-09/);
+        expect(lines[i - 1]).not.toContain("(required for live)");
+        expect(lines.filter((l) => l.endsWith("(required for live)"))).toHaveLength(4);
     });
 });

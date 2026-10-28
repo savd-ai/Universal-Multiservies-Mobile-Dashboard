@@ -20,7 +20,7 @@ export interface ChartTokens {
     fontMono: string;
     fontDisplay: string;
 }
-const 戴壍: ChartTokens = {
+const LIGHT: ChartTokens = {
     theme: "light",
     text: "#1c1c1e",
     muted: "#48484a",
@@ -40,8 +40,8 @@ const 戴壍: ChartTokens = {
     fontMono: "IBM Plex Mono, monospace",
     fontDisplay: "Space Grotesk, sans-serif",
 };
-const 脣壍: ChartTokens = {
-    ...戴壍,
+const DARK: ChartTokens = {
+    ...LIGHT,
     theme: "dark",
     text: "#f5f5f3",
     muted: "#a8abb2",
@@ -58,38 +58,38 @@ const 脣壍: ChartTokens = {
     series: ["#0a9e84", "#3987e5", "#d55181", "#9085e9", "#8f9a2b", "#c06bd8"],
     other: "rgba(255,255,255,0.35)",
 };
-function 丒壍(洁壍: string, 诰壍: string): string {
+function cssFont(name: string, fallback: string): string {
     if (typeof window === "undefined")
-        return 诰壍;
-    const 壟壍 = getComputedStyle(document.documentElement).getPropertyValue(洁壍).trim();
-    return 壟壍 ? `${壟壍}, ${诰壍}` : 诰壍;
+        return fallback;
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v ? `${v}, ${fallback}` : fallback;
 }
-let 矎壍: {
+let cached: {
     theme: string;
     tokens: ChartTokens;
 } | null = null;
 export function readChartTokens(): ChartTokens {
-    const 隽壍 = typeof document !== "undefined" && document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
-    if (矎壍 && 矎壍.theme === 隽壍)
-        return 矎壍.tokens;
-    const 掬壍 = 隽壍 === "dark" ? 脣壍 : 戴壍;
-    const 芛壍: ChartTokens = {
-        ...掬壍,
-        fontSans: 丒壍("--nf-sans", 掬壍.fontSans),
-        fontMono: 丒壍("--nf-mono", 掬壍.fontMono),
-        fontDisplay: 丒壍("--nf-display", 掬壍.fontDisplay),
+    const theme = typeof document !== "undefined" && document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+    if (cached && cached.theme === theme)
+        return cached.tokens;
+    const base = theme === "dark" ? DARK : LIGHT;
+    const tokens: ChartTokens = {
+        ...base,
+        fontSans: cssFont("--nf-sans", base.fontSans),
+        fontMono: cssFont("--nf-mono", base.fontMono),
+        fontDisplay: cssFont("--nf-display", base.fontDisplay),
     };
-    矎壍 = { theme: 隽壍, tokens: 芛壍 };
-    return 芛壍;
+    cached = { theme, tokens };
+    return tokens;
 }
-function 侊壍(湹壍: () => void): () => void {
-    const 赨壍 = new MutationObserver(() => {
-        矎壍 = null;
-        湹壍();
+function subscribe(cb: () => void): () => void {
+    const obs = new MutationObserver(() => {
+        cached = null;
+        cb();
     });
-    赨壍.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => 赨壍.disconnect();
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => obs.disconnect();
 }
 export function useChartTokens(): ChartTokens {
-    return useSyncExternalStore(侊壍, readChartTokens, () => 戴壍);
+    return useSyncExternalStore(subscribe, readChartTokens, () => LIGHT);
 }

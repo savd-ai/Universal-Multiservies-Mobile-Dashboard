@@ -3,78 +3,78 @@ import { SEVERITY_RANK, seriesKey, windowEndOf } from "./ids";
 export type StateDraft = Omit<SignalState, "version" | "createdAt" | "updatedAt"> & Partial<Pick<SignalState, "version" | "createdAt" | "updatedAt">>;
 export const AUTO_RESOLVE_AFTER = 2;
 export const PRUNE_RESOLVED_AFTER_DAYS = 45;
-const 砖壍 = (霅壍: string | undefined) => (霅壍 ? Date.parse(霅壍) : Number.NaN);
-export function addHoursIso(援壍: string, 苣壍: number): string {
-    return new Date(砖壍(援壍) + 苣壍 * 3600000).toISOString();
+const ms = (iso: string | undefined) => (iso ? Date.parse(iso) : Number.NaN);
+export function addHoursIso(iso: string, hours: number): string {
+    return new Date(ms(iso) + hours * 3600000).toISOString();
 }
-export function snapshotOf(俒壍: Signal): Omit<Signal, "series"> {
-    const { series: _滁壍, ...趰壍 } = 俒壍;
-    return 趰壍;
+export function snapshotOf(s: Signal): Omit<Signal, "series"> {
+    const { series: _series, ...rest } = s;
+    return rest;
 }
-export function isSnoozeExpired(媟壍: Pick<SignalState, "status" | "snoozedUntil">, 禎壍: string): boolean {
-    if (媟壍.status !== "snoozed")
+export function isSnoozeExpired(state: Pick<SignalState, "status" | "snoozedUntil">, nowIso: string): boolean {
+    if (state.status !== "snoozed")
         return false;
-    const 顽壍 = 砖壍(媟壍.snoozedUntil);
-    return !Number.isFinite(顽壍) || 顽壍 <= 砖壍(禎壍);
+    const until = ms(state.snoozedUntil);
+    return !Number.isFinite(until) || until <= ms(nowIso);
 }
-export function transition(敬壍: StateDraft, 葛壍: SignalStatus, 兊壍: "user" | "system", 瀹壍: string): StateDraft {
-    if (敬壍.status === 葛壍)
-        return 敬壍;
-    const { snoozedUntil: 輨壍, resolvedAt: 尗壍, ...笆壍 } = 敬壍;
-    const 駵壍: StateDraft = { ...笆壍, status: 葛壍, history: [...敬壍.history, { at: 瀹壍, from: 敬壍.status, to: 葛壍, by: 兊壍 }] };
-    if (葛壍 === "snoozed" && 輨壍)
-        駵壍.snoozedUntil = 輨壍;
-    if (葛壍 === "resolved")
-        駵壍.resolvedAt = 瀹壍;
-    else if (尗壍 && 葛壍 !== "open")
-        駵壍.resolvedAt = 尗壍;
-    return 駵壍;
+export function transition(state: StateDraft, to: SignalStatus, by: "user" | "system", nowIso: string): StateDraft {
+    if (state.status === to)
+        return state;
+    const { snoozedUntil, resolvedAt, ...rest } = state;
+    const next: StateDraft = { ...rest, status: to, history: [...state.history, { at: nowIso, from: state.status, to, by }] };
+    if (to === "snoozed" && snoozedUntil)
+        next.snoozedUntil = snoozedUntil;
+    if (to === "resolved")
+        next.resolvedAt = nowIso;
+    else if (resolvedAt && to !== "open")
+        next.resolvedAt = resolvedAt;
+    return next;
 }
-export function applySignalAction(曤壍: StateDraft, 藓壍: SignalAction, 勂壍: string): StateDraft {
-    let 熱壍: StateDraft;
-    switch (藓壍.action) {
+export function applySignalAction(state: StateDraft, action: SignalAction, nowIso: string): StateDraft {
+    let next: StateDraft;
+    switch (action.action) {
         case "acknowledge":
-            熱壍 = transition(曤壍, "acknowledged", "user", 勂壍);
+            next = transition(state, "acknowledged", "user", nowIso);
             break;
         case "snooze": {
-            const 邠壍 = 曤壍.status === "snoozed" ? { ...曤壍, history: [...曤壍.history, { at: 勂壍, from: 曤壍.status, to: "snoozed" as const, by: "user" as const }] } : transition(曤壍, "snoozed", "user", 勂壍);
-            熱壍 = { ...邠壍, snoozedUntil: addHoursIso(勂壍, 藓壍.hours) };
+            const base = state.status === "snoozed" ? { ...state, history: [...state.history, { at: nowIso, from: state.status, to: "snoozed" as const, by: "user" as const }] } : transition(state, "snoozed", "user", nowIso);
+            next = { ...base, snoozedUntil: addHoursIso(nowIso, action.hours) };
             break;
         }
         case "resolve":
-            熱壍 = transition(曤壍, "resolved", "user", 勂壍);
+            next = transition(state, "resolved", "user", nowIso);
             break;
         case "reopen":
-            熱壍 = { ...transition(曤壍, "open", "user", 勂壍), missedEvaluations: 0 };
+            next = { ...transition(state, "open", "user", nowIso), missedEvaluations: 0 };
             break;
     }
-    const 嶏壍 = "note" in 藓壍 ? 藓壍.note?.trim() : undefined;
-    if (嶏壍)
-        熱壍 = { ...熱壍, notes: [...熱壍.notes, { at: 勂壍, text: 嶏壍 }] };
-    return 熱壍;
+    const note = "note" in action ? action.note?.trim() : undefined;
+    if (note)
+        next = { ...next, notes: [...next.notes, { at: nowIso, text: note }] };
+    return next;
 }
-export function addNote(籾壍: StateDraft, 魭壍: string, 桜壍: string): StateDraft {
-    return { ...籾壍, notes: [...籾壍.notes, { at: 桜壍, text: 魭壍.trim() }] };
+export function addNote(state: StateDraft, text: string, nowIso: string): StateDraft {
+    return { ...state, notes: [...state.notes, { at: nowIso, text: text.trim() }] };
 }
 export interface StateIndex {
     byId: Map<string, SignalState>;
-    earlier(蝋壍: Pick<Signal, "id" | "window">): SignalState[];
+    earlier(signal: Pick<Signal, "id" | "window">): SignalState[];
 }
-export function indexStates(吺壍: readonly SignalState[]): StateIndex {
-    const 猩壍 = new Map<string, SignalState>();
-    const 鈘壍 = new Map<string, SignalState[]>();
-    for (const 弇壍 of 吺壍) {
-        猩壍.set(弇壍.id, 弇壍);
-        const 緶壍 = seriesKey(弇壍.id);
-        const 鳥壍 = 鈘壍.get(緶壍) ?? [];
-        鳥壍.push(弇壍);
-        鈘壍.set(緶壍, 鳥壍);
+export function indexStates(states: readonly SignalState[]): StateIndex {
+    const byId = new Map<string, SignalState>();
+    const bySeries = new Map<string, SignalState[]>();
+    for (const st of states) {
+        byId.set(st.id, st);
+        const k = seriesKey(st.id);
+        const list = bySeries.get(k) ?? [];
+        list.push(st);
+        bySeries.set(k, list);
     }
-    for (const 槔壍 of 鈘壍.values())
-        槔壍.sort((裃壍, 喲壍) => (windowEndOf(喲壍.id) ?? "").localeCompare(windowEndOf(裃壍.id) ?? ""));
+    for (const list of bySeries.values())
+        list.sort((a, b) => (windowEndOf(b.id) ?? "").localeCompare(windowEndOf(a.id) ?? ""));
     return {
-        byId: 猩壍,
-        earlier: (璡壍) => (鈘壍.get(seriesKey(璡壍.id)) ?? []).filter((鎐壍) => 鎐壍.id !== 璡壍.id && (windowEndOf(鎐壍.id) ?? "") < 璡壍.window.recentEnd),
+        byId,
+        earlier: (signal) => (bySeries.get(seriesKey(signal.id)) ?? []).filter((st) => st.id !== signal.id && (windowEndOf(st.id) ?? "") < signal.window.recentEnd),
     };
 }
 export interface Resolution {
@@ -89,71 +89,71 @@ export interface Resolution {
     isNew: boolean;
     escalated: boolean;
 }
-const 恿壍 = (置壍: SignalState) => 置壍.history[置壍.history.length - 1]?.by;
-export function resolveSignalState(鹝壍: Signal, 歌壍: SignalState | undefined, 註壍: SignalState | undefined, 圪壍: string): Resolution {
-    if (歌壍) {
-        let 瘙壍 = 歌壍.status;
-        if (isSnoozeExpired(歌壍, 圪壍))
-            瘙壍 = "open";
-        const 锈壍 = SEVERITY_RANK[鹝壍.severity] > SEVERITY_RANK[歌壍.lastSeverity];
-        let 懷壍 = false;
-        if (瘙壍 === "resolved" && 恿壍(歌壍) === "system") {
-            if (歌壍.supersededBy) {
-                瘙壍 = 歌壍.history[歌壍.history.length - 1]?.from === "acknowledged" ? "acknowledged" : "open";
+const lastBy = (st: SignalState) => st.history[st.history.length - 1]?.by;
+export function resolveSignalState(signal: Signal, exact: SignalState | undefined, previous: SignalState | undefined, nowIso: string): Resolution {
+    if (exact) {
+        let status = exact.status;
+        if (isSnoozeExpired(exact, nowIso))
+            status = "open";
+        const escalated = SEVERITY_RANK[signal.severity] > SEVERITY_RANK[exact.lastSeverity];
+        let isNew = false;
+        if (status === "resolved" && lastBy(exact) === "system") {
+            if (exact.supersededBy) {
+                status = exact.history[exact.history.length - 1]?.from === "acknowledged" ? "acknowledged" : "open";
             }
             else {
-                瘙壍 = "open";
-                懷壍 = true;
+                status = "open";
+                isNew = true;
             }
         }
-        if (锈壍 && (瘙壍 === "acknowledged" || 瘙壍 === "resolved"))
-            瘙壍 = "open";
-        return { status: 瘙壍, snoozedUntil: 瘙壍 === "snoozed" ? 歌壍.snoozedUntil : undefined, notes: 歌壍.notes, firstSeenAt: 歌壍.firstSeenAt, history: 歌壍.history, isNew: 懷壍, escalated: 锈壍 && 瘙壍 === "open" };
+        if (escalated && (status === "acknowledged" || status === "resolved"))
+            status = "open";
+        return { status, snoozedUntil: status === "snoozed" ? exact.snoozedUntil : undefined, notes: exact.notes, firstSeenAt: exact.firstSeenAt, history: exact.history, isNew, escalated: escalated && status === "open" };
     }
-    if (註壍) {
-        const 胦壍 = isSnoozeExpired(註壍, 圪壍) ? "open" : 註壍.status;
-        const 鿕壍 = SEVERITY_RANK[鹝壍.severity] > SEVERITY_RANK[註壍.lastSeverity];
-        const 泄壍 = { notes: 註壍.notes, firstSeenAt: 註壍.firstSeenAt, history: 註壍.history };
-        if (胦壍 === "snoozed")
-            return { status: "snoozed", snoozedUntil: 註壍.snoozedUntil, ...泄壍, isNew: false, escalated: false };
-        if (胦壍 === "acknowledged" && !鿕壍)
-            return { status: "acknowledged", ...泄壍, isNew: false, escalated: false };
-        if (胦壍 === "resolved" && !註壍.supersededBy)
-            return { status: "open", ...泄壍, isNew: true, escalated: false };
-        return { status: "open", ...泄壍, isNew: false, escalated: 鿕壍 };
+    if (previous) {
+        const prevStatus = isSnoozeExpired(previous, nowIso) ? "open" : previous.status;
+        const escalated = SEVERITY_RANK[signal.severity] > SEVERITY_RANK[previous.lastSeverity];
+        const carried = { notes: previous.notes, firstSeenAt: previous.firstSeenAt, history: previous.history };
+        if (prevStatus === "snoozed")
+            return { status: "snoozed", snoozedUntil: previous.snoozedUntil, ...carried, isNew: false, escalated: false };
+        if (prevStatus === "acknowledged" && !escalated)
+            return { status: "acknowledged", ...carried, isNew: false, escalated: false };
+        if (prevStatus === "resolved" && !previous.supersededBy)
+            return { status: "open", ...carried, isNew: true, escalated: false };
+        return { status: "open", ...carried, isNew: false, escalated };
     }
     return { status: "open", notes: [], isNew: true, escalated: false };
 }
-function 讳壍(墢壍: SignalState["history"] | undefined, 瞑壍: string | undefined): Pick<SignalView, "history" | "statusChangedAt"> {
-    if (!墢壍?.length)
-        return 瞑壍 ? { statusChangedAt: 瞑壍 } : {};
-    const 隀壍 = 墢壍.slice(-20);
-    return { history: 隀壍, statusChangedAt: 隀壍[隀壍.length - 1]?.at ?? 瞑壍 };
+function lifecycleFields(history: SignalState["history"] | undefined, firstSeenAt: string | undefined): Pick<SignalView, "history" | "statusChangedAt"> {
+    if (!history?.length)
+        return firstSeenAt ? { statusChangedAt: firstSeenAt } : {};
+    const recent = history.slice(-20);
+    return { history: recent, statusChangedAt: recent[recent.length - 1]?.at ?? firstSeenAt };
 }
-export function toView(捯壍: Signal, 艞壍: Resolution): SignalView {
-    return { ...捯壍, status: 艞壍.status, snoozedUntil: 艞壍.snoozedUntil, notes: 艞壍.notes, firstSeenAt: 艞壍.firstSeenAt, ...讳壍(艞壍.history, 艞壍.firstSeenAt) };
+export function toView(signal: Signal, r: Resolution): SignalView {
+    return { ...signal, status: r.status, snoozedUntil: r.snoozedUntil, notes: r.notes, firstSeenAt: r.firstSeenAt, ...lifecycleFields(r.history, r.firstSeenAt) };
 }
-export function joinSignals(位壍: readonly Signal[], 渼壍: readonly SignalState[], 贫壍: string): SignalView[] {
-    const 娚壍 = indexStates(渼壍);
-    return 位壍.map((礉壍) => toView(礉壍, resolveSignalState(礉壍, 娚壍.byId.get(礉壍.id), 娚壍.earlier(礉壍)[0], 贫壍)));
+export function joinSignals(signals: readonly Signal[], states: readonly SignalState[], nowIso: string): SignalView[] {
+    const index = indexStates(states);
+    return signals.map((s) => toView(s, resolveSignalState(s, index.byId.get(s.id), index.earlier(s)[0], nowIso)));
 }
-export function initialDraft(韸壍: Signal, 擧壍: string, 菖壍: StateIndex, 僅壍: string): StateDraft {
-    const 澴壍 = 菖壍.byId.get(韸壍.id);
-    if (澴壍)
-        return 澴壍;
-    const 躣壍 = resolveSignalState(韸壍, undefined, 菖壍.earlier(韸壍)[0], 僅壍);
+export function initialDraft(signal: Signal, scope: string, index: StateIndex, nowIso: string): StateDraft {
+    const exact = index.byId.get(signal.id);
+    if (exact)
+        return exact;
+    const r = resolveSignalState(signal, undefined, index.earlier(signal)[0], nowIso);
     return {
-        id: 韸壍.id,
-        scopeKey: 擧壍,
-        status: 躣壍.status,
-        snoozedUntil: 躣壍.snoozedUntil,
-        firstSeenAt: 躣壍.firstSeenAt ?? 僅壍,
-        lastSeenAt: 僅壍,
-        lastSeverity: 韸壍.severity,
-        notes: 躣壍.notes,
+        id: signal.id,
+        scopeKey: scope,
+        status: r.status,
+        snoozedUntil: r.snoozedUntil,
+        firstSeenAt: r.firstSeenAt ?? nowIso,
+        lastSeenAt: nowIso,
+        lastSeverity: signal.severity,
+        notes: r.notes,
         history: [],
         missedEvaluations: 0,
-        snapshot: snapshotOf(韸壍),
+        snapshot: snapshotOf(signal),
     };
 }
 export interface EvaluationPlan {
@@ -162,67 +162,67 @@ export interface EvaluationPlan {
     newOrEscalated: string[];
     resolved: StateDraft[];
 }
-export function planEvaluation(宒壍: readonly Signal[], 突壍: readonly SignalState[], 饰壍: string, 晟壍: string, 蕎壍: {
+export function planEvaluation(signals: readonly Signal[], states: readonly SignalState[], scope: string, nowIso: string, opts: {
     autoResolveAfter?: number;
     pruneAfterDays?: number;
 } = {}): EvaluationPlan {
-    const 刽壍 = 蕎壍.autoResolveAfter ?? AUTO_RESOLVE_AFTER;
-    const 焬壍 = (蕎壍.pruneAfterDays ?? PRUNE_RESOLVED_AFTER_DAYS) * 86400000;
-    const 逛壍 = indexStates(突壍);
-    const 崊壍: EvaluationPlan = { upserts: [], deletes: [], newOrEscalated: [], resolved: [] };
-    const 篹壍 = new Set<string>();
-    const 髨壍 = new Map<string, string>();
-    for (const 柗壍 of 宒壍) {
-        篹壍.add(柗壍.id);
-        const 蛆壍 = 逛壍.byId.get(柗壍.id);
-        const 厵壍 = 逛壍.earlier(柗壍);
-        const 犤壍 = resolveSignalState(柗壍, 蛆壍, 厵壍[0], 晟壍);
-        let 醓壍: StateDraft = { ...initialDraft(柗壍, 饰壍, 逛壍, 晟壍), ...(蛆壍 ? {} : { status: "open" as const }) };
-        if (醓壍.supersededBy) {
-            const { supersededBy: _庂壍, ...統壍 } = 醓壍;
-            醓壍 = 統壍;
+    const autoResolveAfter = opts.autoResolveAfter ?? AUTO_RESOLVE_AFTER;
+    const pruneMs = (opts.pruneAfterDays ?? PRUNE_RESOLVED_AFTER_DAYS) * 86400000;
+    const index = indexStates(states);
+    const plan: EvaluationPlan = { upserts: [], deletes: [], newOrEscalated: [], resolved: [] };
+    const seen = new Set<string>();
+    const superseded = new Map<string, string>();
+    for (const signal of signals) {
+        seen.add(signal.id);
+        const exact = index.byId.get(signal.id);
+        const earlier = index.earlier(signal);
+        const r = resolveSignalState(signal, exact, earlier[0], nowIso);
+        let draft: StateDraft = { ...initialDraft(signal, scope, index, nowIso), ...(exact ? {} : { status: "open" as const }) };
+        if (draft.supersededBy) {
+            const { supersededBy: _gone, ...rest } = draft;
+            draft = rest;
         }
-        if (醓壍.status !== 犤壍.status)
-            醓壍 = transition(醓壍, 犤壍.status, "system", 晟壍);
-        if (犤壍.status === "snoozed" && 犤壍.snoozedUntil)
-            醓壍.snoozedUntil = 犤壍.snoozedUntil;
-        醓壍 = { ...醓壍, lastSeenAt: 晟壍, lastSeverity: 柗壍.severity, missedEvaluations: 0, snapshot: snapshotOf(柗壍) };
-        崊壍.upserts.push(醓壍);
-        if ((犤壍.isNew || 犤壍.escalated) && 犤壍.status === "open")
-            崊壍.newOrEscalated.push(柗壍.id);
-        for (const 鱠壍 of 厵壍)
-            if (!鱠壍.supersededBy)
-                髨壍.set(鱠壍.id, 柗壍.id);
+        if (draft.status !== r.status)
+            draft = transition(draft, r.status, "system", nowIso);
+        if (r.status === "snoozed" && r.snoozedUntil)
+            draft.snoozedUntil = r.snoozedUntil;
+        draft = { ...draft, lastSeenAt: nowIso, lastSeverity: signal.severity, missedEvaluations: 0, snapshot: snapshotOf(signal) };
+        plan.upserts.push(draft);
+        if ((r.isNew || r.escalated) && r.status === "open")
+            plan.newOrEscalated.push(signal.id);
+        for (const prev of earlier)
+            if (!prev.supersededBy)
+                superseded.set(prev.id, signal.id);
     }
-    const 楏壍 = 砖壍(晟壍);
-    for (const 蠾壍 of 突壍) {
-        if (篹壍.has(蠾壍.id))
+    const now = ms(nowIso);
+    for (const st of states) {
+        if (seen.has(st.id))
             continue;
-        const 唭壍 = 髨壍.get(蠾壍.id);
-        if (唭壍) {
-            const 琜壍 = { ...transition(蠾壍, "resolved", "system", 晟壍), supersededBy: 唭壍 };
-            崊壍.upserts.push(琜壍);
-            continue;
-        }
-        if (蠾壍.status === "resolved" || 蠾壍.supersededBy) {
-            const 錋壍 = 砖壍(蠾壍.resolvedAt ?? 蠾壍.updatedAt);
-            if (Number.isFinite(錋壍) && 楏壍 - 錋壍 > 焬壍)
-                崊壍.deletes.push(蠾壍.id);
+        const successor = superseded.get(st.id);
+        if (successor) {
+            const p = { ...transition(st, "resolved", "system", nowIso), supersededBy: successor };
+            plan.upserts.push(p);
             continue;
         }
-        const 忺壍 = (蠾壍.missedEvaluations ?? 0) + 1;
-        if (忺壍 >= 刽壍) {
-            const 绩壍 = { ...transition(蠾壍, "resolved", "system", 晟壍), missedEvaluations: 忺壍 };
-            崊壍.upserts.push(绩壍);
-            崊壍.resolved.push(绩壍);
+        if (st.status === "resolved" || st.supersededBy) {
+            const at = ms(st.resolvedAt ?? st.updatedAt);
+            if (Number.isFinite(at) && now - at > pruneMs)
+                plan.deletes.push(st.id);
+            continue;
+        }
+        const missed = (st.missedEvaluations ?? 0) + 1;
+        if (missed >= autoResolveAfter) {
+            const p = { ...transition(st, "resolved", "system", nowIso), missedEvaluations: missed };
+            plan.upserts.push(p);
+            plan.resolved.push(p);
         }
         else
-            崊壍.upserts.push({ ...蠾壍, missedEvaluations: 忺壍 });
+            plan.upserts.push({ ...st, missedEvaluations: missed });
     }
-    return 崊壍;
+    return plan;
 }
-export function resolvedView(鷘壍: StateDraft): SignalView | null {
-    if (!鷘壍.snapshot)
+export function resolvedView(st: StateDraft): SignalView | null {
+    if (!st.snapshot)
         return null;
-    return { ...鷘壍.snapshot, series: [], status: "resolved", notes: 鷘壍.notes, firstSeenAt: 鷘壍.firstSeenAt, ...讳壍(鷘壍.history, 鷘壍.firstSeenAt) };
+    return { ...st.snapshot, series: [], status: "resolved", notes: st.notes, firstSeenAt: st.firstSeenAt, ...lifecycleFields(st.history, st.firstSeenAt) };
 }

@@ -4,11 +4,11 @@ import { vi } from "vitest";
 import { resetSingletonsForTests } from "@/lib/server/cache";
 import { setClockForTests } from "@/lib/server/clock";
 import { TOKEN_URL } from "@/lib/server/google-ads/oauth";
-export function fixture<T = unknown>(緎壍: string): T {
-    return JSON.parse(readFileSync(fileURLToPath(new URL(`../../fixtures/google-ads/${緎壍}`, import.meta.url)), "utf8")) as T;
+export function fixture<T = unknown>(name: string): T {
+    return JSON.parse(readFileSync(fileURLToPath(new URL(`../../fixtures/google-ads/${name}`, import.meta.url)), "utf8")) as T;
 }
-export const jsonResponse = (鲽壍: unknown, 榬壍 = 200, 袛壍: Record<string, string> = {}): Response => new Response(JSON.stringify(鲽壍), { status: 榬壍, headers: { "content-type": "application/json", ...袛壍 } });
-export const fixtureResponse = (喊壍: string, 瑹壍 = 200): Response => jsonResponse(fixture(喊壍), 瑹壍);
+export const jsonResponse = (body: unknown, status = 200, headers: Record<string, string> = {}): Response => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", ...headers } });
+export const fixtureResponse = (name: string, status = 200): Response => jsonResponse(fixture(name), status);
 export interface RecordedCall {
     url: string;
     method: string;
@@ -17,83 +17,83 @@ export interface RecordedCall {
     query?: string;
     customerId?: string;
 }
-export type Handler = (鍨壍: RecordedCall, 恗壍?: RequestInit) => Response | Promise<Response> | undefined | Promise<Response | undefined>;
-export function mockFetch(罆壍: Handler) {
-    const 鸵壍: RecordedCall[] = [];
-    const 欤壍 = vi.fn(async (訓壍: string | URL | Request, 圂壍?: RequestInit): Promise<Response> => {
-        const 痱壍 = 訓壍 instanceof Request ? 訓壍.url : String(訓壍);
-        const 铠壍: Record<string, string> = {};
-        new Headers(圂壍?.headers).forEach((懏壍, 肾壍) => {
-            铠壍[肾壍] = 懏壍;
+export type Handler = (call: RecordedCall, init?: RequestInit) => Response | Promise<Response> | undefined | Promise<Response | undefined>;
+export function mockFetch(handler: Handler) {
+    const calls: RecordedCall[] = [];
+    const fn = vi.fn(async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+        const url = input instanceof Request ? input.url : String(input);
+        const headers: Record<string, string> = {};
+        new Headers(init?.headers).forEach((v, k) => {
+            headers[k] = v;
         });
-        const 龭壍 = typeof 圂壍?.body === "string" ? 圂壍.body : "";
-        let 沜壍: string | undefined;
+        const body = typeof init?.body === "string" ? init.body : "";
+        let query: string | undefined;
         try {
-            const 讋壍: unknown = JSON.parse(龭壍);
-            if (讋壍 && typeof 讋壍 === "object" && "query" in 讋壍 && typeof 讋壍.query === "string")
-                沜壍 = 讋壍.query;
+            const parsed: unknown = JSON.parse(body);
+            if (parsed && typeof parsed === "object" && "query" in parsed && typeof parsed.query === "string")
+                query = parsed.query;
         }
         catch {
         }
-        const 塺壍: RecordedCall = { url: 痱壍, method: 圂壍?.method ?? "GET", headers: 铠壍, body: 龭壍, query: 沜壍, customerId: /\/customers\/(\d+)\//.exec(痱壍)?.[1] };
-        鸵壍.push(塺壍);
-        const 睩壍 = await 罆壍(塺壍, 圂壍);
-        if (!睩壍)
-            throw new Error(`Unmocked request: ${圂壍?.method ?? "GET"} ${痱壍} ${沜壍 ?? ""}`);
-        return 睩壍;
+        const call: RecordedCall = { url, method: init?.method ?? "GET", headers, body, query, customerId: /\/customers\/(\d+)\//.exec(url)?.[1] };
+        calls.push(call);
+        const res = await handler(call, init);
+        if (!res)
+            throw new Error(`Unmocked request: ${init?.method ?? "GET"} ${url} ${query ?? ""}`);
+        return res;
     });
     return {
-        fetch: 欤壍 as unknown as typeof fetch,
-        calls: 鸵壍,
-        searches: () => 鸵壍.filter((陘壍) => 陘壍.url.endsWith("googleAds:searchStream")),
-        tokenCalls: () => 鸵壍.filter((捇壍) => 捇壍.url === TOKEN_URL),
+        fetch: fn as unknown as typeof fetch,
+        calls,
+        searches: () => calls.filter((c) => c.url.endsWith("googleAds:searchStream")),
+        tokenCalls: () => calls.filter((c) => c.url === TOKEN_URL),
     };
 }
-const 舶壍: Record<string, string> = {
+const CUSTOMERS: Record<string, string> = {
     "1234567890": "customer.json",
     "2345678901": "customer-eu.json",
     "9876543210": "customer-manager.json",
 };
-export function googleAdsRouter(伥壍?: Handler): Handler {
-    return async (渔壍, 贃壍) => {
-        const 姲壍 = 伥壍 ? await 伥壍(渔壍, 贃壍) : undefined;
-        if (姲壍)
-            return 姲壍;
-        if (渔壍.url === TOKEN_URL)
+export function googleAdsRouter(override?: Handler): Handler {
+    return async (call, init) => {
+        const custom = override ? await override(call, init) : undefined;
+        if (custom)
+            return custom;
+        if (call.url === TOKEN_URL)
             return fixtureResponse("oauth-token.json");
-        if (渔壍.url.endsWith("/customers:listAccessibleCustomers"))
+        if (call.url.endsWith("/customers:listAccessibleCustomers"))
             return fixtureResponse("list-accessible-customers.json");
-        const 磡壍 = 渔壍.query ?? "";
-        if (/ FROM customer_client /.test(磡壍))
+        const q = call.query ?? "";
+        if (/ FROM customer_client /.test(q))
             return fixtureResponse("customer-client.json");
-        if (/ FROM customer /.test(磡壍))
-            return fixtureResponse(舶壍[渔壍.customerId ?? ""] ?? "customer.json");
-        if (/ FROM geo_target_constant /.test(磡壍))
+        if (/ FROM customer /.test(q))
+            return fixtureResponse(CUSTOMERS[call.customerId ?? ""] ?? "customer.json");
+        if (/ FROM geo_target_constant /.test(q))
             return fixtureResponse("geo-constants.json");
-        if (/ FROM change_event /.test(磡壍))
+        if (/ FROM change_event /.test(q))
             return fixtureResponse("change-events.json");
-        if (/ FROM search_term_view /.test(磡壍))
+        if (/ FROM search_term_view /.test(q))
             return fixtureResponse("search-terms.json");
-        if (/ FROM user_location_view /.test(磡壍))
+        if (/ FROM user_location_view /.test(q))
             return fixtureResponse("geo.json");
-        if (/ FROM keyword_view /.test(磡壍))
-            return fixtureResponse(磡壍.includes("segments.date,") ? "keyword-daily.json" : "keywords.json");
-        if (/ FROM ad_group WHERE ad_group\.id IN/.test(磡壍))
+        if (/ FROM keyword_view /.test(q))
+            return fixtureResponse(q.includes("segments.date,") ? "keyword-daily.json" : "keywords.json");
+        if (/ FROM ad_group WHERE ad_group\.id IN/.test(q))
             return fixtureResponse("ad-groups-removed.json");
-        if (/ FROM ad_group /.test(磡壍))
-            return fixtureResponse(磡壍.includes("segments.date") ? "ad-group-daily.json" : "ad-groups.json");
-        if (/ FROM campaign_simulation /.test(磡壍))
+        if (/ FROM ad_group /.test(q))
+            return fixtureResponse(q.includes("segments.date") ? "ad-group-daily.json" : "ad-groups.json");
+        if (/ FROM campaign_simulation /.test(q))
             return fixtureResponse("campaign-simulations.json");
-        if (/ FROM recommendation /.test(磡壍))
+        if (/ FROM recommendation /.test(q))
             return fixtureResponse("recommendations.json");
-        if (/ FROM campaign WHERE segments\.date/.test(磡壍)) {
-            if (磡壍.includes("segments.device"))
+        if (/ FROM campaign WHERE segments\.date/.test(q)) {
+            if (q.includes("segments.device"))
                 return fixtureResponse("campaign-device.json");
-            if (磡壍.includes("segments.hour"))
+            if (q.includes("segments.hour"))
                 return fixtureResponse("campaign-hourly.json");
             return fixtureResponse("campaign-daily.json");
         }
-        if (/ FROM campaign /.test(磡壍))
+        if (/ FROM campaign /.test(q))
             return fixtureResponse("campaigns.json");
         return undefined;
     };
@@ -105,7 +105,7 @@ export const TEST_ENV = {
     GOOGLE_ADS_CUSTOMER_ID: "123-456-7890",
 } as const;
 export const NOW = new Date("2026-09-29T15:00:00Z");
-export function setupLiveEnv(韐壍: Record<string, string> = {}): void {
+export function setupLiveEnv(extra: Record<string, string> = {}): void {
     resetSingletonsForTests("gads:");
     resetSingletonsForTests("resolver:");
     setClockForTests(() => NOW);
@@ -113,8 +113,8 @@ export function setupLiveEnv(韐壍: Record<string, string> = {}): void {
     vi.stubEnv("DASHBOARD_FORCE_DEMO", "");
     vi.stubEnv("GOOGLE_ADS_LOGIN_CUSTOMER_ID", "");
     vi.stubEnv("GOOGLE_ADS_DEVELOPER_TOKEN", "");
-    for (const [撿壍, 莮壍] of Object.entries({ ...TEST_ENV, ...韐壍 }))
-        vi.stubEnv(撿壍, 莮壍);
+    for (const [k, v] of Object.entries({ ...TEST_ENV, ...extra }))
+        vi.stubEnv(k, v);
 }
 export function teardownLiveEnv(): void {
     vi.unstubAllEnvs();
@@ -123,6 +123,6 @@ export function teardownLiveEnv(): void {
     resetSingletonsForTests("gads:");
     resetSingletonsForTests("resolver:");
 }
-export function setClock(傝壍: Date): void {
-    setClockForTests(() => 傝壍);
+export function setClock(date: Date): void {
+    setClockForTests(() => date);
 }

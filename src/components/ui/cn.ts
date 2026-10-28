@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { extendTailwindMerge } from "tailwind-merge";
-const 寏壍 = extendTailwindMerge({
+const twMerge = extendTailwindMerge({
     extend: {
         theme: {
             text: ["micro", "meta", "eyebrow", "h1"],
@@ -45,6 +45,6 @@ const 寏壍 = extendTailwindMerge({
         },
     },
 });
-export function cn(...窾壍: ClassValue[]): string {
-    return 寏壍(clsx(窾壍));
+export function cn(...inputs: ClassValue[]): string {
+    return twMerge(clsx(inputs));
 }

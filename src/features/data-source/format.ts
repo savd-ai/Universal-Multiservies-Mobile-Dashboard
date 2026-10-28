@@ -1,52 +1,52 @@
-export function formatAccountId(脇壍: string): string {
-    return /^\d{10}$/.test(脇壍) ? `${脇壍.slice(0, 3)}-${脇壍.slice(3, 6)}-${脇壍.slice(6)}` : 脇壍;
+export function formatAccountId(id: string): string {
+    return /^\d{10}$/.test(id) ? `${id.slice(0, 3)}-${id.slice(3, 6)}-${id.slice(6)}` : id;
 }
-export function timeAgo(鿶壍: string, 泥壍: number): string {
-    const 诔壍 = Date.parse(鿶壍);
-    if (!Number.isFinite(诔壍))
+export function timeAgo(iso: string, now: number): string {
+    const t = Date.parse(iso);
+    if (!Number.isFinite(t))
         return "—";
-    const 壃壍 = Math.max(0, Math.round((泥壍 - 诔壍) / 1000));
-    if (壃壍 < 45)
+    const s = Math.max(0, Math.round((now - t) / 1000));
+    if (s < 45)
         return "just now";
-    if (壃壍 < 3600)
-        return `${Math.max(1, Math.round(壃壍 / 60))}m ago`;
-    if (壃壍 < 86400)
-        return `${Math.round(壃壍 / 3600)}h ago`;
-    if (壃壍 < 7 * 86400)
-        return `${Math.round(壃壍 / 86400)}d ago`;
-    return formatDateTime(鿶壍, "UTC", false);
+    if (s < 3600)
+        return `${Math.max(1, Math.round(s / 60))}m ago`;
+    if (s < 86400)
+        return `${Math.round(s / 3600)}h ago`;
+    if (s < 7 * 86400)
+        return `${Math.round(s / 86400)}d ago`;
+    return formatDateTime(iso, "UTC", false);
 }
-export function formatDateTime(瞲壍: string, 隡壍: string, 掐壍 = true): string {
-    const 艿壍 = new Date(瞲壍);
-    if (!Number.isFinite(艿壍.getTime()))
+export function formatDateTime(iso: string, timeZone: string, withTime = true): string {
+    const d = new Date(iso);
+    if (!Number.isFinite(d.getTime()))
         return "—";
     try {
-        return new Intl.DateTimeFormat("en-US", { timeZone: 隡壍, month: "short", day: "numeric", ...(掐壍 ? { hour: "2-digit", minute: "2-digit", hourCycle: "h23" } : { year: "numeric" }) }).format(艿壍);
+        return new Intl.DateTimeFormat("en-US", { timeZone, month: "short", day: "numeric", ...(withTime ? { hour: "2-digit", minute: "2-digit", hourCycle: "h23" } : { year: "numeric" }) }).format(d);
     }
     catch {
-        return 艿壍.toISOString().slice(0, 掐壍 ? 16 : 10).replace("T", " ");
+        return d.toISOString().slice(0, withTime ? 16 : 10).replace("T", " ");
     }
 }
-export function formatInterval(佮壍: number): string {
-    if (!佮壍)
+export function formatInterval(seconds: number): string {
+    if (!seconds)
         return "Off";
-    if (佮壍 < 60)
-        return `${佮壍} s`;
-    if (佮壍 < 3600)
-        return `${Math.round(佮壍 / 60)} min`;
-    return `${Math.round(佮壍 / 3600)} h`;
+    if (seconds < 60)
+        return `${seconds} s`;
+    if (seconds < 3600)
+        return `${Math.round(seconds / 60)} min`;
+    return `${Math.round(seconds / 3600)} h`;
 }
-export function parseTerms(湝壍: string, 赌壍 = 50, 娻壍 = 60): string[] {
-    const 礪壍: string[] = [];
-    const 頙壍 = new Set<string>();
-    for (const 攈壍 of 湝壍.split(/[,\n]/)) {
-        const 菷壍 = 攈壍.trim().slice(0, 娻壍);
-        if (!菷壍 || 頙壍.has(菷壍.toLowerCase()))
+export function parseTerms(text: string, max = 50, maxLen = 60): string[] {
+    const out: string[] = [];
+    const seen = new Set<string>();
+    for (const raw of text.split(/[,\n]/)) {
+        const t = raw.trim().slice(0, maxLen);
+        if (!t || seen.has(t.toLowerCase()))
             continue;
-        頙壍.add(菷壍.toLowerCase());
-        礪壍.push(菷壍);
-        if (礪壍.length >= 赌壍)
+        seen.add(t.toLowerCase());
+        out.push(t);
+        if (out.length >= max)
             break;
     }
-    return 礪壍;
+    return out;
 }

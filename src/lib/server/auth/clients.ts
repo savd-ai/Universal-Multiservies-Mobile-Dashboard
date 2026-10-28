@@ -16,151 +16,151 @@ export async function listClientRecords(): Promise<ClientRecord[]> {
 }
 export async function directoryAccounts(): Promise<AccountInfo[]> {
     try {
-        const { source: 粆壍 } = await resolveGoogleAds();
-        return (await 粆壍.listAccounts()).filter((魵壍) => !魵壍.isManager);
+        const { source } = await resolveGoogleAds();
+        return (await source.listAccounts()).filter((a) => !a.isManager);
     }
-    catch (桤壍) {
-        log.warn("account directory unavailable", { error: (桤壍 as Error).message });
+    catch (err) {
+        log.warn("account directory unavailable", { error: (err as Error).message });
         return [];
     }
 }
-async function 蝓壍(): Promise<Map<string, number>> {
-    const 呂壍 = new Map<string, number>();
-    for (const 猱壍 of await getGlobalStore().users.list())
-        if (猱壍.clientId)
-            呂壍.set(猱壍.clientId, (呂壍.get(猱壍.clientId) ?? 0) + 1);
-    return 呂壍;
+async function userCounts(): Promise<Map<string, number>> {
+    const counts = new Map<string, number>();
+    for (const u of await getGlobalStore().users.list())
+        if (u.clientId)
+            counts.set(u.clientId, (counts.get(u.clientId) ?? 0) + 1);
+    return counts;
 }
-function 鈠壍(式壍: ClientRecord, 緾壍: readonly AccountInfo[], 鳭壍: Map<string, number>): ClientView {
-    const 槜壍 = new Map(緾壍.map((裋壍) => [裋壍.id, 裋壍]));
+function toView(c: ClientRecord, directory: readonly AccountInfo[], users: Map<string, number>): ClientView {
+    const known = new Map(directory.map((a) => [a.id, a]));
     return {
-        id: 式壍.id,
-        name: 式壍.name,
-        notes: 式壍.notes,
-        accountIds: [...式壍.accountIds],
-        accounts: 式壍.accountIds.flatMap((喺壍) => {
-            const 璩壍 = 槜壍.get(喺壍);
-            return 璩壍 ? [{ id: 璩壍.id, name: 璩壍.name, currency: 璩壍.currency }] : [];
+        id: c.id,
+        name: c.name,
+        notes: c.notes,
+        accountIds: [...c.accountIds],
+        accounts: c.accountIds.flatMap((id) => {
+            const a = known.get(id);
+            return a ? [{ id: a.id, name: a.name, currency: a.currency }] : [];
         }),
-        missingAccountIds: 緾壍.length ? 式壍.accountIds.filter((鎘壍) => !槜壍.has(鎘壍)) : [],
-        userCount: 鳭壍.get(式壍.id) ?? 0,
-        createdAt: 式壍.createdAt,
-        updatedAt: 式壍.updatedAt,
+        missingAccountIds: directory.length ? c.accountIds.filter((id) => !known.has(id)) : [],
+        userCount: users.get(c.id) ?? 0,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
     };
 }
 export async function listClients(): Promise<ClientView[]> {
-    const [悇壍, 罶壍, 鹥壍] = await Promise.all([listClientRecords(), directoryAccounts(), 蝓壍()]);
-    return 悇壍.sort((歔壍, 詃壍) => 歔壍.name.localeCompare(詃壍.name)).map((圲壍) => 鈠壍(圲壍, 罶壍, 鹥壍));
+    const [clients, directory, users] = await Promise.all([listClientRecords(), directoryAccounts(), userCounts()]);
+    return clients.sort((a, b) => a.name.localeCompare(b.name)).map((c) => toView(c, directory, users));
 }
 export async function accountDirectory(): Promise<DirectoryAccount[]> {
-    const [瘡壍, 锐壍] = await Promise.all([listClientRecords(), directoryAccounts()]);
-    return 锐壍.map((懿壍) => {
-        const 胮壍 = clientForAccount(懿壍.id, 瘡壍);
-        return { id: 懿壍.id, name: 懿壍.name, currency: 懿壍.currency, clientId: 胮壍?.id ?? null, clientName: 胮壍?.name ?? null };
+    const [clients, directory] = await Promise.all([listClientRecords(), directoryAccounts()]);
+    return directory.map((a) => {
+        const owner = clientForAccount(a.id, clients);
+        return { id: a.id, name: a.name, currency: a.currency, clientId: owner?.id ?? null, clientName: owner?.name ?? null };
     });
 }
-async function 鿝壍(泌壍: readonly string[], 讻壍: string | null): Promise<void> {
-    const 墪壍 = await listClientRecords();
-    const 瞙壍 = 泌壍.flatMap((隈壍) => {
-        const 捷壍 = clientForAccount(隈壍, 墪壍);
-        return 捷壍 && 捷壍.id !== 讻壍 ? [`${隈壍} (${捷壍.name})`] : [];
+async function assertAssignable(accountIds: readonly string[], clientId: string | null): Promise<void> {
+    const clients = await listClientRecords();
+    const taken = accountIds.flatMap((id) => {
+        const owner = clientForAccount(id, clients);
+        return owner && owner.id !== clientId ? [`${id} (${owner.name})`] : [];
     });
-    if (瞙壍.length)
-        throw new AppError("CONFLICT", `Already assigned to another client: ${瞙壍.join(", ")}. Remove it there first.`);
-    const 艦壍 = await directoryAccounts();
-    if (艦壍.length) {
-        const 何壍 = new Set(艦壍.map((湄壍) => 湄壍.id));
-        const 贳壍 = 泌壍.filter((娢壍) => !何壍.has(娢壍));
-        if (贳壍.length)
-            throw new AppError("VALIDATION_ERROR", `Not reachable with the agency's Google Ads credentials: ${贳壍.join(", ")}`);
+    if (taken.length)
+        throw new AppError("CONFLICT", `Already assigned to another client: ${taken.join(", ")}. Remove it there first.`);
+    const directory = await directoryAccounts();
+    if (directory.length) {
+        const known = new Set(directory.map((a) => a.id));
+        const unknown = accountIds.filter((id) => !known.has(id));
+        if (unknown.length)
+            throw new AppError("VALIDATION_ERROR", `Not reachable with the agency's Google Ads credentials: ${unknown.join(", ")}`);
     }
 }
-async function 礑壍<T extends BaseRecord>(頀壍: Collection<T>, 擯壍: Collection<T>, 菞壍: (働壍: T) => boolean): Promise<number> {
-    const 澼壍 = await 頀壍.take(菞壍);
-    await 擯壍.restore(澼壍);
-    return 澼壍.length;
+async function move<T extends BaseRecord>(collection: Collection<T>, to: Collection<T>, filter: (t: T) => boolean): Promise<number> {
+    const taken = await collection.take(filter);
+    await to.restore(taken);
+    return taken.length;
 }
-export async function moveAccountData(身壍: readonly string[], 定壍: string, 窉壍: string): Promise<number> {
-    if (定壍 === 窉壍 || !身壍.length)
+export async function moveAccountData(accountIds: readonly string[], fromWs: string, toWs: string): Promise<number> {
+    if (fromWs === toWs || !accountIds.length)
         return 0;
-    const 饸壍 = new Set(身壍);
-    const 晧壍 = getWorkspaceStore(定壍);
-    const 蕖壍 = getWorkspaceStore(窉壍);
-    const 剅壍 = (焴壍: string) => 焴壍.split(":")[1] ?? "";
-    const 連壍 = await Promise.all([
-        礑壍(晧壍.signalStates as unknown as Collection<BaseRecord & {
+    const ids = new Set(accountIds);
+    const src = getWorkspaceStore(fromWs);
+    const dst = getWorkspaceStore(toWs);
+    const acct = (key: string) => key.split(":")[1] ?? "";
+    const counts = await Promise.all([
+        move(src.signalStates as unknown as Collection<BaseRecord & {
             scopeKey: string;
-        }>, 蕖壍.signalStates as unknown as Collection<BaseRecord & {
+        }>, dst.signalStates as unknown as Collection<BaseRecord & {
             scopeKey: string;
-        }>, (崒壍) => 饸壍.has(剅壍(崒壍.scopeKey))),
-        礑壍(晧壍.budgetTargets, 蕖壍.budgetTargets, (簁壍) => 饸壍.has(剅壍(簁壍.id))),
-        礑壍(晧壍.budgetPlans, 蕖壍.budgetPlans, (髰壍) => !!髰壍.accountId && 饸壍.has(髰壍.accountId)),
-        礑壍(晧壍.annotations, 蕖壍.annotations, (柟壍) => !!柟壍.accountId && 饸壍.has(柟壍.accountId)),
+        }>, (r) => ids.has(acct(r.scopeKey))),
+        move(src.budgetTargets, dst.budgetTargets, (r) => ids.has(acct(r.id))),
+        move(src.budgetPlans, dst.budgetPlans, (r) => !!r.accountId && ids.has(r.accountId)),
+        move(src.annotations, dst.annotations, (r) => !!r.accountId && ids.has(r.accountId)),
     ]);
-    return 連壍.reduce((蛎壍, 厽壍) => 蛎壍 + 厽壍, 0);
+    return counts.reduce((a, b) => a + b, 0);
 }
-async function 犬壍(醛壍: ClientRecord, 床壍: ClientInput["startFrom"], 絹壍?: Partial<ReturnType<typeof defaultSettings>>): Promise<void> {
-    const 鱨壍 = getWorkspaceStore(醛壍.id);
-    const 楗壍 = 醛壍.name.split(/\s+/)[0]?.toLowerCase().replace(/[^a-z0-9]/g, "") ?? "";
-    await 鱨壍.settings.set({ ...defaultSettings(), businessContext: "", brandTerms: 楗壍 ? [楗壍] : [], competitorTerms: [], ...絹壍 });
-    if (床壍 !== "agency")
+async function initWorkspace(client: ClientRecord, startFrom: ClientInput["startFrom"], settingsOverride?: Partial<ReturnType<typeof defaultSettings>>): Promise<void> {
+    const ws = getWorkspaceStore(client.id);
+    const brand = client.name.split(/\s+/)[0]?.toLowerCase().replace(/[^a-z0-9]/g, "") ?? "";
+    await ws.settings.set({ ...defaultSettings(), businessContext: "", brandTerms: brand ? [brand] : [], competitorTerms: [], ...settingsOverride });
+    if (startFrom !== "agency")
         return;
-    const 衆壍 = getWorkspaceStore(AGENCY_WORKSPACE);
-    const [唵壍, 琤壍, 錓壍, 怂壍] = await Promise.all([衆壍.dashboards.list(), 衆壍.questions.list(), 衆壍.customMetrics.list(), 衆壍.anomalySettings.get()]);
-    await 鱨壍.dashboards.take(() => true);
-    await 鱨壍.dashboards.restore(唵壍);
-    await 鱨壍.questions.restore(琤壍);
-    await 鱨壍.customMetrics.restore(錓壍);
-    await 鱨壍.anomalySettings.set(怂壍);
+    const agency = getWorkspaceStore(AGENCY_WORKSPACE);
+    const [dashboards, questions, metrics, anomaly] = await Promise.all([agency.dashboards.list(), agency.questions.list(), agency.customMetrics.list(), agency.anomalySettings.get()]);
+    await ws.dashboards.take(() => true);
+    await ws.dashboards.restore(dashboards);
+    await ws.questions.restore(questions);
+    await ws.customMetrics.restore(metrics);
+    await ws.anomalySettings.set(anomaly);
 }
-function 绱壍(): string {
+function newClientId(): string {
     return `c-${randomBytes(5).toString("hex")}`;
 }
-export async function createClient(鷠壍: ClientInput, 櫏壍: {
+export async function createClient(input: ClientInput, opts: {
     settings?: Partial<ReturnType<typeof defaultSettings>>;
 } = {}): Promise<ClientView> {
-    const 覾壍 = [...new Set(鷠壍.accountIds)];
-    await 鿝壍(覾壍, null);
-    const 嚭壍 = getGlobalStore();
-    if ((await 嚭壍.clients.list((疜壍) => 疜壍.name.toLowerCase() === 鷠壍.name.toLowerCase())).length)
+    const accountIds = [...new Set(input.accountIds)];
+    await assertAssignable(accountIds, null);
+    const store = getGlobalStore();
+    if ((await store.clients.list((c) => c.name.toLowerCase() === input.name.toLowerCase())).length)
         throw new AppError("CONFLICT", "A client with this name already exists");
-    const 钋壍 = await 嚭壍.clients.create({ id: 绱壍(), name: 鷠壍.name, accountIds: 覾壍, notes: 鷠壍.notes });
-    await 犬壍(钋壍, 鷠壍.startFrom, 櫏壍.settings);
-    const 慺壍 = await moveAccountData(覾壍, AGENCY_WORKSPACE, 钋壍.id);
+    const client = await store.clients.create({ id: newClientId(), name: input.name, accountIds, notes: input.notes });
+    await initWorkspace(client, input.startFrom, opts.settings);
+    const moved = await moveAccountData(accountIds, AGENCY_WORKSPACE, client.id);
     invalidateQueryCache();
-    await audit({ actor: "user", action: "client.create", target: 钋壍.name, summary: `Created client ${钋壍.name} with ${覾壍.length} account(s)`, details: { clientId: 钋壍.id, accountIds: 覾壍, movedRecords: 慺壍 } });
-    return 鈠壍(钋壍, await directoryAccounts(), await 蝓壍());
+    await audit({ actor: "user", action: "client.create", target: client.name, summary: `Created client ${client.name} with ${accountIds.length} account(s)`, details: { clientId: client.id, accountIds, movedRecords: moved } });
+    return toView(client, await directoryAccounts(), await userCounts());
 }
-export async function updateClient(聩壍: string, 齘壍: Partial<Omit<ClientInput, "startFrom">>): Promise<ClientView> {
-    const 汇壍 = getGlobalStore();
-    const 謶壍 = await 汇壍.clients.get(聩壍);
-    if (!謶壍)
+export async function updateClient(id: string, patch: Partial<Omit<ClientInput, "startFrom">>): Promise<ClientView> {
+    const store = getGlobalStore();
+    const prev = await store.clients.get(id);
+    if (!prev)
         throw new AppError("NOT_FOUND", "Client not found");
-    if (齘壍.name && 齘壍.name.toLowerCase() !== 謶壍.name.toLowerCase() && (await 汇壍.clients.list((堥壍) => 堥壍.id !== 聩壍 && 堥壍.name.toLowerCase() === 齘壍.name!.toLowerCase())).length) {
+    if (patch.name && patch.name.toLowerCase() !== prev.name.toLowerCase() && (await store.clients.list((c) => c.id !== id && c.name.toLowerCase() === patch.name!.toLowerCase())).length) {
         throw new AppError("CONFLICT", "A client with this name already exists");
     }
-    const 眔壍 = 齘壍.accountIds ? [...new Set(齘壍.accountIds)] : 謶壍.accountIds;
-    const 阃壍 = 眔壍.filter((拲壍) => !謶壍.accountIds.includes(拲壍));
-    const 臡壍 = 謶壍.accountIds.filter((仐壍) => !眔壍.includes(仐壍));
-    if (阃壍.length)
-        await 鿝壍(阃壍, 聩壍);
-    const 涿壍 = await 汇壍.clients.update(聩壍, { name: 齘壍.name ?? 謶壍.name, notes: 齘壍.notes ?? 謶壍.notes, accountIds: 眔壍 });
-    const 貮壍 = (await moveAccountData(阃壍, AGENCY_WORKSPACE, 聩壍)) + (await moveAccountData(臡壍, 聩壍, AGENCY_WORKSPACE));
-    if (阃壍.length || 臡壍.length)
+    const accountIds = patch.accountIds ? [...new Set(patch.accountIds)] : prev.accountIds;
+    const added = accountIds.filter((a) => !prev.accountIds.includes(a));
+    const removed = prev.accountIds.filter((a) => !accountIds.includes(a));
+    if (added.length)
+        await assertAssignable(added, id);
+    const next = await store.clients.update(id, { name: patch.name ?? prev.name, notes: patch.notes ?? prev.notes, accountIds });
+    const moved = (await moveAccountData(added, AGENCY_WORKSPACE, id)) + (await moveAccountData(removed, id, AGENCY_WORKSPACE));
+    if (added.length || removed.length)
         invalidateQueryCache();
-    await audit({ actor: "user", action: "client.update", target: 涿壍.name, summary: `Updated client ${涿壍.name}`, details: { clientId: 聩壍, added: 阃壍, removed: 臡壍, movedRecords: 貮壍 } });
-    return 鈠壍(涿壍, await directoryAccounts(), await 蝓壍());
+    await audit({ actor: "user", action: "client.update", target: next.name, summary: `Updated client ${next.name}`, details: { clientId: id, added, removed, movedRecords: moved } });
+    return toView(next, await directoryAccounts(), await userCounts());
 }
-export async function deleteClient(妝壍: string): Promise<void> {
-    const 碌壍 = getGlobalStore();
-    const 靻壍 = await 碌壍.clients.get(妝壍);
-    if (!靻壍)
+export async function deleteClient(id: string): Promise<void> {
+    const store = getGlobalStore();
+    const prev = await store.clients.get(id);
+    if (!prev)
         throw new AppError("NOT_FOUND", "Client not found");
-    const 摪壍 = await 碌壍.users.list((荙壍) => 荙壍.clientId === 妝壍);
-    if (摪壍.length)
-        throw new AppError("CONFLICT", `Remove or move this client's ${摪壍.length} user(s) first`);
-    await moveAccountData(靻壍.accountIds, 妝壍, AGENCY_WORKSPACE);
-    await 碌壍.clients.delete(妝壍);
+    const users = await store.users.list((u) => u.clientId === id);
+    if (users.length)
+        throw new AppError("CONFLICT", `Remove or move this client's ${users.length} user(s) first`);
+    await moveAccountData(prev.accountIds, id, AGENCY_WORKSPACE);
+    await store.clients.delete(id);
     invalidateQueryCache();
-    await audit({ actor: "user", action: "client.delete", target: 靻壍.name, summary: `Deleted client ${靻壍.name}; its accounts returned to the agency`, details: { clientId: 妝壍, accountIds: 靻壍.accountIds } });
+    await audit({ actor: "user", action: "client.delete", target: prev.name, summary: `Deleted client ${prev.name}; its accounts returned to the agency`, details: { clientId: id, accountIds: prev.accountIds } });
 }

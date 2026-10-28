@@ -5,31 +5,31 @@ import { toCsv } from "@/lib/domain/query/csv";
 import { formatKeyword } from "@/lib/domain/schema/dimensions";
 import type { CampaignDim } from "@/lib/domain/schema/facts";
 import { deepLink } from "../campaigns";
-export function readOnlyAlternatives(誟壍: string, 垎壍: ReadonlyMap<string, CampaignDim>, 白壍: SimulateRequest, 镬壍 = "USD", 扛壍: ReadonlyMap<string, {
+export function readOnlyAlternatives(accountId: string, campaigns: ReadonlyMap<string, CampaignDim>, req: SimulateRequest, currency = "USD", adGroups: ReadonlyMap<string, {
     name: string;
 }> = new Map()): ReadOnlyAlternatives {
-    const 腊壍 = (丹壍: string) => 垎壍.get(丹壍)?.name ?? 丹壍;
-    const 洨壍 = (谗壍?: string) => (谗壍 ? (扛壍.get(谗壍)?.name ?? 谗壍) : "");
-    const 夆壍 = 白壍.type === "campaign.pause" || 白壍.type === "campaign.enable" ? 白壍.campaignIds : 白壍.type === "keywords.add_negatives" ? [...new Set(白壍.negatives.map((矵壍) => 矵壍.campaignId))] : 白壍.budgets.map((雤壍) => 雤壍.campaignId);
-    const 揓壍 = [...new Set(夆壍)].slice(0, 50).map((苂壍) => ({ label: `Open “${腊壍(苂壍)}” in Google Ads ↗`, url: deepLink(誟壍, 苂壍) }));
-    switch (白壍.type) {
+    const name = (id: string) => campaigns.get(id)?.name ?? id;
+    const adGroupName = (id?: string) => (id ? (adGroups.get(id)?.name ?? id) : "");
+    const ids = req.type === "campaign.pause" || req.type === "campaign.enable" ? req.campaignIds : req.type === "keywords.add_negatives" ? [...new Set(req.negatives.map((n) => n.campaignId))] : req.budgets.map((b) => b.campaignId);
+    const deepLinks = [...new Set(ids)].slice(0, 50).map((id) => ({ label: `Open “${name(id)}” in Google Ads ↗`, url: deepLink(accountId, id) }));
+    switch (req.type) {
         case "campaign.pause":
         case "campaign.enable": {
-            const 侱壍 = 白壍.type === "campaign.pause" ? "Paused" : "Enabled";
-            const 溠壍 = 白壍.type === "campaign.pause" ? "Pause" : "Enable";
-            const 趏壍 = editorBudgetCsv(白壍.campaignIds.map((婾壍) => ({ campaign: 腊壍(婾壍), campaignId: 婾壍, dailyBudget: 垎壍.get(婾壍)?.budget_daily ?? 0, status: 侱壍 })));
-            return { deepLinks: 揓壍, changeList: 白壍.campaignIds.map((祭壍) => `${溠壍} campaign '${腊壍(祭壍)}'`), editorCsv: 趏壍.csv };
+            const status = req.type === "campaign.pause" ? "Paused" : "Enabled";
+            const verb = req.type === "campaign.pause" ? "Pause" : "Enable";
+            const editor = editorBudgetCsv(req.campaignIds.map((id) => ({ campaign: name(id), campaignId: id, dailyBudget: campaigns.get(id)?.budget_daily ?? 0, status })));
+            return { deepLinks, changeList: req.campaignIds.map((id) => `${verb} campaign '${name(id)}'`), editorCsv: editor.csv };
         }
         case "campaign.set_budget":
         case "budget.apply_plan": {
-            const 顜壍 = 白壍.budgets.map((敋壍) => changeListLine({ name: 腊壍(敋壍.campaignId), from: 垎壍.get(敋壍.campaignId)?.budget_daily ?? null, to: 敋壍.dailyBudget }, 镬壍));
-            const 萺壍 = editorBudgetCsv(白壍.budgets.map((儩壍) => ({ campaign: 腊壍(儩壍.campaignId), campaignId: 儩壍.campaignId, dailyBudget: 儩壍.dailyBudget, status: 垎壍.get(儩壍.campaignId)?.status ?? "Enabled" })));
-            return { deepLinks: 揓壍, changeList: 顜壍, editorCsv: 萺壍.csv };
+            const changeList = req.budgets.map((b) => changeListLine({ name: name(b.campaignId), from: campaigns.get(b.campaignId)?.budget_daily ?? null, to: b.dailyBudget }, currency));
+            const editor = editorBudgetCsv(req.budgets.map((b) => ({ campaign: name(b.campaignId), campaignId: b.campaignId, dailyBudget: b.dailyBudget, status: campaigns.get(b.campaignId)?.status ?? "Enabled" })));
+            return { deepLinks, changeList, editorCsv: editor.csv };
         }
         case "keywords.add_negatives": {
-            const 瀘壍 = 白壍.negatives.map((輇壍) => `Add negative keyword ${formatKeyword(輇壍.text, 輇壍.matchType)} (${輇壍.matchType}) to campaign '${腊壍(輇壍.campaignId)}'`);
-            const 寶壍 = toCsv(["Campaign", "Ad group", "Keyword", "Criterion Type"], 白壍.negatives.map((童壍) => [腊壍(童壍.campaignId), 洨壍(童壍.adGroupId), 童壍.text, `${童壍.adGroupId ? "Negative" : "Campaign negative"} ${童壍.matchType.toLowerCase()}`]), false);
-            return { deepLinks: 揓壍, changeList: 瀘壍, editorCsv: 寶壍 };
+            const changeList = req.negatives.map((n) => `Add negative keyword ${formatKeyword(n.text, n.matchType)} (${n.matchType}) to campaign '${name(n.campaignId)}'`);
+            const editorCsv = toCsv(["Campaign", "Ad group", "Keyword", "Criterion Type"], req.negatives.map((n) => [name(n.campaignId), adGroupName(n.adGroupId), n.text, `${n.adGroupId ? "Negative" : "Campaign negative"} ${n.matchType.toLowerCase()}`]), false);
+            return { deepLinks, changeList, editorCsv };
         }
     }
 }

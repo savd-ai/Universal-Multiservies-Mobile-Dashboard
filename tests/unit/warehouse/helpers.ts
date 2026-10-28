@@ -10,16 +10,16 @@ import type { Warehouse } from "@/lib/server/warehouse";
 import { WarehouseRepo } from "@/lib/server/warehouse/repo";
 import { migrate } from "@/lib/server/warehouse/schema";
 import { openDatabase } from "@/lib/server/warehouse/sqlite";
-export function memoryWarehouse(樃壍: "live" | "blank" = "live"): Warehouse {
-    const 裲壍 = openDatabase(":memory:");
-    migrate(裲壍, "2026-09-29T00:00:00.000Z");
-    return { mode: 樃壍, repo: new WarehouseRepo(裲壍), location: ":memory:", sqliteVersion: null, knownAccounts: new Set() };
+export function memoryWarehouse(mode: "live" | "blank" = "live"): Warehouse {
+    const db = openDatabase(":memory:");
+    migrate(db, "2026-09-29T00:00:00.000Z");
+    return { mode, repo: new WarehouseRepo(db), location: ":memory:", sqliteVersion: null, knownAccounts: new Set() };
 }
-export function sorted(嗡壍: readonly Record<string, unknown>[]): Record<string, unknown>[] {
-    const 瓐壍 = 嗡壍.map((鎿壍) => ({ row: { ...鎿壍 }, key: JSON.stringify(Object.keys(鎿壍).sort().map((悮壍) => [悮壍, 鎿壍[悮壍]])) }));
-    return 瓐壍.sort((羝壍, 麌壍) => (羝壍.key < 麌壍.key ? -1 : 羝壍.key > 麌壍.key ? 1 : 0)).map((死壍) => 死壍.row);
+export function sorted(rows: readonly Record<string, unknown>[]): Record<string, unknown>[] {
+    const keyed = rows.map((r) => ({ row: { ...r }, key: JSON.stringify(Object.keys(r).sort().map((k) => [k, r[k]])) }));
+    return keyed.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)).map((k) => k.row);
 }
-const 詪壍: Record<GoogleTableId, number> = {
+const DATASET_DAYS: Record<GoogleTableId, number> = {
     campaign_daily: 400,
     campaign_device_daily: 400,
     campaign_geo_daily: 180,
@@ -67,25 +67,25 @@ export class FakeLiveSource implements GoogleAdsSource {
         this.dimsCalls++;
         return this.dims;
     }
-    async coverage(坙壍: string, 癈壍: GoogleTableId): Promise<DateRange> {
-        const 锷壍 = this.googleDays[癈壍] ?? 詪壍[癈壍];
-        const 戦壍 = addDays(this.ds.anchor, -(詪壍[癈壍] - 1));
-        return { start: maxDate(戦壍, addDays(this.todayValue, -(锷壍 - 1))), end: this.todayValue };
+    async coverage(_accountId: string, table: GoogleTableId): Promise<DateRange> {
+        const days = this.googleDays[table] ?? DATASET_DAYS[table];
+        const datasetStart = addDays(this.ds.anchor, -(DATASET_DAYS[table] - 1));
+        return { start: maxDate(datasetStart, addDays(this.todayValue, -(days - 1))), end: this.todayValue };
     }
-    async getTable(脕壍: string, 丄壍: GoogleTableId, 泳壍: DateRange): Promise<FactSlice> {
-        this.calls.push({ table: 丄壍, range: { ...泳壍 } });
-        if (this.failTables.has(丄壍))
-            throw new Error(`${丄壍} is unavailable`);
-        const 询壍 = await this.coverage(脕壍, 丄壍);
-        const 壑壍 = maxDate(泳壍.start, 询壍.start);
-        const 矀壍 = minDate(泳壍.end, 询壍.end);
-        const 隯壍 = (this.ds.tables[丄壍] as unknown as Record<string, unknown>[]).filter((掞壍) => typeof 掞壍.date === "string" && 掞壍.date >= 壑壍 && 掞壍.date <= 矀壍);
-        return { rows: 隯壍.map((芍壍) => ({ ...芍壍 })), grain: "daily", coverage: 询壍 };
+    async getTable(accountId: string, table: GoogleTableId, range: DateRange): Promise<FactSlice> {
+        this.calls.push({ table, range: { ...range } });
+        if (this.failTables.has(table))
+            throw new Error(`${table} is unavailable`);
+        const cov = await this.coverage(accountId, table);
+        const start = maxDate(range.start, cov.start);
+        const end = minDate(range.end, cov.end);
+        const rows = (this.ds.tables[table] as unknown as Record<string, unknown>[]).filter((r) => typeof r.date === "string" && r.date >= start && r.date <= end);
+        return { rows: rows.map((r) => ({ ...r })), grain: "daily", coverage: cov };
     }
-    async getChangeEvents(佼壍: string, 湫壍: DateRange): Promise<ChangeEvent[]> {
+    async getChangeEvents(_accountId: string, range: DateRange): Promise<ChangeEvent[]> {
         this.changeCalls++;
-        const 赚壍 = maxDate(湫壍.start, addDays(this.todayValue, -29));
-        return this.ds.changeEvents.filter((婉壍) => 婉壍.date >= 赚壍 && 婉壍.date <= 湫壍.end).map((礸壍) => ({ ...礸壍 }));
+        const maxDate2 = maxDate(range.start, addDays(this.todayValue, -29));
+        return this.ds.changeEvents.filter((e) => e.date >= maxDate2 && e.date <= range.end).map((e) => ({ ...e }));
     }
     async getGoogleEstimates(): Promise<GoogleEstimates> {
         this.estimateCalls++;

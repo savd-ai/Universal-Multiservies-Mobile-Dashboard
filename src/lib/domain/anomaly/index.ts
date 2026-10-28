@@ -31,14 +31,14 @@ export interface DetectionResult {
     signals: Signal[];
     warnings: string[];
 }
-export function isMonitorable(辭壍: CampaignDim | undefined, 岜壍: AnomalySettings, 箋壍: CivilDate): boolean {
-    if (!辭壍)
+export function isMonitorable(c: CampaignDim | undefined, settings: AnomalySettings, dataThrough: CivilDate): boolean {
+    if (!c)
         return false;
-    if (辭壍.status !== "Enabled")
+    if (c.status !== "Enabled")
         return false;
-    if (岜壍.excludeCampaignIds.includes(辭壍.id))
+    if (settings.excludeCampaignIds.includes(c.id))
         return false;
-    if (辭壍.end && 辭壍.end < 箋壍)
+    if (c.end && c.end < dataThrough)
         return false;
     return true;
 }
@@ -49,53 +49,53 @@ interface Prepared {
     account: EntitySeries;
     dates: CivilDate[];
 }
-function 驺壍(杩壍: DetectionInput): Prepared {
-    const 虘壍 = addDays(杩壍.dataThrough, -(DETECTION_LOOKBACK_DAYS - 1));
-    const 升壍 = buildCampaignSeries(杩壍.rows, 杩壍.campaigns, 虘壍, 杩壍.dataThrough);
-    const 父壍 = [...升壍.values()].filter((鄥壍) => isMonitorable(鄥壍.campaign, 杩壍.settings, 杩壍.dataThrough));
-    const 帔壍 = enumerate(虘壍, 杩壍.dataThrough);
-    const 紃壍 = combineSeries(杩壍.accountId, 杩壍.accountName, [...升壍.values()], 帔壍);
-    const 鯲壍: DetectorContext = {
-        accountId: 杩壍.accountId,
-        accountName: 杩壍.accountName,
-        mode: 杩壍.mode,
-        currency: 杩壍.currency,
-        dataThrough: 杩壍.dataThrough,
-        now: 杩壍.now,
-        settings: 杩壍.settings,
-        conversionLag: 杩壍.conversionLag ?? false,
-        registry: 杩壍.registry,
+function prepare(input: DetectionInput): Prepared {
+    const start = addDays(input.dataThrough, -(DETECTION_LOOKBACK_DAYS - 1));
+    const all = buildCampaignSeries(input.rows, input.campaigns, start, input.dataThrough);
+    const monitorable = [...all.values()].filter((s) => isMonitorable(s.campaign, input.settings, input.dataThrough));
+    const dates = enumerate(start, input.dataThrough);
+    const account = combineSeries(input.accountId, input.accountName, [...all.values()], dates);
+    const ctx: DetectorContext = {
+        accountId: input.accountId,
+        accountName: input.accountName,
+        mode: input.mode,
+        currency: input.currency,
+        dataThrough: input.dataThrough,
+        now: input.now,
+        settings: input.settings,
+        conversionLag: input.conversionLag ?? false,
+        registry: input.registry,
     };
-    return { ctx: 鯲壍, all: 升壍, monitorable: 父壍, account: 紃壍, dates: 帔壍 };
+    return { ctx, all, monitorable, account, dates };
 }
-export function detectSignals(棡壍: DetectionInput): DetectionResult {
-    const { ctx: 蟐壍, all: 咿壍, monitorable: 玮壍, account: 銝壍, dates: 後壍 } = 驺壍(棡壍);
-    const 繻壍: string[] = [];
-    const 鵪壍: Signal[] = [];
-    if (!後壍.length)
-        return { signals: [], warnings: 繻壍 };
-    detectZscore(蟐壍, 玮壍, 鵪壍);
-    detectRobust(蟐壍, 玮壍, 鵪壍);
-    detectSeasonal(蟐壍, 玮壍, 鵪壍);
-    detectThreshold(蟐壍, 玮壍, 銝壍, 鵪壍, 繻壍);
-    detectPacing(蟐壍, 棡壍.pacing, 咿壍, 後壍, new Set(玮壍.map((橙壍) => 橙壍.id)), 鵪壍);
-    detectTrackingBreak(蟐壍, 玮壍, 鵪壍);
-    if (!鵪壍.some((襈壍) => 襈壍.kind === "tracking_break"))
-        detectTrackingBreak(蟐壍, [銝壍], 鵪壍);
-    detectZeroDelivery(蟐壍, 玮壍, 鵪壍);
-    detectBudgetLimited(蟐壍, 玮壍, [...咿壍.values()], 鵪壍);
-    const 嘷壍 = new Map((棡壍.pacing?.rows ?? []).filter((甦壍) => 甦壍.unitId.startsWith("budget:")).map((鐕壍) => [鐕壍.unitId, 鐕壍.campaignIds] as const));
-    const 愄壍 = absorbSymptoms(mergeSignals(鵪壍), 蟐壍.accountId);
-    const 翳壍 = correlateChanges(愄壍, 棡壍.changeEvents ?? [], {
-        settings: 棡壍.settings.changeHistory,
-        available: 棡壍.changeHistoryAvailable ?? 棡壍.changeEvents !== undefined,
-        from: 棡壍.changeHistoryFrom,
-        currency: 棡壍.currency,
-        unitCampaigns: 嘷壍,
+export function detectSignals(input: DetectionInput): DetectionResult {
+    const { ctx, all, monitorable, account, dates } = prepare(input);
+    const warnings: string[] = [];
+    const raw: Signal[] = [];
+    if (!dates.length)
+        return { signals: [], warnings };
+    detectZscore(ctx, monitorable, raw);
+    detectRobust(ctx, monitorable, raw);
+    detectSeasonal(ctx, monitorable, raw);
+    detectThreshold(ctx, monitorable, account, raw, warnings);
+    detectPacing(ctx, input.pacing, all, dates, new Set(monitorable.map((s) => s.id)), raw);
+    detectTrackingBreak(ctx, monitorable, raw);
+    if (!raw.some((s) => s.kind === "tracking_break"))
+        detectTrackingBreak(ctx, [account], raw);
+    detectZeroDelivery(ctx, monitorable, raw);
+    detectBudgetLimited(ctx, monitorable, [...all.values()], raw);
+    const unitCampaigns = new Map((input.pacing?.rows ?? []).filter((r) => r.unitId.startsWith("budget:")).map((r) => [r.unitId, r.campaignIds] as const));
+    const merged = absorbSymptoms(mergeSignals(raw), ctx.accountId);
+    const correlated = correlateChanges(merged, input.changeEvents ?? [], {
+        settings: input.settings.changeHistory,
+        available: input.changeHistoryAvailable ?? input.changeEvents !== undefined,
+        from: input.changeHistoryFrom,
+        currency: input.currency,
+        unitCampaigns,
     });
-    return { signals: sortSignals(翳壍), warnings: 繻壍 };
+    return { signals: sortSignals(correlated), warnings };
 }
-export function previewThresholdRule(黢壍: DetectionInput, 毑壍: ThresholdRule, 諀壍 = 30): {
+export function previewThresholdRule(input: DetectionInput, rule: ThresholdRule, days = 30): {
     date: CivilDate;
     hits: {
         entityId: string;
@@ -103,11 +103,11 @@ export function previewThresholdRule(黢壍: DetectionInput, 毑壍: ThresholdRu
         observed: number;
     }[];
 }[] {
-    const { monitorable: 垯壍, account: 皞壍 } = 驺壍(黢壍);
-    if (!黢壍.registry)
+    const { monitorable, account } = prepare(input);
+    if (!input.registry)
         return [];
-    const 閍壍 = ruleEntities(毑壍, 垯壍, 皞壍);
-    const 扼壍: {
+    const entities = ruleEntities(rule, monitorable, account);
+    const out: {
         date: CivilDate;
         hits: {
             entityId: string;
@@ -115,20 +115,20 @@ export function previewThresholdRule(黢壍: DetectionInput, 毑壍: ThresholdRu
             observed: number;
         }[];
     }[] = [];
-    const 腫壍 = 皞壍.days.length - 1;
-    for (let 乚壍 = Math.max(0, 腫壍 - 諀壍 + 1); 乚壍 <= 腫壍; 乚壍++) {
-        const 浉壍: {
+    const last = account.days.length - 1;
+    for (let end = Math.max(0, last - days + 1); end <= last; end++) {
+        const hits: {
             entityId: string;
             entityName: string;
             observed: number;
         }[] = [];
-        for (const 谸壍 of 閍壍) {
-            const 大壍 = evaluateRule(毑壍, 谸壍, 黢壍.registry, 乚壍);
-            if (大壍)
-                浉壍.push({ entityId: 谸壍 === 皞壍 ? 黢壍.accountId : 谸壍.id, entityName: 谸壍.name, observed: 大壍.observed });
+        for (const s of entities) {
+            const hit = evaluateRule(rule, s, input.registry, end);
+            if (hit)
+                hits.push({ entityId: s === account ? input.accountId : s.id, entityName: s.name, observed: hit.observed });
         }
-        扼壍.push({ date: dateAt(皞壍, 乚壍), hits: 浉壍 });
+        out.push({ date: dateAt(account, end), hits });
     }
-    return 扼壍;
+    return out;
 }
 export { AUTO_RESOLVE_AFTER, applySignalAction, joinSignals, planEvaluation, resolvedView } from "./lifecycle";

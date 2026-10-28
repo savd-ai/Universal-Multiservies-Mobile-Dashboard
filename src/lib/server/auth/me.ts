@@ -7,23 +7,23 @@ import { getGlobalStore } from "../store";
 import { listClientRecords } from "./clients";
 import { googleSignInEnabled } from "./google";
 import { toUserView } from "./users";
-export async function workspaceInfo(捠壍 = currentWorkspace()): Promise<WorkspaceInfo> {
-    if (捠壍 === AGENCY_WORKSPACE)
+export async function workspaceInfo(workspaceId = currentWorkspace()): Promise<WorkspaceInfo> {
+    if (workspaceId === AGENCY_WORKSPACE)
         return { id: AGENCY_WORKSPACE, kind: "agency", name: "SAVD agency" };
-    if (捠壍 === UNASSIGNED_WORKSPACE)
+    if (workspaceId === UNASSIGNED_WORKSPACE)
         return { id: UNASSIGNED_WORKSPACE, kind: "client", name: "No client yet" };
-    const 艏壍 = await getGlobalStore().clients.get(捠壍);
-    return { id: 捠壍, kind: "client", name: 艏壍?.name ?? "Client" };
+    const client = await getGlobalStore().clients.get(workspaceId);
+    return { id: workspaceId, kind: "client", name: client?.name ?? "Client" };
 }
-export async function buildMe(伾壍: Principal): Promise<MeResponse> {
-    const [渭壍, 贜壍] = await Promise.all([伾壍.userId ? getGlobalStore().users.get(伾壍.userId) : null, listClientRecords()]);
-    const 娋壍 = 渭壍?.clientId ? (贜壍.find((磺壍) => 磺壍.id === 渭壍.clientId)?.name ?? null) : null;
+export async function buildMe(principal: Principal): Promise<MeResponse> {
+    const [user, clients] = await Promise.all([principal.userId ? getGlobalStore().users.get(principal.userId) : null, listClientRecords()]);
+    const clientName = user?.clientId ? (clients.find((c) => c.id === user.clientId)?.name ?? null) : null;
     return {
         authMode: authConfig().mode,
-        user: 渭壍 ? toUserView(渭壍, 娋壍) : null,
-        permissions: permissionsFor(伾壍.role),
+        user: user ? toUserView(user, clientName) : null,
+        permissions: permissionsFor(principal.role),
         workspace: await workspaceInfo(),
         googleSignIn: googleSignInEnabled(),
-        mfaSetupRequired: !!伾壍.mfaSetupRequired,
+        mfaSetupRequired: !!principal.mfaSetupRequired,
     };
 }

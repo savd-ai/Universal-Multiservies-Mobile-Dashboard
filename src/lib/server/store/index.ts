@@ -31,9 +31,9 @@ export interface AppStore {
     scheduler: Singleton<SchedulerState>;
     audit: AppendLog<AuditEntry>;
 }
-function 刻壍(): Dashboard[] {
-    const 焪壍 = new Date().toISOString();
-    return seedDashboardBodies().map((這壍) => ({ ...這壍, schemaVersion: 1 as const, version: 1, createdAt: 焪壍, updatedAt: 焪壍 }));
+function seedDashboards(): Dashboard[] {
+    const nowIso = new Date().toISOString();
+    return seedDashboardBodies().map((b) => ({ ...b, schemaVersion: 1 as const, version: 1, createdAt: nowIso, updatedAt: nowIso }));
 }
 export interface GlobalStore {
     users: Collection<UserRecord>;
@@ -45,59 +45,59 @@ export interface GlobalStore {
 }
 export function getGlobalStore(): GlobalStore {
     return singleton("store:global", () => {
-        const 崈壍 = getDriver();
+        const d = getDriver();
         return {
-            users: new Collection<UserRecord>(崈壍, "users"),
-            sessions: new Collection<SessionRecord>(崈壍, "sessions"),
-            clients: new Collection<ClientRecord>(崈壍, "clients"),
-            authTokens: new Collection<AuthTokenRecord>(崈壍, "auth-tokens"),
-            scheduler: new Singleton<SchedulerState>(崈壍, "scheduler", () => ({ lastRunAt: null, lastDigest: {} })),
-            audit: new AppendLog<AuditEntry>(崈壍, "audit"),
+            users: new Collection<UserRecord>(d, "users"),
+            sessions: new Collection<SessionRecord>(d, "sessions"),
+            clients: new Collection<ClientRecord>(d, "clients"),
+            authTokens: new Collection<AuthTokenRecord>(d, "auth-tokens"),
+            scheduler: new Singleton<SchedulerState>(d, "scheduler", () => ({ lastRunAt: null, lastDigest: {} })),
+            audit: new AppendLog<AuditEntry>(d, "audit"),
         };
     });
 }
-export function isWorkspaceId(篷壍: string): boolean {
-    return 篷壍 === AGENCY_WORKSPACE || CLIENT_ID_PATTERN.test(篷壍);
+export function isWorkspaceId(id: string): boolean {
+    return id === AGENCY_WORKSPACE || CLIENT_ID_PATTERN.test(id);
 }
-function 髦壍(柕壍: string): Driver {
-    const 蛄壍 = getDriver();
-    return 柕壍 === AGENCY_WORKSPACE ? 蛄壍 : prefixedDriver(蛄壍, `workspaces/${柕壍}/`);
+function workspaceDriver(workspaceId: string): Driver {
+    const base = getDriver();
+    return workspaceId === AGENCY_WORKSPACE ? base : prefixedDriver(base, `workspaces/${workspaceId}/`);
 }
-export function getWorkspaceStore(厳壍: string): AppStore {
-    if (!isWorkspaceId(厳壍))
-        throw new Error(`Invalid workspace id ${厳壍}`);
-    return singleton(`store:ws:${厳壍}`, () => {
-        const 犢壍 = 髦壍(厳壍);
-        const 醑壍 = getGlobalStore();
+export function getWorkspaceStore(workspaceId: string): AppStore {
+    if (!isWorkspaceId(workspaceId))
+        throw new Error(`Invalid workspace id ${workspaceId}`);
+    return singleton(`store:ws:${workspaceId}`, () => {
+        const d = workspaceDriver(workspaceId);
+        const g = getGlobalStore();
         return {
-            dashboards: new Collection<Dashboard>(犢壍, "dashboards", 刻壍),
-            questions: new Collection<SavedQuestion>(犢壍, "questions"),
-            customMetrics: new Collection<CustomMetric>(犢壍, "custom-metrics"),
-            annotations: new Collection<Annotation>(犢壍, "annotations"),
-            signalStates: new Collection<SignalState>(犢壍, "signal-states"),
-            anomalySettings: new Singleton<AnomalySettings>(犢壍, "anomaly-settings", defaultAnomalySettings),
-            alertChannels: new Collection<AlertChannel>(犢壍, "alert-channels"),
-            alertRoutes: new Collection<AlertRoute>(犢壍, "alert-routes"),
-            deliveries: new AppendLog<AlertDelivery>(犢壍, "alert-deliveries"),
-            budgetTargets: new Collection<BudgetTargets>(犢壍, "budget-targets"),
-            budgetPlans: new Collection<BudgetPlan>(犢壍, "budget-plans"),
-            settings: new Singleton<AppSettings>(犢壍, "settings", defaultSettings),
-            scheduler: 醑壍.scheduler,
-            audit: 醑壍.audit,
+            dashboards: new Collection<Dashboard>(d, "dashboards", seedDashboards),
+            questions: new Collection<SavedQuestion>(d, "questions"),
+            customMetrics: new Collection<CustomMetric>(d, "custom-metrics"),
+            annotations: new Collection<Annotation>(d, "annotations"),
+            signalStates: new Collection<SignalState>(d, "signal-states"),
+            anomalySettings: new Singleton<AnomalySettings>(d, "anomaly-settings", defaultAnomalySettings),
+            alertChannels: new Collection<AlertChannel>(d, "alert-channels"),
+            alertRoutes: new Collection<AlertRoute>(d, "alert-routes"),
+            deliveries: new AppendLog<AlertDelivery>(d, "alert-deliveries"),
+            budgetTargets: new Collection<BudgetTargets>(d, "budget-targets"),
+            budgetPlans: new Collection<BudgetPlan>(d, "budget-plans"),
+            settings: new Singleton<AppSettings>(d, "settings", defaultSettings),
+            scheduler: g.scheduler,
+            audit: g.audit,
         };
     });
 }
 export function getStore(): AppStore {
     return getWorkspaceStore(currentWorkspace());
 }
-export async function audit(庀壍: Omit<AuditEntry, "ts">): Promise<void> {
+export async function audit(entry: Omit<AuditEntry, "ts">): Promise<void> {
     try {
-        const 絯壍 = currentPrincipal();
+        const who = currentPrincipal();
         await getGlobalStore().audit.append({
             ts: new Date().toISOString(),
             workspace: currentWorkspace(),
-            ...(絯壍.kind === "user" ? { actorId: 絯壍.userId ?? undefined, actorEmail: 絯壍.email ?? undefined } : {}),
-            ...庀壍,
+            ...(who.kind === "user" ? { actorId: who.userId ?? undefined, actorEmail: who.email ?? undefined } : {}),
+            ...entry,
         });
     }
     catch {

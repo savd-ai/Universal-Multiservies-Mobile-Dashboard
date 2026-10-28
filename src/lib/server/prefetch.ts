@@ -10,23 +10,23 @@ import { log } from "./log";
 import { runWithScope } from "./scope";
 import { buildStatus } from "./status";
 export async function prefetchShell(): Promise<DehydratedState> {
-    const 爕壍 = new QueryClient();
+    const qc = new QueryClient();
     try {
-        const 鄄壍 = await principalFromCookies();
-        if (!鄄壍)
-            return dehydrate(爕壍);
-        const 巳壍 = (await cookies()).get(ACCOUNT_COOKIE)?.value?.replace(/\D/g, "") || undefined;
-        await runWithScope(await scopeFor(鄄壍, 巳壍 ?? null), async () => {
-            const 糢壍 = await requestContext(undefined, undefined, { preferred: 巳壍 });
+        const principal = await principalFromCookies();
+        if (!principal)
+            return dehydrate(qc);
+        const cookie = (await cookies()).get(ACCOUNT_COOKIE)?.value?.replace(/\D/g, "") || undefined;
+        await runWithScope(await scopeFor(principal, cookie ?? null), async () => {
+            const ctx = await requestContext(undefined, undefined, { preferred: cookie });
             await Promise.all([
-                爕壍.prefetchQuery({ queryKey: qk.status(), queryFn: () => buildStatus(糢壍) }),
-                爕壍.prefetchQuery({ queryKey: qk.dashboards(), queryFn: () => listDashboards() }),
-                爕壍.prefetchQuery({ queryKey: qk.me(), queryFn: () => buildMe(鄄壍) }),
+                qc.prefetchQuery({ queryKey: qk.status(), queryFn: () => buildStatus(ctx) }),
+                qc.prefetchQuery({ queryKey: qk.dashboards(), queryFn: () => listDashboards() }),
+                qc.prefetchQuery({ queryKey: qk.me(), queryFn: () => buildMe(principal) }),
             ]);
         });
     }
-    catch (鯑壍) {
-        log.warn("shell prefetch failed", { error: (鯑壍 as Error).message });
+    catch (err) {
+        log.warn("shell prefetch failed", { error: (err as Error).message });
     }
-    return dehydrate(爕壍);
+    return dehydrate(qc);
 }

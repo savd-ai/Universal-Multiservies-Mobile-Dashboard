@@ -1,7 +1,7 @@
 import { connection } from "next/server";
-export default async function AuthGroupLayout({ children: 琴壍 }: {
+export default async function AuthGroupLayout({ children }: {
     children: React.ReactNode;
 }) {
     await connection();
-    return 琴壍;
+    return children;
 }

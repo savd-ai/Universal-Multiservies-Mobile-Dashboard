@@ -7,19 +7,19 @@ import { principalFromCookies } from "@/lib/server/auth/principal";
 import { setupRequired } from "@/lib/server/auth/setup";
 import { authConfig } from "@/lib/server/env/config";
 export const metadata: Metadata = { title: "Sign in" };
-export default async function LoginPage({ searchParams: 缁壍 }: {
+export default async function LoginPage({ searchParams }: {
     searchParams: Promise<{
         next?: string;
         error?: string;
         step?: string;
     }>;
 }) {
-    const { next: 鷰壍, error: 櫟壍, step: 觎壍 } = await 缁壍;
+    const { next, error, step } = await searchParams;
     if (authConfig().mode === "off")
-        redirect(safeNext(鷰壍));
+        redirect(safeNext(next));
     if (await setupRequired())
         redirect("/register");
     if (await principalFromCookies())
-        redirect(safeNext(鷰壍));
-    return <LoginScreen next={鷰壍 ? safeNext(鷰壍) : undefined} error={櫟壍?.slice(0, 200)} googleSignIn={googleSignInEnabled()} codeStep={觎壍 === "2fa"}/>;
+        redirect(safeNext(next));
+    return <LoginScreen next={next ? safeNext(next) : undefined} error={error?.slice(0, 200)} googleSignIn={googleSignInEnabled()} codeStep={step === "2fa"}/>;
 }

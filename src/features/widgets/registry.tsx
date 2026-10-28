@@ -4,14 +4,14 @@ import { AnomalyFeedWidget, CampaignPerformanceWidget, PacingWidget } from "./be
 import { AlertStatusWidget, CumulativeSpendWidget, DataHealthWidget, ForecastWidget, GoalTrackerWidget, NoteWidget, OpportunitiesWidget, SearchTermWasteWidget, TodaySoFarWidget, TopMoversWidget, } from "./bespoke/more-widgets";
 import { QuestionWidget } from "./question/question-widget";
 import { ALL_FILTERS, type WidgetDefinition } from "./types";
-const 娙壍 = ALL_FILTERS;
-const 礈壍: readonly FilterKey[] = ["range", "compare", "campaignType", "campaign", "status", "device", "cross"];
-const 韷壍: readonly FilterKey[] = [];
-function 擦壍<C>(菕壍: WidgetDefinition<C>): WidgetDefinition {
-    return 菕壍 as unknown as WidgetDefinition;
+const QUERY_FILTERS = ALL_FILTERS;
+const ENTITY_FILTERS: readonly FilterKey[] = ["range", "compare", "campaignType", "campaign", "status", "device", "cross"];
+const NONE: readonly FilterKey[] = [];
+function def<C>(d: WidgetDefinition<C>): WidgetDefinition {
+    return d as unknown as WidgetDefinition;
 }
 export const WIDGETS: Record<string, WidgetDefinition> = {
-    question: 擦壍({
+    question: def({
         type: "question",
         title: "Question",
         subtitle: "Custom query",
@@ -21,11 +21,11 @@ export const WIDGETS: Record<string, WidgetDefinition> = {
         defaultSize: { w: 6, h: 16 },
         minSize: { w: 3, h: 6 },
         defaultConfig: { query: { source: "google_ads", metrics: ["cost", "conversions"], dimensions: ["date"] }, viz: { type: "line" } },
-        filters: 娙壍,
-        grows: (僄壍) => ["kpi-strip", "number", "gauge", "progress-goal"].includes(String(僄壍.viz?.type)),
+        filters: QUERY_FILTERS,
+        grows: (c) => ["kpi-strip", "number", "gauge", "progress-goal"].includes(String(c.viz?.type)),
         Component: QuestionWidget,
     }),
-    pacing: 擦壍({
+    pacing: def({
         type: "pacing",
         title: "Budget pacing",
         subtitle: "Month to date",
@@ -36,11 +36,11 @@ export const WIDGETS: Record<string, WidgetDefinition> = {
         minSize: { w: 3, h: 14 },
         defaultConfig: {},
         link: { href: "/budget", label: "Plan" },
-        filters: 韷壍,
+        filters: NONE,
         grows: true,
         Component: PacingWidget,
     }),
-    "anomaly-feed": 擦壍({
+    "anomaly-feed": def({
         type: "anomaly-feed",
         title: "Anomalies",
         subtitle: "Last 3 days vs baseline",
@@ -55,7 +55,7 @@ export const WIDGETS: Record<string, WidgetDefinition> = {
         filters: ["campaignType"],
         Component: AnomalyFeedWidget,
     }),
-    "campaign-performance": 擦壍({
+    "campaign-performance": def({
         type: "campaign-performance",
         title: "Campaign performance",
         subtitle: "Sorted by spend",
@@ -67,10 +67,10 @@ export const WIDGETS: Record<string, WidgetDefinition> = {
         defaultConfig: { limit: 6 },
         link: { href: "/campaigns", label: "All campaigns" },
         configFields: [{ key: "limit", label: "Campaigns shown", kind: "number", min: 3, max: 20 }],
-        filters: 礈壍,
+        filters: ENTITY_FILTERS,
         Component: CampaignPerformanceWidget,
     }),
-    "goal-tracker": 擦壍({
+    "goal-tracker": def({
         type: "goal-tracker",
         title: "Monthly goal",
         subtitle: "Conversions vs target",
@@ -81,11 +81,11 @@ export const WIDGETS: Record<string, WidgetDefinition> = {
         minSize: { w: 3, h: 10 },
         defaultConfig: { metric: "conversions" },
         configFields: [{ key: "metric", label: "Goal metric", kind: "select", options: [{ value: "conversions", label: "Conversions" }, { value: "conv_value", label: "Conversion value (revenue)" }], hint: "Targets are set in Data source → Preferences, or right here." }],
-        filters: 韷壍,
+        filters: NONE,
         grows: true,
         Component: GoalTrackerWidget,
     }),
-    "top-movers": 擦壍({
+    "top-movers": def({
         type: "top-movers",
         title: "Top movers",
         subtitle: "Biggest changes vs previous period",
@@ -96,10 +96,10 @@ export const WIDGETS: Record<string, WidgetDefinition> = {
         minSize: { w: 4, h: 10 },
         defaultConfig: { metric: "conversions", limit: 5 },
         configFields: [{ key: "metric", label: "Metric", kind: "metric" }, { key: "limit", label: "Campaigns shown", kind: "number", min: 3, max: 12 }],
-        filters: 礈壍,
+        filters: ENTITY_FILTERS,
         Component: TopMoversWidget,
     }),
-    "cumulative-spend": 擦壍({
+    "cumulative-spend": def({
         type: "cumulative-spend",
         title: "Cumulative spend",
         subtitle: "Actual · projected · ideal",
@@ -110,10 +110,10 @@ export const WIDGETS: Record<string, WidgetDefinition> = {
         minSize: { w: 4, h: 12 },
         defaultConfig: {},
         link: { href: "/budget", label: "Plan" },
-        filters: 韷壍,
+        filters: NONE,
         Component: CumulativeSpendWidget,
     }),
-    forecast: 擦壍({
+    forecast: def({
         type: "forecast",
         title: "30-day forecast",
         subtitle: "Spend with 80% band",
@@ -124,10 +124,10 @@ export const WIDGETS: Record<string, WidgetDefinition> = {
         minSize: { w: 4, h: 12 },
         defaultConfig: { metric: "cost" },
         configFields: [{ key: "metric", label: "Metric", kind: "select", options: [{ value: "cost", label: "Spend" }, { value: "conversions", label: "Conversions" }, { value: "conv_value", label: "Conversion value" }, { value: "clicks", label: "Clicks" }] }],
-        filters: 韷壍,
+        filters: NONE,
         Component: ForecastWidget,
     }),
-    "today-so-far": 擦壍({
+    "today-so-far": def({
         type: "today-so-far",
         title: "Today so far",
         subtitle: "Hourly spend vs typical",
@@ -140,7 +140,7 @@ export const WIDGETS: Record<string, WidgetDefinition> = {
         filters: ["campaignType", "campaign", "status", "cross"],
         Component: TodaySoFarWidget,
     }),
-    opportunities: 擦壍({
+    opportunities: def({
         type: "opportunities",
         title: "Opportunities",
         subtitle: "Budget-limited, above-average ROAS",
@@ -150,10 +150,10 @@ export const WIDGETS: Record<string, WidgetDefinition> = {
         defaultSize: { w: 6, h: 16 },
         minSize: { w: 4, h: 10 },
         defaultConfig: {},
-        filters: 礈壍,
+        filters: ENTITY_FILTERS,
         Component: OpportunitiesWidget,
     }),
-    "alert-status": 擦壍({
+    "alert-status": def({
         type: "alert-status",
         title: "Alert status",
         subtitle: "Open signals by severity",
@@ -164,11 +164,11 @@ export const WIDGETS: Record<string, WidgetDefinition> = {
         minSize: { w: 3, h: 9 },
         defaultConfig: {},
         link: { href: "/anomalies", label: "Signals" },
-        filters: 韷壍,
+        filters: NONE,
         grows: true,
         Component: AlertStatusWidget,
     }),
-    "data-health": 擦壍({
+    "data-health": def({
         type: "data-health",
         title: "Data health",
         subtitle: "Sources and freshness",
@@ -179,11 +179,11 @@ export const WIDGETS: Record<string, WidgetDefinition> = {
         minSize: { w: 3, h: 9 },
         defaultConfig: {},
         link: { href: "/data-source", label: "Data source" },
-        filters: 韷壍,
+        filters: NONE,
         grows: true,
         Component: DataHealthWidget,
     }),
-    "search-term-waste": 擦壍({
+    "search-term-waste": def({
         type: "search-term-waste",
         title: "Search-term waste",
         subtitle: "Spend with no conversions",
@@ -194,10 +194,10 @@ export const WIDGETS: Record<string, WidgetDefinition> = {
         minSize: { w: 5, h: 10 },
         defaultConfig: { limit: 8 },
         configFields: [{ key: "limit", label: "Terms shown", kind: "number", min: 3, max: 25 }],
-        filters: 礈壍,
+        filters: ENTITY_FILTERS,
         Component: SearchTermWasteWidget,
     }),
-    note: 擦壍({
+    note: def({
         type: "note",
         title: "Note",
         subtitle: "Markdown",
@@ -208,11 +208,11 @@ export const WIDGETS: Record<string, WidgetDefinition> = {
         minSize: { w: 2, h: 4 },
         defaultConfig: { text: "" },
         configFields: [{ key: "text", label: "Text (Markdown)", kind: "text", multiline: true }],
-        filters: 韷壍,
+        filters: NONE,
         Component: NoteWidget,
     }),
 };
-export function widgetDef(澳壍: string): WidgetDefinition | undefined {
-    return WIDGETS[澳壍];
+export function widgetDef(text: string): WidgetDefinition | undefined {
+    return WIDGETS[text];
 }
 export const WIDGET_LIST: WidgetDefinition[] = Object.values(WIDGETS);

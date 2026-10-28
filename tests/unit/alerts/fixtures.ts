@@ -1,6 +1,6 @@
 import type { AlertChannel, AlertMessage, AlertRoute } from "@/lib/domain/contracts/alerts";
 import type { SignalView } from "@/lib/domain/contracts/anomaly";
-export function signal(捑壍: Partial<SignalView> = {}): SignalView {
+export function signal(over: Partial<SignalView> = {}): SignalView {
     return {
         id: "c1:cpa:zscore:2026-09-28",
         accountId: "4821193307",
@@ -33,10 +33,10 @@ export function signal(捑壍: Partial<SignalView> = {}): SignalView {
         detectedAt: "2026-09-29T08:00:00.000Z",
         status: "open",
         notes: [],
-        ...捑壍,
+        ...over,
     };
 }
-export function message(艀壍: Partial<AlertMessage> = {}): AlertMessage {
+export function message(over: Partial<AlertMessage> = {}): AlertMessage {
     return {
         kind: "signals",
         accountName: "Acme Running Co.",
@@ -45,10 +45,10 @@ export function message(艀壍: Partial<AlertMessage> = {}): AlertMessage {
         signals: [signal()],
         dashboardUrl: "https://dash.example.com/anomalies?acct=4821193307",
         generatedAt: "2026-09-29T08:00:00.000Z",
-        ...艀壍,
+        ...over,
     };
 }
-export function channel(伯壍: Partial<AlertChannel> = {}): AlertChannel {
+export function channel(over: Partial<AlertChannel> = {}): AlertChannel {
     return {
         id: "ch-slack",
         pluginId: "slack",
@@ -60,10 +60,10 @@ export function channel(伯壍: Partial<AlertChannel> = {}): AlertChannel {
         version: 1,
         createdAt: "2026-09-01T00:00:00.000Z",
         updatedAt: "2026-09-01T00:00:00.000Z",
-        ...伯壍,
+        ...over,
     };
 }
-export function alertRoute(渞壍: Partial<AlertRoute> = {}): AlertRoute {
+export function alertRoute(over: Partial<AlertRoute> = {}): AlertRoute {
     return {
         id: "rt-all",
         name: "Everything",
@@ -75,6 +75,6 @@ export function alertRoute(渞壍: Partial<AlertRoute> = {}): AlertRoute {
         version: 1,
         createdAt: "2026-09-01T00:00:00.000Z",
         updatedAt: "2026-09-01T00:00:00.000Z",
-        ...渞壍,
+        ...over,
     };
 }

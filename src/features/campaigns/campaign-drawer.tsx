@@ -12,7 +12,7 @@ import { GoogleAdsLink, KpiMiniGrid, MetricDelta, PacingBlock, SignalItem, type 
 import { adjustBudget, formatMetric, money, pacingMonthOf, rangeShortLabel, type MetricKey, type MoneyFmt } from "./campaign-utils";
 import { useCampaignContext, useCampaignParam } from "./use-campaign-context";
 import { useCampaignWrites } from "./use-campaign-writes";
-const 馧壍: {
+const DRAWER_KPIS: {
     key: MetricKey;
     label: string;
 }[] = [
@@ -24,115 +24,115 @@ const 馧壍: {
     { key: "cpc", label: "CPC" },
 ];
 export function CampaignDrawerHost() {
-    const [暖壍, 薅壍] = useCampaignParam();
-    const { query: 剴壍 } = useCampaignContext();
-    const 煣壍 = useCampaignDetail(暖壍, 剴壍);
-    const 遒壍 = 煣壍.data?.campaign.id === 暖壍 ? 煣壍.data?.campaign : undefined;
-    return (<Drawer open={!!暖壍} onOpenChange={(嵁壍) => {
-            if (!嵁壍)
-                void 薅壍(null);
-        }} eyebrow={遒壍 ? `${遒壍.type} · ${遒壍.status}` : "Campaign"} title={遒壍 ? (遒壍.name) : 煣壍.error ? ("Campaign unavailable") : (<span className="inline-block h-6 w-56 animate-shimmer rounded-mini bg-tone/8 align-middle">
+    const [id, setId] = useCampaignParam();
+    const { query } = useCampaignContext();
+    const detail = useCampaignDetail(id, query);
+    const c = detail.data?.campaign.id === id ? detail.data?.campaign : undefined;
+    return (<Drawer open={!!id} onOpenChange={(o) => {
+            if (!o)
+                void setId(null);
+        }} eyebrow={c ? `${c.type} · ${c.status}` : "Campaign"} title={c ? (c.name) : detail.error ? ("Campaign unavailable") : (<span className="inline-block h-6 w-56 animate-shimmer rounded-mini bg-tone/8 align-middle">
             <span className="sr-only">Loading campaign</span>
           </span>)}>
-      {暖壍 ? <Cmp25 key={暖壍} id={暖壍}/> : null}
+      {id ? <DrawerBody key={id} id={id}/> : null}
     </Drawer>);
 }
-function Cmp25({ id: 鬟壍 }: {
+function DrawerBody({ id }: {
     id: string;
 }) {
-    const { money: 栎壍, query: 蛽壍, compareOn: 召壍, filters: 狛壍, rangeSearch: 释壍 } = useCampaignContext();
-    const 庹壍 = useCampaignDetail(鬟壍, 蛽壍);
-    const 綨壍 = 庹壍.data;
-    if (庹壍.error && !綨壍) {
-        const 鲗壍 = 庹壍.error instanceof ApiError && 庹壍.error.status === 404;
-        return 鲗壍 ? <p className="m-0 text-[13px] text-muted-3">This campaign doesn&apos;t exist in the current account.</p> : <ErrorState error={庹壍.error} onRetry={() => void 庹壍.refetch()}/>;
+    const { money: m, query, compareOn, filters, rangeSearch } = useCampaignContext();
+    const detail = useCampaignDetail(id, query);
+    const d = detail.data;
+    if (detail.error && !d) {
+        const missing = detail.error instanceof ApiError && detail.error.status === 404;
+        return missing ? <p className="m-0 text-[13px] text-muted-3">This campaign doesn&apos;t exist in the current account.</p> : <ErrorState error={detail.error} onRetry={() => void detail.refetch()}/>;
     }
-    if (!綨壍)
-        return <淮壍 />;
-    const 榆壍: MiniKpi[] = 馧壍.map((衵壍) => ({
-        label: 衵壍.label,
-        value: formatMetric(衵壍.key, 綨壍.kpis[衵壍.key], 栎壍),
-        delta: 召壍 && 綨壍.prev ? <MetricDelta metric={衵壍.key} cur={綨壍.kpis[衵壍.key]} prev={綨壍.prev[衵壍.key]}/> : undefined,
+    if (!d)
+        return <DrawerSkeleton />;
+    const kpis: MiniKpi[] = DRAWER_KPIS.map((k) => ({
+        label: k.label,
+        value: formatMetric(k.key, d.kpis[k.key], m),
+        delta: compareOn && d.prev ? <MetricDelta metric={k.key} cur={d.kpis[k.key]} prev={d.prev[k.key]}/> : undefined,
     }));
-    const 啤壍 = 綨壍.campaign.budget_daily;
-    const 瑓壍 = 綨壍.signals.filter((鍂壍) => 鍂壍.status === "open");
-    return (<Refetching active={庹壍.isFetching && 庹壍.isPlaceholderData} className="flex flex-1 flex-col gap-[22px]">
-      <KpiMiniGrid items={榆壍}/>
+    const budget = d.campaign.budget_daily;
+    const active = d.signals.filter((s) => s.status === "open");
+    return (<Refetching active={detail.isFetching && detail.isPlaceholderData} className="flex flex-1 flex-col gap-[22px]">
+      <KpiMiniGrid items={kpis}/>
 
       <div className="flex flex-col gap-2.5">
-        <span className="meta">{`Daily spend · ${rangeShortLabel(狛壍.rangeKey, 狛壍.range)}`}</span>
+        <span className="meta">{`Daily spend · ${rangeShortLabel(filters.rangeKey, filters.range)}`}</span>
         <div className="relative h-[140px] border-b border-tone/8">
-          <AreaSpark values={綨壍.daily.map((怱壍) => 怱壍.cost)} refLine={啤壍} height={140} gradientId={`drawer-spend-${鬟壍}`} className="absolute inset-0"/>
+          <AreaSpark values={d.daily.map((p) => p.cost)} refLine={budget} height={140} gradientId={`drawer-spend-${id}`} className="absolute inset-0"/>
         </div>
-        <span className="text-xs text-muted-3">{啤壍 ? `Dashed line · daily budget ${money(啤壍, 栎壍)}` : "No daily budget set on this campaign."}</span>
+        <span className="text-xs text-muted-3">{budget ? `Dashed line · daily budget ${money(budget, m)}` : "No daily budget set on this campaign."}</span>
       </div>
 
       <div className="flex flex-col gap-2.5">
         <span className="meta">Active signals</span>
-        {瑓壍.length ? 瑓壍.map((缠壍) => <SignalItem key={缠壍.id} signal={缠壍}/>) : <span className="text-[13px] text-muted-3">Operating within expected range.</span>}
+        {active.length ? active.map((s) => <SignalItem key={s.id} signal={s}/>) : <span className="text-[13px] text-muted-3">Operating within expected range.</span>}
       </div>
 
-      {綨壍.pacing && 綨壍.pacing.monthlyTarget > 0 ? <Cmp26 detail={綨壍} money={栎壍}/> : null}
+      {d.pacing && d.pacing.monthlyTarget > 0 ? <DrawerPacing detail={d} money={m}/> : null}
 
-      <Cmp27 detail={綨壍} money={栎壍} detailHref={`/campaigns/${encodeURIComponent(鬟壍)}${释壍}`}/>
+      <QuickActions detail={d} money={m} detailHref={`/campaigns/${encodeURIComponent(id)}${rangeSearch}`}/>
     </Refetching>);
 }
-function Cmp26({ detail: 櫾壍, money: 觭壍 }: {
+function DrawerPacing({ detail, money: m }: {
     detail: CampaignDetail;
     money: MoneyFmt;
 }) {
-    const { status: 囜壍 } = useCampaignContext();
-    const 痋壍 = pacingMonthOf(囜壍.data?.dataThrough);
-    if (!櫾壍.pacing)
+    const { status } = useCampaignContext();
+    const month = pacingMonthOf(status.data?.dataThrough);
+    if (!detail.pacing)
         return null;
-    return <PacingBlock pacing={櫾壍.pacing} money={觭壍} monthLabel={痋壍.month} marker={痋壍.marker}/>;
+    return <PacingBlock pacing={detail.pacing} money={m} monthLabel={month.month} marker={month.marker}/>;
 }
-function Cmp27({ detail: 憩壍, money: 肘壍, detailHref: 龇壍 }: {
+function QuickActions({ detail, money: m, detailHref }: {
     detail: CampaignDetail;
     money: MoneyFmt;
     detailHref: string;
 }) {
-    const 汶壍 = useCampaignWrites();
-    const 譥壍 = 憩壍.campaign;
-    const 塔壍 = 汶壍.pending.get(譥壍.id) ?? 譥壍.status;
-    const 睃壍 = 譥壍.budget_daily;
-    const 防壍 = (挡壍: number) => (睃壍 ? adjustBudget(睃壍, 挡壍) : null);
-    const 舐壍 = 防壍(-10);
-    const 仿壍 = 防壍(10);
+    const writes = useCampaignWrites();
+    const c = detail.campaign;
+    const status = writes.pending.get(c.id) ?? c.status;
+    const budget = c.budget_daily;
+    const step = (pct: number) => (budget ? adjustBudget(budget, pct) : null);
+    const down = step(-10);
+    const up = step(10);
     return (<div className="mt-auto flex flex-col gap-3 border-t border-line pt-5">
       <div className="flex items-center gap-2.5">
         <span className="meta">Quick actions</span>
               </div>
-      {睃壍 && 舐壍 !== null && 仿壍 !== null ? (<div className="grid grid-cols-2 gap-2">
+      {budget && down !== null && up !== null ? (<div className="grid grid-cols-2 gap-2">
           <LiveGuard className="grid">
-            <Button variant="outline" size="sm" className="w-full justify-center" disabled={!!汶壍.busy} loading={汶壍.busy === "budget"} onClick={() => void 汶壍.setBudgets([{ campaignId: 譥壍.id, dailyBudget: 舐壍 }])}>
-              {`Budget −10% · ${money(舐壍, 肘壍)}`}
+            <Button variant="outline" size="sm" className="w-full justify-center" disabled={!!writes.busy} loading={writes.busy === "budget"} onClick={() => void writes.setBudgets([{ campaignId: c.id, dailyBudget: down }])}>
+              {`Budget −10% · ${money(down, m)}`}
             </Button>
           </LiveGuard>
           <LiveGuard className="grid">
-            <Button variant="outline" size="sm" className="w-full justify-center" disabled={!!汶壍.busy} loading={汶壍.busy === "budget"} onClick={() => void 汶壍.setBudgets([{ campaignId: 譥壍.id, dailyBudget: 仿壍 }])}>
-              {`Budget +10% · ${money(仿壍, 肘壍)}`}
+            <Button variant="outline" size="sm" className="w-full justify-center" disabled={!!writes.busy} loading={writes.busy === "budget"} onClick={() => void writes.setBudgets([{ campaignId: c.id, dailyBudget: up }])}>
+              {`Budget +10% · ${money(up, m)}`}
             </Button>
           </LiveGuard>
         </div>) : null}
-      {譥壍.status !== "Removed" ? (<LiveGuard className="grid">
-          <Button variant="block" size="md" disabled={!!汶壍.busy} loading={汶壍.busy === "pause" || 汶壍.busy === "enable"} onClick={() => void 汶壍.setStatus([譥壍.id], 塔壍 === "Enabled" ? "Paused" : "Enabled")}>
-            {塔壍 === "Enabled" ? "Pause campaign" : "Enable campaign"}
+      {c.status !== "Removed" ? (<LiveGuard className="grid">
+          <Button variant="block" size="md" disabled={!!writes.busy} loading={writes.busy === "pause" || writes.busy === "enable"} onClick={() => void writes.setStatus([c.id], status === "Enabled" ? "Paused" : "Enabled")}>
+            {status === "Enabled" ? "Pause campaign" : "Enable campaign"}
           </Button>
         </LiveGuard>) : null}
       <p className="m-0 text-xs text-muted-3">{READ_ONLY_COPY}</p>
       <div className="flex flex-wrap items-center justify-between gap-3 text-[13px]">
-        <Link href={龇壍}>Open full detail →</Link>
-        <GoogleAdsLink href={憩壍.deepLink} variant="link"/>
+        <Link href={detailHref}>Open full detail →</Link>
+        <GoogleAdsLink href={detail.deepLink} variant="link"/>
       </div>
-      {汶壍.dialog}
+      {writes.dialog}
     </div>);
 }
-function 淮壍() {
+function DrawerSkeleton() {
     return (<div className="flex flex-col gap-[22px]" aria-busy="true">
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-mini bg-tone/8">
-        {馧壍.map((賝壍) => (<div key={賝壍.key} className="flex flex-col gap-2 bg-surface px-4 py-3.5">
-            <span className="label-mono">{賝壍.label}</span>
+        {DRAWER_KPIS.map((k) => (<div key={k.key} className="flex flex-col gap-2 bg-surface px-4 py-3.5">
+            <span className="label-mono">{k.label}</span>
             <Skeleton height={24} className="w-24"/>
           </div>))}
       </div>

@@ -9,21 +9,21 @@ export const DEFAULT_MAX_MULT = 1.6;
 export const STRATEGY_LABELS: Record<Strategy, string> = { marginal: "Marginal returns", roas_heuristic: "ROAS heuristic" };
 export const OBJECTIVE_LABELS: Record<Objective, string> = { conversions: "Conversions", conv_value: "Conversion value" };
 export const CURVE_SOURCE_LABELS: Record<CurveSourceMode, string> = { auto: "Auto (Google where available)", model: "Our model only" };
-export const curveSourceLabel = (绡壍: OptimizeResultRow["curveSource"], 鷐壍?: number): string => (绡壍 === "google_simulator" ? "Google simulator" : 鷐壍 !== undefined ? "Our model, matched to Google" : "Our model");
-export function curveMixLine(檿壍: CurveMix | undefined): string | null {
-    if (!檿壍)
+export const curveSourceLabel = (source: OptimizeResultRow["curveSource"], calibration?: number): string => (source === "google_simulator" ? "Google simulator" : calibration !== undefined ? "Our model, matched to Google" : "Our model");
+export function curveMixLine(mix: CurveMix | undefined): string | null {
+    if (!mix)
         return null;
-    const 覮壍 = 檿壍.google + 檿壍.model;
-    if (檿壍.mode === "model")
-        return `Our model prices all ${覮壍} budgets (curves fitted on each campaign's last 60 days).`;
-    if (!檿壍.google)
-        return 檿壍.available
-            ? `Our model prices all ${覮壍} budgets: Google simulated only ${檿壍.available} of them, too few to put both sources on one scale.`
-            : `Our model prices all ${覮壍} budgets: Google has no fresh budget simulation for these campaigns.`;
-    if (!檿壍.model)
-        return `Google's budget simulators price all ${覮壍} budgets.`;
-    const 嚝壍 = 檿壍.calibration === null ? "" : ` (exponents ×${檿壍.calibration.toFixed(2)})`;
-    return `Google's budget simulators price ${檿壍.google} of ${覮壍} budgets. Our model prices the other ${檿壍.model}, with its curves matched to Google's${嚝壍} so the split doesn't favour either source.`;
+    const n = mix.google + mix.model;
+    if (mix.mode === "model")
+        return `Our model prices all ${n} budgets (curves fitted on each campaign's last 60 days).`;
+    if (!mix.google)
+        return mix.available
+            ? `Our model prices all ${n} budgets: Google simulated only ${mix.available} of them, too few to put both sources on one scale.`
+            : `Our model prices all ${n} budgets: Google has no fresh budget simulation for these campaigns.`;
+    if (!mix.model)
+        return `Google's budget simulators price all ${n} budgets.`;
+    const factor = mix.calibration === null ? "" : ` (exponents ×${mix.calibration.toFixed(2)})`;
+    return `Google's budget simulators price ${mix.google} of ${n} budgets. Our model prices the other ${mix.model}, with its curves matched to Google's${factor} so the split doesn't favour either source.`;
 }
 export interface OptimizerSettings {
     strategy: Strategy;
@@ -33,37 +33,37 @@ export interface OptimizerSettings {
     maxMult: number;
     curveSource?: CurveSourceMode;
 }
-export function validateSettings(疌壍: OptimizerSettings): string | null {
-    if (!Number.isFinite(疌壍.total) || 疌壍.total <= 0)
+export function validateSettings(s: OptimizerSettings): string | null {
+    if (!Number.isFinite(s.total) || s.total <= 0)
         return "Enter a total budget above zero.";
-    if (!Number.isFinite(疌壍.minMult) || 疌壍.minMult < 0)
+    if (!Number.isFinite(s.minMult) || s.minMult < 0)
         return "The minimum multiplier can't be negative.";
-    if (!Number.isFinite(疌壍.maxMult) || 疌壍.maxMult <= 0)
+    if (!Number.isFinite(s.maxMult) || s.maxMult <= 0)
         return "The maximum multiplier must be above zero.";
-    if (疌壍.minMult > 疌壍.maxMult)
+    if (s.minMult > s.maxMult)
         return "The minimum multiplier is above the maximum.";
     return null;
 }
-export function optimizerConstraints(鑻壍: readonly PacingRow[], 慪壍: Readonly<Record<string, boolean>>, 聙壍: number, 齈壍: number): OptimizeRequest["constraints"] {
-    const 氷壍: OptimizeRequest["constraints"] = {};
-    for (const 謦壍 of 鑻壍) {
-        if (慪壍[謦壍.unitId])
-            氷壍[謦壍.unitId] = { locked: 謦壍.monthlyTarget };
+export function optimizerConstraints(rows: readonly PacingRow[], locks: Readonly<Record<string, boolean>>, minMult: number, maxMult: number): OptimizeRequest["constraints"] {
+    const out: OptimizeRequest["constraints"] = {};
+    for (const r of rows) {
+        if (locks[r.unitId])
+            out[r.unitId] = { locked: r.monthlyTarget };
         else
-            氷壍[謦壍.unitId] = { min: Math.round(謦壍.monthlyTarget * 聙壍 * 100) / 100, max: Math.round(謦壍.monthlyTarget * 齈壍 * 100) / 100 };
+            out[r.unitId] = { min: Math.round(r.monthlyTarget * minMult * 100) / 100, max: Math.round(r.monthlyTarget * maxMult * 100) / 100 };
     }
-    return 氷壍;
+    return out;
 }
-export function optimizeBody(堕壍: string, 眄壍: OptimizerSettings, 闳壍: readonly PacingRow[], 拢壍: Readonly<Record<string, boolean>>) {
+export function optimizeBody(month: string, s: OptimizerSettings, rows: readonly PacingRow[], locks: Readonly<Record<string, boolean>>) {
     return {
-        month: 堕壍,
+        month,
         period: "monthly" as const,
-        total: Math.round(眄壍.total * 100) / 100,
-        objective: 眄壍.objective,
-        strategy: 眄壍.strategy,
-        constraints: optimizerConstraints(闳壍, 拢壍, 眄壍.minMult, 眄壍.maxMult),
+        total: Math.round(s.total * 100) / 100,
+        objective: s.objective,
+        strategy: s.strategy,
+        constraints: optimizerConstraints(rows, locks, s.minMult, s.maxMult),
         roundTo: MONEY_STEP,
-        curveSource: 眄壍.curveSource ?? "auto",
+        curveSource: s.curveSource ?? "auto",
     };
 }
 export interface DiffRow extends OptimizeResultRow {
@@ -75,45 +75,45 @@ export interface DiffRow extends OptimizeResultRow {
     recommendedDaily: number;
     liveDaily: number | null;
 }
-export function diffRows(臑壍: OptimizeResult, 什壍: readonly PacingRow[], 涯壍: number): DiffRow[] {
-    const 貞壍 = new Map(什壍.map((妍壍) => [妍壍.unitId, 妍壍]));
-    return 臑壍.rows.map((硼壍) => {
-        const 靫壍 = 貞壍.get(硼壍.unitId);
-        const 摚壍 = !!靫壍 && (靫壍.type === "Shared" || 靫壍.campaignIds.length > 1);
+export function diffRows(result: OptimizeResult, rows: readonly PacingRow[], days: number): DiffRow[] {
+    const byId = new Map(rows.map((r) => [r.unitId, r]));
+    return result.rows.map((r) => {
+        const src = byId.get(r.unitId);
+        const shared = !!src && (src.type === "Shared" || src.campaignIds.length > 1);
         return {
-            ...硼壍,
-            type: 靫壍?.type ?? "",
-            shared: 摚壍,
-            paused: !!靫壍?.paused,
-            campaignId: 靫壍 && !摚壍 ? (靫壍.campaignIds[0] ?? null) : null,
-            currentDaily: dailyFromMonthly(硼壍.current, 涯壍),
-            recommendedDaily: dailyFromMonthly(硼壍.recommended, 涯壍),
-            liveDaily: 靫壍?.dailyBudget ?? null,
+            ...r,
+            type: src?.type ?? "",
+            shared,
+            paused: !!src?.paused,
+            campaignId: src && !shared ? (src.campaignIds[0] ?? null) : null,
+            currentDaily: dailyFromMonthly(r.current, days),
+            recommendedDaily: dailyFromMonthly(r.recommended, days),
+            liveDaily: src?.dailyBudget ?? null,
         };
     });
 }
-export function optimizerChanges(草壍: readonly DiffRow[]): {
+export function optimizerChanges(rows: readonly DiffRow[]): {
     changes: BudgetChange[];
     skipped: SkippedChange[];
 } {
-    const 倸壍: BudgetChange[] = [];
-    const 漧壍: SkippedChange[] = [];
-    for (const 踖壍 of 草壍) {
-        if (踖壍.shared || !踖壍.campaignId)
-            漧壍.push({ name: 踖壍.name, reason: "Shared budget — edit it in Google Ads (Shared library)" });
-        else if (踖壍.paused)
-            漧壍.push({ name: 踖壍.name, reason: "Paused" });
-        else if (踖壍.recommendedDaily <= 0)
-            漧壍.push({ name: 踖壍.name, reason: "No budget recommended" });
-        else if (踖壍.liveDaily !== null && Math.abs(踖壍.recommendedDaily - 踖壍.liveDaily) < 0.01)
-            漧壍.push({ name: 踖壍.name, reason: "Already at this budget" });
+    const changes: BudgetChange[] = [];
+    const skipped: SkippedChange[] = [];
+    for (const r of rows) {
+        if (r.shared || !r.campaignId)
+            skipped.push({ name: r.name, reason: "Shared budget — edit it in Google Ads (Shared library)" });
+        else if (r.paused)
+            skipped.push({ name: r.name, reason: "Paused" });
+        else if (r.recommendedDaily <= 0)
+            skipped.push({ name: r.name, reason: "No budget recommended" });
+        else if (r.liveDaily !== null && Math.abs(r.recommendedDaily - r.liveDaily) < 0.01)
+            skipped.push({ name: r.name, reason: "Already at this budget" });
         else
-            倸壍.push({ unitId: 踖壍.unitId, campaignId: 踖壍.campaignId, name: 踖壍.name, from: 踖壍.liveDaily, to: 踖壍.recommendedDaily });
+            changes.push({ unitId: r.unitId, campaignId: r.campaignId, name: r.name, from: r.liveDaily, to: r.recommendedDaily });
     }
-    return { changes: 倸壍, skipped: 漧壍 };
+    return { changes, skipped };
 }
-export function recommendedTargets(嬅壍: OptimizeResult): Record<string, number> {
-    return Object.fromEntries(嬅壍.rows.map((秴壍) => [秴壍.unitId, 秴壍.recommended]));
+export function recommendedTargets(result: OptimizeResult): Record<string, number> {
+    return Object.fromEntries(result.rows.map((r) => [r.unitId, r.recommended]));
 }
 export interface LiftSummary {
     pct: number;
@@ -122,23 +122,23 @@ export interface LiftSummary {
     before: number;
     after: number;
 }
-export function liftSummary(飣壍: OptimizeResult): LiftSummary {
-    const 旒壍 = 飣壍.totals;
-    const 蓁壍 = 旒壍.recommended - 旒壍.current;
-    return { pct: 旒壍.liftPct, budgetDelta: 蓁壍, sameBudget: Math.abs(蓁壍) < 0.5, before: 旒壍.expectedCurrent, after: 旒壍.expectedRecommended };
+export function liftSummary(result: OptimizeResult): LiftSummary {
+    const t = result.totals;
+    const budgetDelta = t.recommended - t.current;
+    return { pct: t.liftPct, budgetDelta, sameBudget: Math.abs(budgetDelta) < 0.5, before: t.expectedCurrent, after: t.expectedRecommended };
 }
-export function lowConfidenceNames(冰壍: OptimizeResult): string[] {
-    return 冰壍.rows.filter((炟壍) => 炟壍.curveConfidence === "low").map((辎壍) => 辎壍.name);
+export function lowConfidenceNames(result: OptimizeResult): string[] {
+    return result.rows.filter((r) => r.curveConfidence === "low").map((r) => r.name);
 }
-export function formatOutcome(屽壍: Objective, 筬壍: number | null | undefined, 驛壍: string): string {
-    if (筬壍 === null || 筬壍 === undefined || !Number.isFinite(筬壍))
+export function formatOutcome(objective: Objective, v: number | null | undefined, currency: string): string {
+    if (v === null || v === undefined || !Number.isFinite(v))
         return "—";
-    return 屽壍 === "conv_value" ? formatMetricValue("money", 筬壍, { currency: 驛壍 }) : formatMetricValue("decimal", 筬壍, { decimals: Math.abs(筬壍) >= 100 ? 0 : 1 });
+    return objective === "conv_value" ? formatMetricValue("money", v, { currency }) : formatMetricValue("decimal", v, { decimals: Math.abs(v) >= 100 ? 0 : 1 });
 }
-export function marginalLabel(杊壍: Objective, 蘹壍: number | null | undefined, 匨壍: string): string {
-    if (蘹壍 === null || 蘹壍 === undefined || !Number.isFinite(蘹壍) || 蘹壍 <= 0)
+export function marginalLabel(objective: Objective, marginalCost: number | null | undefined, currency: string): string {
+    if (marginalCost === null || marginalCost === undefined || !Number.isFinite(marginalCost) || marginalCost <= 0)
         return "—";
-    if (杊壍 === "conv_value")
-        return `${(1 / 蘹壍).toFixed(2)}x`;
-    return `${蘹壍 >= 100 ? moneyExact(蘹壍, 匨壍) : formatMetricValue("money", 蘹壍, { currency: 匨壍, decimals: 2 })}/conv`;
+    if (objective === "conv_value")
+        return `${(1 / marginalCost).toFixed(2)}x`;
+    return `${marginalCost >= 100 ? moneyExact(marginalCost, currency) : formatMetricValue("money", marginalCost, { currency, decimals: 2 })}/conv`;
 }

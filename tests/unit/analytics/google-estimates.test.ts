@@ -10,94 +10,94 @@ import { getGoogleEstimatesView } from "@/lib/server/budget/google-estimates";
 import { optimize, scenarios } from "@/lib/server/budget/service";
 import { requestContext, type RequestContext } from "@/lib/server/context";
 import { ANCHOR, demoDataset, outletDataset, resetServerState, restoreServerState } from "./helpers";
-vi.mock("next/server", async (髜壍) => ({ ...(await 髜壍<typeof import("next/server")>()), connection: async () => undefined }));
-const 柋壍 = "2026-09-28";
-function 蚺壍(厩壍: [
+vi.mock("next/server", async (importOriginal) => ({ ...(await importOriginal<typeof import("next/server")>()), connection: async () => undefined }));
+const DATA_THROUGH = "2026-09-28";
+function sim(points: [
     number,
     number,
     number
-][], 犘壍: Partial<CampaignSimulation> = {}): CampaignSimulation {
-    const 醇壍 = 7;
-    const 并壍: SimulationPoint[] = 厩壍.map(([絥壍, 鱔壍, 楃壍]) => ({ value: 絥壍, cost: 鱔壍 * 醇壍, clicks: 鱔壍 * 2 * 醇壍, impressions: 鱔壍 * 40 * 醇壍, conversions: 楃壍 * 醇壍, convValue: 楃壍 * 50 * 醇壍, requiredBudget: null }));
-    return { campaignId: "c1", type: "BUDGET", modification: "UNIFORM", start: "2026-09-21", end: "2026-09-27", points: 并壍, ...犘壍 };
+][], over: Partial<CampaignSimulation> = {}): CampaignSimulation {
+    const days = 7;
+    const pts: SimulationPoint[] = points.map(([value, cost, conversions]) => ({ value, cost: cost * days, clicks: cost * 2 * days, impressions: cost * 40 * days, conversions: conversions * days, convValue: conversions * 50 * days, requiredBudget: null }));
+    return { campaignId: "c1", type: "BUDGET", modification: "UNIFORM", start: "2026-09-21", end: "2026-09-27", points: pts, ...over };
 }
-const 蠲壍 = 蚺壍([100, 150, 200, 250, 300, 400].map((唡壍) => [唡壍, 唡壍 * 0.9, 2 * (唡壍 * 0.9) ** 0.7] as [
+const POWER = sim([100, 150, 200, 250, 300, 400].map((b) => [b, b * 0.9, 2 * (b * 0.9) ** 0.7] as [
     number,
     number,
     number
 ]));
-const 琐壍 = 蚺壍([
+const LINEAR = sim([
     [200, 200, 10],
     [400, 380, 16],
     [600, 500, 20],
 ]);
 describe("simulation points", () => {
     it("turns window totals into per-day points, sorted, one per setting", () => {
-        expect(simulationDays(琐壍)).toBe(7);
+        expect(simulationDays(LINEAR)).toBe(7);
         expect(simulationDays({ start: "2026-09-27", end: "2026-09-27" })).toBe(1);
-        const 鋿壍 = { ...琐壍, points: [琐壍.points[2]!, 琐壍.points[0]!, { ...琐壍.points[0]!, cost: 1 }, 琐壍.points[1]!] };
-        const 忮壍 = perDayPoints(鋿壍);
-        expect(忮壍.map((绝壍) => 绝壍.value)).toEqual([200, 400, 600]);
-        expect(忮壍[0]).toMatchObject({ value: 200, cost: 200, conversions: 10, convValue: 500, clicks: 400 });
+        const shuffled = { ...LINEAR, points: [LINEAR.points[2]!, LINEAR.points[0]!, { ...LINEAR.points[0]!, cost: 1 }, LINEAR.points[1]!] };
+        const pts = perDayPoints(shuffled);
+        expect(pts.map((p) => p.value)).toEqual([200, 400, 600]);
+        expect(pts[0]).toMatchObject({ value: 200, cost: 200, conversions: 10, convValue: 500, clicks: 400 });
     });
     it("interpolates linearly between settings and extends the end segments by at most 5 %", () => {
-        expect(interpolateSimulation(琐壍, 400)).toMatchObject({ value: 400, cost: 380, conversions: 16 });
-        expect(interpolateSimulation(琐壍, 300)).toMatchObject({ cost: 290, conversions: 13 });
-        expect(interpolateSimulation(琐壍, 500)).toMatchObject({ cost: 440, conversions: 18 });
-        expect(interpolateSimulation(琐壍, 190)!.cost).toBeCloseTo(191, 6);
-        expect(interpolateSimulation(琐壍, 630)!.conversions).toBeCloseTo(20.6, 6);
-        expect(interpolateSimulation(琐壍, 189)).toBeNull();
-        expect(interpolateSimulation(琐壍, 631)).toBeNull();
-        expect(interpolateSimulation(琐壍, 0)).toBeNull();
-        expect(interpolateSimulation(琐壍, Number.NaN)).toBeNull();
-        expect(interpolatePoints(perDayPoints(琐壍), 199, 0)).toBeNull();
+        expect(interpolateSimulation(LINEAR, 400)).toMatchObject({ value: 400, cost: 380, conversions: 16 });
+        expect(interpolateSimulation(LINEAR, 300)).toMatchObject({ cost: 290, conversions: 13 });
+        expect(interpolateSimulation(LINEAR, 500)).toMatchObject({ cost: 440, conversions: 18 });
+        expect(interpolateSimulation(LINEAR, 190)!.cost).toBeCloseTo(191, 6);
+        expect(interpolateSimulation(LINEAR, 630)!.conversions).toBeCloseTo(20.6, 6);
+        expect(interpolateSimulation(LINEAR, 189)).toBeNull();
+        expect(interpolateSimulation(LINEAR, 631)).toBeNull();
+        expect(interpolateSimulation(LINEAR, 0)).toBeNull();
+        expect(interpolateSimulation(LINEAR, Number.NaN)).toBeNull();
+        expect(interpolatePoints(perDayPoints(LINEAR), 199, 0)).toBeNull();
     });
     it("handles one point, required budgets and never goes negative", () => {
-        const 鷌壍 = 蚺壍([[300, 280, 12]]);
-        expect(interpolateSimulation(鷌壍, 310)).toMatchObject({ value: 310, cost: 280, conversions: 12 });
-        expect(interpolateSimulation(鷌壍, 320)).toBeNull();
-        const 檻壍 = { ...琐壍, type: "TARGET_CPA" as const, points: 琐壍.points.map((親壍, 嚙壍) => ({ ...親壍, requiredBudget: [210, 400, 530][嚙壍] ?? null })) };
-        expect(interpolateSimulation(檻壍, 300)?.requiredBudget).toBeCloseTo(305, 6);
-        const 疈壍 = { ...檻壍, points: 檻壍.points.map((鑷壍, 慦壍) => (慦壍 === 1 ? { ...鑷壍, requiredBudget: null } : 鑷壍)) };
-        expect(interpolateSimulation(疈壍, 300)?.requiredBudget).toBeNull();
-        const 聕壍 = 蚺壍([
+        const one = sim([[300, 280, 12]]);
+        expect(interpolateSimulation(one, 310)).toMatchObject({ value: 310, cost: 280, conversions: 12 });
+        expect(interpolateSimulation(one, 320)).toBeNull();
+        const target = { ...LINEAR, type: "TARGET_CPA" as const, points: LINEAR.points.map((p, i) => ({ ...p, requiredBudget: [210, 400, 530][i] ?? null })) };
+        expect(interpolateSimulation(target, 300)?.requiredBudget).toBeCloseTo(305, 6);
+        const partial = { ...target, points: target.points.map((p, i) => (i === 1 ? { ...p, requiredBudget: null } : p)) };
+        expect(interpolateSimulation(partial, 300)?.requiredBudget).toBeNull();
+        const falling = sim([
             [100, 100, 1],
             [200, 200, 10],
         ]);
-        expect(interpolateSimulation(聕壍, 96)!.conversions).toBeGreaterThanOrEqual(0);
+        expect(interpolateSimulation(falling, 96)!.conversions).toBeGreaterThanOrEqual(0);
     });
 });
 describe("simulator curve fit", () => {
     it("recovers an exact power law of cost with full confidence and no shrinkage", () => {
-        const 齄壍 = fitSimulationCurve("c1", "conversions", 蠲壍)!;
-        expect(齄壍.b).toBeCloseTo(0.7, 6);
-        expect(齄壍.a).toBeCloseTo(2, 6);
-        expect(齄壍).toMatchObject({ campaignId: "c1", objective: "conversions", r2: 1, n: 6, confidence: "high", source: "google_simulator" });
-        expect(齄壍.spendRange).toEqual([90, 360]);
-        expect(curveOutcome(齄壍, 200)).toBeCloseTo(2 * 200 ** 0.7, 6);
-        const 氳壍 = fitSimulationCurve("c1", "conv_value", 蠲壍)!;
-        expect(氳壍.a).toBeCloseTo(100, 4);
-        expect(氳壍.b).toBeCloseTo(0.7, 6);
+        const c = fitSimulationCurve("c1", "conversions", POWER)!;
+        expect(c.b).toBeCloseTo(0.7, 6);
+        expect(c.a).toBeCloseTo(2, 6);
+        expect(c).toMatchObject({ campaignId: "c1", objective: "conversions", r2: 1, n: 6, confidence: "high", source: "google_simulator" });
+        expect(c.spendRange).toEqual([90, 360]);
+        expect(curveOutcome(c, 200)).toBeCloseTo(2 * 200 ** 0.7, 6);
+        const value = fitSimulationCurve("c1", "conv_value", POWER)!;
+        expect(value.a).toBeCloseTo(100, 4);
+        expect(value.b).toBeCloseTo(0.7, 6);
     });
     it("clamps convex points to b = 1 and grades sparse or narrow simulations", () => {
-        const 謢壍 = 蚺壍([
+        const convex = sim([
             [100, 100, 1],
             [200, 200, 4],
             [300, 300, 9],
         ]);
-        expect(fitSimulationCurve("c1", "conversions", 謢壍)?.b).toBe(1);
-        const 堑壍 = 蚺壍([
+        expect(fitSimulationCurve("c1", "conversions", convex)?.b).toBe(1);
+        const three = sim([
             [100, 100, 10],
             [150, 140, 12.6],
             [200, 170, 14.5],
         ]);
-        expect(fitSimulationCurve("c1", "conversions", 堑壍)?.confidence).toBe("medium");
-        expect(fitSimulationCurve("c1", "conversions", 蚺壍([[100, 100, 10]]))).toBeNull();
-        expect(fitSimulationCurve("c1", "conversions", 蚺壍([
+        expect(fitSimulationCurve("c1", "conversions", three)?.confidence).toBe("medium");
+        expect(fitSimulationCurve("c1", "conversions", sim([[100, 100, 10]]))).toBeNull();
+        expect(fitSimulationCurve("c1", "conversions", sim([
             [100, 100, 10],
             [200, 101, 10.1],
         ]))).toBeNull();
-        expect(fitSimulationCurve("c1", "conversions", 蚺壍([
+        expect(fitSimulationCurve("c1", "conversions", sim([
             [100, 100, 0],
             [200, 180, 0],
             [300, 250, 12],
@@ -106,84 +106,84 @@ describe("simulator curve fit", () => {
 });
 describe("picking and normalising simulations", () => {
     it("prefers the latest window, then UNIFORM over DEFAULT over SCALING", () => {
-        const 眀壍 = { ...琐壍, end: "2026-09-20", start: "2026-09-14" };
-        const 闯壍 = { ...琐壍, modification: "SCALING" as const };
-        expect(pickSimulation([眀壍, 闯壍, 琐壍], "c1", "BUDGET")).toBe(琐壍);
-        expect(pickSimulation([眀壍], "c1", "BUDGET")).toBe(眀壍);
-        expect(pickSimulation([琐壍], "c2", "BUDGET")).toBeNull();
-        expect(pickSimulation([琐壍], "c1", "TARGET_ROAS")).toBeNull();
-        expect(pickSimulation([{ ...琐壍, points: [] }], "c1", "BUDGET")).toBeNull();
+        const older = { ...LINEAR, end: "2026-09-20", start: "2026-09-14" };
+        const scaling = { ...LINEAR, modification: "SCALING" as const };
+        expect(pickSimulation([older, scaling, LINEAR], "c1", "BUDGET")).toBe(LINEAR);
+        expect(pickSimulation([older], "c1", "BUDGET")).toBe(older);
+        expect(pickSimulation([LINEAR], "c2", "BUDGET")).toBeNull();
+        expect(pickSimulation([LINEAR], "c1", "TARGET_ROAS")).toBeNull();
+        expect(pickSimulation([{ ...LINEAR, points: [] }], "c1", "BUDGET")).toBeNull();
     });
     it("scales relative (SCALING) simulations by the current setting", () => {
-        const 拞壍 = { ...琐壍, type: "TARGET_CPA" as const, modification: "SCALING" as const, relative: true, points: 琐壍.points.map((臍壍, 亼壍) => ({ ...臍壍, value: [0.8, 1, 1.2][亼壍] as number })) };
-        const 涫壍 = absoluteSimulation(拞壍, 30)!;
-        expect(涫壍.points.map((貚壍) => 貚壍.value)).toEqual([24, 30, 36]);
-        expect(涫壍.relative).toBeUndefined();
-        expect(absoluteSimulation(拞壍, null)).toBeNull();
-        expect(absoluteSimulation(拞壍, 0)).toBeNull();
-        expect(absoluteSimulation(琐壍, null)).toBe(琐壍);
+        const rel = { ...LINEAR, type: "TARGET_CPA" as const, modification: "SCALING" as const, relative: true, points: LINEAR.points.map((p, i) => ({ ...p, value: [0.8, 1, 1.2][i] as number })) };
+        const abs = absoluteSimulation(rel, 30)!;
+        expect(abs.points.map((p) => p.value)).toEqual([24, 30, 36]);
+        expect(abs.relative).toBeUndefined();
+        expect(absoluteSimulation(rel, null)).toBeNull();
+        expect(absoluteSimulation(rel, 0)).toBeNull();
+        expect(absoluteSimulation(LINEAR, null)).toBe(LINEAR);
     });
 });
 describe("source policy", () => {
-    const 妉壍 = { a: 0.2, b: 0.8 };
-    const 硸壍 = { campaign: { type: "Search" as const }, simulation: 琐壍, modelCurve: 妉壍, dataThrough: 柋壍, objective: "conversions" as const, currency: "USD" };
+    const model = { a: 0.2, b: 0.8 };
+    const base = { campaign: { type: "Search" as const }, simulation: LINEAR, modelCurve: model, dataThrough: DATA_THROUGH, objective: "conversions" as const, currency: "USD" };
     it("Google leads inside a fresh simulated range, our model is the second opinion", () => {
-        const 靧壍 = chooseBudgetEstimate({ ...硸壍, proposedDaily: 400 });
-        expect(靧壍.lead).toBe("google_simulator");
-        expect(靧壍.reason).toBe("Google's budget simulator covers $400/day (Sep 21 – Sep 27), so it leads; our model is a second opinion.");
-        expect(靧壍.googleOutcome).toBe(16);
-        expect(靧壍.model).toBeCloseTo(curveOutcome(妉壍, 400), 9);
-        expect(靧壍.disagreementPct).toBeCloseTo(Math.round((curveOutcome(妉壍, 400) / 16 - 1) * 1e4) / 1e4, 9);
-        expect(靧壍.google).toMatchObject({ value: 400, cost: 380 });
-        expect(chooseBudgetEstimate({ ...硸壍, proposedDaily: 400, objective: "conv_value" }).googleOutcome).toBe(800);
+        const d = chooseBudgetEstimate({ ...base, proposedDaily: 400 });
+        expect(d.lead).toBe("google_simulator");
+        expect(d.reason).toBe("Google's budget simulator covers $400/day (Sep 21 – Sep 27), so it leads; our model is a second opinion.");
+        expect(d.googleOutcome).toBe(16);
+        expect(d.model).toBeCloseTo(curveOutcome(model, 400), 9);
+        expect(d.disagreementPct).toBeCloseTo(Math.round((curveOutcome(model, 400) / 16 - 1) * 1e4) / 1e4, 9);
+        expect(d.google).toMatchObject({ value: 400, cost: 380 });
+        expect(chooseBudgetEstimate({ ...base, proposedDaily: 400, objective: "conv_value" }).googleOutcome).toBe(800);
     });
     it("treats Performance Max like any campaign: Google leads with a fresh simulation, our model without one", () => {
-        expect(chooseBudgetEstimate({ ...硸壍, campaign: { type: "PMax" }, proposedDaily: 400 })).toMatchObject({ lead: "google_simulator", googleOutcome: 16 });
-        expect(budgetSimulatorGap("PMax", 琐壍, 柋壍)).toBeNull();
-        const 摖壍 = chooseBudgetEstimate({ ...硸壍, campaign: { type: "PMax" }, simulation: null, proposedDaily: 400 });
-        expect(摖壍).toMatchObject({ lead: "model", google: null, googleOutcome: null, disagreementPct: null });
-        expect(摖壍.reason).toBe("Google returned no budget simulation for this campaign, so our model leads.");
+        expect(chooseBudgetEstimate({ ...base, campaign: { type: "PMax" }, proposedDaily: 400 })).toMatchObject({ lead: "google_simulator", googleOutcome: 16 });
+        expect(budgetSimulatorGap("PMax", LINEAR, DATA_THROUGH)).toBeNull();
+        const none = chooseBudgetEstimate({ ...base, campaign: { type: "PMax" }, simulation: null, proposedDaily: 400 });
+        expect(none).toMatchObject({ lead: "model", google: null, googleOutcome: null, disagreementPct: null });
+        expect(none.reason).toBe("Google returned no budget simulation for this campaign, so our model leads.");
     });
     it("never lets a shared-budget campaign's simulation lead: it shows the campaign on a budget of its own", () => {
-        const 荅壍 = chooseBudgetEstimate({ ...硸壍, campaign: { type: "Search", budget_shared: true }, modelCurve: null, proposedDaily: 400 });
-        expect(荅壍).toMatchObject({ lead: "model", googleOutcome: 16, model: null, disagreementPct: null });
-        expect(荅壍.reason).toBe("This campaign shares its budget with other campaigns. Google simulated it as if the budget were its own, so those points don't describe the shared budget — plan the shared budget as a whole.");
-        expect(budgetSimulatorGap("Search", 琐壍, 柋壍, true)).toBe("shared");
-        expect(budgetSimulatorGap("Shared", 琐壍, 柋壍)).toBe("shared");
-        expect(chooseBudgetEstimate({ ...硸壍, campaign: { type: "Search", budget_shared: true }, simulation: null, modelCurve: null, proposedDaily: 400 }).reason).toBe("This campaign shares its budget with other campaigns — plan the shared budget as a whole.");
+        const d = chooseBudgetEstimate({ ...base, campaign: { type: "Search", budget_shared: true }, modelCurve: null, proposedDaily: 400 });
+        expect(d).toMatchObject({ lead: "model", googleOutcome: 16, model: null, disagreementPct: null });
+        expect(d.reason).toBe("This campaign shares its budget with other campaigns. Google simulated it as if the budget were its own, so those points don't describe the shared budget — plan the shared budget as a whole.");
+        expect(budgetSimulatorGap("Search", LINEAR, DATA_THROUGH, true)).toBe("shared");
+        expect(budgetSimulatorGap("Shared", LINEAR, DATA_THROUGH)).toBe("shared");
+        expect(chooseBudgetEstimate({ ...base, campaign: { type: "Search", budget_shared: true }, simulation: null, modelCurve: null, proposedDaily: 400 }).reason).toBe("This campaign shares its budget with other campaigns — plan the shared budget as a whole.");
     });
     it("our model leads without a budget simulation (targets only or none)", () => {
-        const 倴壍 = chooseBudgetEstimate({ ...硸壍, simulation: null, proposedDaily: 400 });
-        expect(倴壍.lead).toBe("model");
-        expect(倴壍.reason).toBe("Google returned no budget simulation for this campaign, so our model leads.");
-        expect(chooseBudgetEstimate({ ...硸壍, simulation: { ...琐壍, type: "TARGET_CPA" }, proposedDaily: 400 }).lead).toBe("model");
-        expect(chooseBudgetEstimate({ ...硸壍, simulation: { ...琐壍, relative: true }, proposedDaily: 400 }).lead).toBe("model");
+        const d = chooseBudgetEstimate({ ...base, simulation: null, proposedDaily: 400 });
+        expect(d.lead).toBe("model");
+        expect(d.reason).toBe("Google returned no budget simulation for this campaign, so our model leads.");
+        expect(chooseBudgetEstimate({ ...base, simulation: { ...LINEAR, type: "TARGET_CPA" }, proposedDaily: 400 }).lead).toBe("model");
+        expect(chooseBudgetEstimate({ ...base, simulation: { ...LINEAR, relative: true }, proposedDaily: 400 }).lead).toBe("model");
     });
     it("our model leads when the simulation ended more than 14 days before the data (Google is still shown)", () => {
-        const 漣壍 = { ...琐壍, start: "2026-09-07", end: addDays(柋壍, -(STALE_AFTER_DAYS + 1)) };
-        const 踒壍 = chooseBudgetEstimate({ ...硸壍, simulation: 漣壍, proposedDaily: 400 });
-        expect(踒壍.lead).toBe("model");
-        expect(踒壍.reason).toBe("Google's budget simulation ended Sep 13, more than 14 days before the latest data, so our model leads.");
-        expect(踒壍.googleOutcome).toBe(16);
-        expect(踒壍.disagreementPct).not.toBeNull();
-        const 嬁壍 = { ...琐壍, end: addDays(柋壍, -STALE_AFTER_DAYS) };
-        expect(chooseBudgetEstimate({ ...硸壍, simulation: 嬁壍, proposedDaily: 400 }).lead).toBe("google_simulator");
+        const stale = { ...LINEAR, start: "2026-09-07", end: addDays(DATA_THROUGH, -(STALE_AFTER_DAYS + 1)) };
+        const d = chooseBudgetEstimate({ ...base, simulation: stale, proposedDaily: 400 });
+        expect(d.lead).toBe("model");
+        expect(d.reason).toBe("Google's budget simulation ended Sep 13, more than 14 days before the latest data, so our model leads.");
+        expect(d.googleOutcome).toBe(16);
+        expect(d.disagreementPct).not.toBeNull();
+        const boundary = { ...LINEAR, end: addDays(DATA_THROUGH, -STALE_AFTER_DAYS) };
+        expect(chooseBudgetEstimate({ ...base, simulation: boundary, proposedDaily: 400 }).lead).toBe("google_simulator");
     });
     it("our model leads outside the simulated budgets (±5 %)", () => {
-        const 称壍 = chooseBudgetEstimate({ ...硸壍, proposedDaily: 700 });
-        expect(称壍).toMatchObject({ lead: "model", google: null, disagreementPct: null });
-        expect(称壍.reason).toBe("$700/day is outside the budgets Google simulated ($200–$600/day), so our model leads.");
-        expect(称壍.model).toBeCloseTo(curveOutcome(妉壍, 700), 9);
-        expect(chooseBudgetEstimate({ ...硸壍, proposedDaily: 185 }).lead).toBe("model");
-        expect(chooseBudgetEstimate({ ...硸壍, proposedDaily: 625 }).lead).toBe("google_simulator");
-        expect(chooseBudgetEstimate({ ...硸壍, proposedDaily: 195 }).lead).toBe("google_simulator");
+        const out = chooseBudgetEstimate({ ...base, proposedDaily: 700 });
+        expect(out).toMatchObject({ lead: "model", google: null, disagreementPct: null });
+        expect(out.reason).toBe("$700/day is outside the budgets Google simulated ($200–$600/day), so our model leads.");
+        expect(out.model).toBeCloseTo(curveOutcome(model, 700), 9);
+        expect(chooseBudgetEstimate({ ...base, proposedDaily: 185 }).lead).toBe("model");
+        expect(chooseBudgetEstimate({ ...base, proposedDaily: 625 }).lead).toBe("google_simulator");
+        expect(chooseBudgetEstimate({ ...base, proposedDaily: 195 }).lead).toBe("google_simulator");
     });
     it("works without a model curve or a budget to evaluate", () => {
-        const 食壍 = chooseBudgetEstimate({ ...硸壍, modelCurve: null, proposedDaily: 400 });
-        expect(食壍).toMatchObject({ lead: "google_simulator", model: null, disagreementPct: null });
-        const 旎壍 = chooseBudgetEstimate({ ...硸壍, modelCurve: null, simulation: null, proposedDaily: 400 });
-        expect(旎壍.reason).toMatch(/Our model has no response curve for it either\.$/);
-        expect(chooseBudgetEstimate({ ...硸壍, proposedDaily: 0 })).toMatchObject({ lead: "model", reason: "There is no daily budget to evaluate.", google: null, model: null });
+        const noModel = chooseBudgetEstimate({ ...base, modelCurve: null, proposedDaily: 400 });
+        expect(noModel).toMatchObject({ lead: "google_simulator", model: null, disagreementPct: null });
+        const neither = chooseBudgetEstimate({ ...base, modelCurve: null, simulation: null, proposedDaily: 400 });
+        expect(neither.reason).toMatch(/Our model has no response curve for it either\.$/);
+        expect(chooseBudgetEstimate({ ...base, proposedDaily: 0 })).toMatchObject({ lead: "model", reason: "There is no daily budget to evaluate.", google: null, model: null });
     });
     it("describes agreement within 10 % and which way a larger gap goes", () => {
         expect(agreementLine(0.04)).toBe("Google and our model agree within 10%");
@@ -193,7 +193,7 @@ describe("source policy", () => {
         expect(agreementLine(null)).toBeNull();
     });
     it("publishes the policy as data", () => {
-        expect(ESTIMATE_POLICY.map((蒽壍) => [蒽壍.id, 蒽壍.lead])).toEqual([
+        expect(ESTIMATE_POLICY.map((r) => [r.id, r.lead])).toEqual([
             ["pacing", "model"],
             ["trend", "model"],
             ["budget_whatif", "google_simulator"],
@@ -201,14 +201,14 @@ describe("source policy", () => {
             ["reallocation", "model"],
             ["shared_budget", "model"],
         ]);
-        expect(ESTIMATE_POLICY.some((冬壍) => /no budget simulator for Performance Max/.test(冬壍.why))).toBe(false);
-        expect(ESTIMATE_POLICY.find((炛壍) => 炛壍.id === "trend")?.why).toMatch(/Performance Planner isn't available in the Google Ads API/);
-        expect(ESTIMATE_POLICY.find((辊壍) => 辊壍.id === "target_whatif")?.why).toBe("We don't model bid targets.");
-        expect(ESTIMATE_POLICY.every((屹壍) => 屹壍.question && 屹壍.leadLabel && 屹壍.why)).toBe(true);
+        expect(ESTIMATE_POLICY.some((r) => /no budget simulator for Performance Max/.test(r.why))).toBe(false);
+        expect(ESTIMATE_POLICY.find((r) => r.id === "trend")?.why).toMatch(/Performance Planner isn't available in the Google Ads API/);
+        expect(ESTIMATE_POLICY.find((r) => r.id === "target_whatif")?.why).toBe("We don't model bid targets.");
+        expect(ESTIMATE_POLICY.every((r) => r.question && r.leadLabel && r.why)).toBe(true);
     });
     it("feeds the optimizer simulator curves only for single-campaign units (PMax included) with a fresh budget simulation", () => {
-        const 筨壍 = [琐壍, { ...蠲壍, campaignId: "c2" }, { ...琐壍, campaignId: "pm" }, { ...琐壍, campaignId: "old", end: "2026-09-01", start: "2026-08-26" }, { ...琐壍, campaignId: "s1" }];
-        const 驗壍 = [
+        const sims = [LINEAR, { ...POWER, campaignId: "c2" }, { ...LINEAR, campaignId: "pm" }, { ...LINEAR, campaignId: "old", end: "2026-09-01", start: "2026-08-26" }, { ...LINEAR, campaignId: "s1" }];
+        const units = [
             { unitId: "c1", campaignIds: ["c1"], type: "Search" as const },
             { unitId: "c2", campaignIds: ["c2"], type: "Shopping" as const },
             { unitId: "pm", campaignIds: ["pm"], type: "PMax" as const },
@@ -216,125 +216,125 @@ describe("source policy", () => {
             { unitId: "budget:9", campaignIds: ["s1", "s2"], type: "Shared" as const },
             { unitId: "none", campaignIds: ["none"], type: "Display" as const },
         ];
-        const 杆壍 = simulatorCurves(驗壍, 筨壍, "conversions", 柋壍);
-        expect([...杆壍.keys()]).toEqual(["c1", "c2", "pm"]);
-        expect(杆壍.get("c2")).toMatchObject({ campaignId: "c2", source: "google_simulator" });
+        const curves = simulatorCurves(units, sims, "conversions", DATA_THROUGH);
+        expect([...curves.keys()]).toEqual(["c1", "c2", "pm"]);
+        expect(curves.get("c2")).toMatchObject({ campaignId: "c2", source: "google_simulator" });
     });
 });
 describe("blending Google's curves with ours", () => {
-    const 蘵壍 = (匤壍: string, 爓壍: number, 鄂壍: Partial<ResponseCurve> = {}): ResponseCurve => ({ campaignId: 匤壍, objective: "conversions", a: 2, b: 爓壍, bRaw: 爓壍, r2: 0.8, n: 60, spendRange: [100, 400], confidence: "high", ...鄂壍 });
-    const 己壍 = (糠壍: string, 鯏壍: number) => 蘵壍(糠壍, 鯏壍, { source: "google_simulator", spendRange: [80, 500] });
+    const curve = (id: string, b: number, over: Partial<ResponseCurve> = {}): ResponseCurve => ({ campaignId: id, objective: "conversions", a: 2, b, bRaw: b, r2: 0.8, n: 60, spendRange: [100, 400], confidence: "high", ...over });
+    const g = (id: string, b: number) => curve(id, b, { source: "google_simulator", spendRange: [80, 500] });
     it("calibrates our curve's exponent and keeps its outcome at the typical spend", () => {
-        const 梾壍 = 蘵壍("u1", 0.9);
-        const 螭壍 = calibrateCurve(梾壍, 0.75);
-        expect(螭壍.b).toBeCloseTo(0.675, 9);
-        expect(螭壍.calibration).toBe(0.75);
-        expect(curveOutcome(螭壍, 200)).toBeCloseTo(curveOutcome(梾壍, 200), 9);
-        expect(curveOutcome(螭壍, 400)).toBeLessThan(curveOutcome(梾壍, 400));
-        expect(curveOutcome(螭壍, 100)).toBeGreaterThan(curveOutcome(梾壍, 100));
-        expect(calibrateCurve(蘵壍("u2", 0.9), 1.5).b).toBe(0.95);
-        expect(calibrateCurve(蘵壍("u3", 0.9, { spendRange: [0, 0] }), 0.75)).toEqual(蘵壍("u3", 0.9, { spendRange: [0, 0] }));
+        const m = curve("u1", 0.9);
+        const c = calibrateCurve(m, 0.75);
+        expect(c.b).toBeCloseTo(0.675, 9);
+        expect(c.calibration).toBe(0.75);
+        expect(curveOutcome(c, 200)).toBeCloseTo(curveOutcome(m, 200), 9);
+        expect(curveOutcome(c, 400)).toBeLessThan(curveOutcome(m, 400));
+        expect(curveOutcome(c, 100)).toBeGreaterThan(curveOutcome(m, 100));
+        expect(calibrateCurve(curve("u2", 0.9), 1.5).b).toBe(0.95);
+        expect(calibrateCurve(curve("u3", 0.9, { spendRange: [0, 0] }), 0.75)).toEqual(curve("u3", 0.9, { spendRange: [0, 0] }));
     });
     it("puts every unit on Google's scale when at least two units have both curves", () => {
-        const 咜壍 = new Map([
-            ["u1", 蘵壍("u1", 0.9)],
-            ["u2", 蘵壍("u2", 0.8)],
-            ["u3", 蘵壍("u3", 0.9)],
-            ["pmax", 蘵壍("pmax", 0.92)],
+        const model = new Map([
+            ["u1", curve("u1", 0.9)],
+            ["u2", curve("u2", 0.8)],
+            ["u3", curve("u3", 0.9)],
+            ["pmax", curve("pmax", 0.92)],
         ]);
-        const 王壍 = new Map([
-            ["u1", 己壍("u1", 0.63)],
-            ["u2", 己壍("u2", 0.64)],
-            ["u3", 己壍("u3", 0.81)],
+        const google = new Map([
+            ["u1", g("u1", 0.63)],
+            ["u2", g("u2", 0.64)],
+            ["u3", g("u3", 0.81)],
         ]);
-        const 鉺壍 = blendCurves(咜壍, 王壍);
-        expect(鉺壍).toMatchObject({ google: 3, model: 1, available: 3, calibration: 0.8, basis: 3 });
-        expect(鉺壍.curves.get("u1")).toBe(王壍.get("u1"));
-        expect(鉺壍.curves.get("pmax")).toMatchObject({ b: 0.92 * 0.8, calibration: 0.8 });
-        expect(鉺壍.curves.get("pmax")?.source).toBeUndefined();
+        const blend = blendCurves(model, google);
+        expect(blend).toMatchObject({ google: 3, model: 1, available: 3, calibration: 0.8, basis: 3 });
+        expect(blend.curves.get("u1")).toBe(google.get("u1"));
+        expect(blend.curves.get("pmax")).toMatchObject({ b: 0.92 * 0.8, calibration: 0.8 });
+        expect(blend.curves.get("pmax")?.source).toBeUndefined();
     });
     it("leaves Google out below two overlapping units, needs no calibration when Google prices everything, and clamps the factor", () => {
-        const 彩壍 = new Map([
-            ["u1", 蘵壍("u1", 0.9)],
-            ["pmax", 蘵壍("pmax", 0.9)],
+        const model = new Map([
+            ["u1", curve("u1", 0.9)],
+            ["pmax", curve("pmax", 0.9)],
         ]);
-        const 繘壍 = blendCurves(彩壍, new Map([["u1", 己壍("u1", 0.6)]]));
-        expect(繘壍).toMatchObject({ google: 0, model: 2, available: 1, calibration: null, basis: 1 });
-        expect(繘壍.curves.get("u1")).toBe(彩壍.get("u1"));
-        const 鵇壍 = blendCurves(彩壍, new Map());
-        expect(鵇壍).toMatchObject({ google: 0, model: 2, available: 0, calibration: null });
-        const 樶壍 = blendCurves(彩壍, new Map([["u1", 己壍("u1", 0.6)], ["pmax", 己壍("pmax", 0.5)]]));
-        expect(樶壍).toMatchObject({ google: 2, model: 0, calibration: null });
-        const 褥壍 = blendCurves(new Map([...彩壍, ["u2", 蘵壍("u2", 0.9)]]), new Map([["u1", 己壍("u1", 0.1)], ["u2", 己壍("u2", 0.1)]]));
-        expect(褥壍.calibration).toBe(CALIBRATION_RANGE[0]);
+        const one = blendCurves(model, new Map([["u1", g("u1", 0.6)]]));
+        expect(one).toMatchObject({ google: 0, model: 2, available: 1, calibration: null, basis: 1 });
+        expect(one.curves.get("u1")).toBe(model.get("u1"));
+        const none = blendCurves(model, new Map());
+        expect(none).toMatchObject({ google: 0, model: 2, available: 0, calibration: null });
+        const all = blendCurves(model, new Map([["u1", g("u1", 0.6)], ["pmax", g("pmax", 0.5)]]));
+        expect(all).toMatchObject({ google: 2, model: 0, calibration: null });
+        const steep = blendCurves(new Map([...model, ["u2", curve("u2", 0.9)]]), new Map([["u1", g("u1", 0.1)], ["u2", g("u2", 0.1)]]));
+        expect(steep.calibration).toBe(CALIBRATION_RANGE[0]);
     });
 });
 describe("synthetic estimates", () => {
-    const 嘔壍 = demoDataset();
-    const 甃壍 = buildDemoEstimates(嘔壍, { seed: "savd-demo-v1" });
-    const 鏲壍 = 甃壍.simulations.filter((惡壍) => 惡壍.type === "BUDGET");
+    const ds = demoDataset();
+    const est = buildDemoEstimates(ds, { seed: "savd-demo-v1" });
+    const budgetSims = est.simulations.filter((s) => s.type === "BUDGET");
     it("is deterministic per seed and pure", () => {
-        expect(buildDemoEstimates(嘔壍, { seed: "savd-demo-v1" })).toEqual(甃壍);
-        expect(buildDemoEstimates(嘔壍, { seed: "another-seed" })).not.toEqual(甃壍);
-        expect(甃壍.warnings).toEqual([]);
+        expect(buildDemoEstimates(ds, { seed: "savd-demo-v1" })).toEqual(est);
+        expect(buildDemoEstimates(ds, { seed: "another-seed" })).not.toEqual(est);
+        expect(est.warnings).toEqual([]);
     });
     it("simulates budgets for Search, Shopping and Display only — the demo leaves PMax, Video and Demand Gen without", () => {
-        expect(鏲壍.map((翐壍) => 翐壍.campaignId)).toEqual(["c1", "c2", "c4", "c6", "c8"]);
-        for (const 麿壍 of ["c3", "c5", "c7"])
-            expect(甃壍.simulations.filter((殮壍) => 殮壍.campaignId === 麿壍), 麿壍).toEqual([]);
-        expect(嘔壍.dims.campaigns.get("c3")?.type).toBe("PMax");
+        expect(budgetSims.map((s) => s.campaignId)).toEqual(["c1", "c2", "c4", "c6", "c8"]);
+        for (const id of ["c3", "c5", "c7"])
+            expect(est.simulations.filter((s) => s.campaignId === id), id).toEqual([]);
+        expect(ds.dims.campaigns.get("c3")?.type).toBe("PMax");
     });
     it("replays the 7 days before the anchor at 0.5×–2× the daily budget, reconciling with campaign_daily at 1×", () => {
-        for (const 誝壍 of 鏲壍) {
-            expect(誝壍).toMatchObject({ start: addDays(ANCHOR, -7), end: addDays(ANCHOR, -1), modification: "UNIFORM" });
-            const 垌壍 = 嘔壍.dims.campaigns.get(誝壍.campaignId)!.budget_daily!;
-            expect(誝壍.points.map((登壍) => 登壍.value)).toEqual(BUDGET_MULTIPLIERS.map((镪壍) => Math.round(垌壍 * 镪壍 * 100) / 100));
-            const 扙壍 = 嘔壍.tables.campaign_daily.filter((腈壍) => 腈壍.campaign_id === 誝壍.campaignId && 腈壍.date >= 誝壍.start && 腈壍.date <= 誝壍.end).reduce((丷壍, 洦壍) => 丷壍 + 洦壍.cost, 0);
-            expect(誝壍.points[2]!.cost).toBeCloseTo(扙壍, 1);
+        for (const s of budgetSims) {
+            expect(s).toMatchObject({ start: addDays(ANCHOR, -7), end: addDays(ANCHOR, -1), modification: "UNIFORM" });
+            const budget = ds.dims.campaigns.get(s.campaignId)!.budget_daily!;
+            expect(s.points.map((p) => p.value)).toEqual(BUDGET_MULTIPLIERS.map((m) => Math.round(budget * m * 100) / 100));
+            const actual = ds.tables.campaign_daily.filter((r) => r.campaign_id === s.campaignId && r.date >= s.start && r.date <= s.end).reduce((sum, r) => sum + r.cost, 0);
+            expect(s.points[2]!.cost).toBeCloseTo(actual, 1);
         }
     });
     it("has diminishing returns, and budget-limited campaigns turn extra budget into spend", () => {
-        for (const 谕壍 of 鏲壍) {
-            const 处壍 = 谕壍.points.map((石壍) => 石壍.conversions / 石壍.cost);
-            for (let 離壍 = 1; 離壍 < 处壍.length; 離壍++)
-                expect(处壍[離壍]!, 谕壍.campaignId).toBeLessThan(处壍[離壍 - 1]! + 1e-9);
-            const 揑壍 = 谕壍.points.map((苀壍) => 苀壍.convValue);
-            expect([...揑壍].sort((侯壍, 溞壍) => 侯壍 - 溞壍), 谕壍.campaignId).toEqual(揑壍);
+        for (const s of budgetSims) {
+            const perDollar = s.points.map((p) => p.conversions / p.cost);
+            for (let i = 1; i < perDollar.length; i++)
+                expect(perDollar[i]!, s.campaignId).toBeLessThan(perDollar[i - 1]! + 1e-9);
+            const values = s.points.map((p) => p.convValue);
+            expect([...values].sort((a, b) => a - b), s.campaignId).toEqual(values);
         }
-        const 趍壍 = (婼壍: string) => {
-            const 祫壍 = 鏲壍.find((顚壍) => 顚壍.campaignId === 婼壍)!;
-            return 祫壍.points[5]!.cost / 祫壍.points[2]!.cost;
+        const growth = (id: string) => {
+            const s = budgetSims.find((x) => x.campaignId === id)!;
+            return s.points[5]!.cost / s.points[2]!.cost;
         };
-        expect(趍壍("c1")).toBeGreaterThan(1.6);
-        expect(趍壍("c8")).toBeLessThan(1.35);
+        expect(growth("c1")).toBeGreaterThan(1.6);
+        expect(growth("c8")).toBeLessThan(1.35);
         expect(spendElasticity(0.25)).toBeCloseTo(0.75, 6);
         expect(spendElasticity(0)).toBe(0.1);
         expect(spendElasticity(1)).toBe(0.85);
     });
     it("simulates targets only for campaigns bidding with one (and not for PMax)", () => {
-        const 敉壍 = 甃壍.simulations.filter((萸壍) => 萸壍.type !== "BUDGET");
-        expect(敉壍.map((儧壍) => `${儧壍.campaignId}:${儧壍.type}`)).toEqual(["c4:TARGET_ROAS"]);
-        const 瀖壍 = 敉壍[0]!;
-        expect(瀖壍.points.map((輅壍) => 輅壍.value)).toEqual([2.8, 3.4, 4, 4.6, 5.2, 6]);
-        expect(瀖壍.points.every((寴壍) => 寴壍.requiredBudget !== null && 寴壍.requiredBudget * 7 > 寴壍.cost)).toBe(true);
-        expect(瀖壍.points[0]!.cost).toBeGreaterThan(瀖壍.points[5]!.cost);
-        expect(瀖壍.points[5]!.convValue / 瀖壍.points[5]!.cost).toBeGreaterThan(瀖壍.points[0]!.convValue / 瀖壍.points[0]!.cost);
-        const 竣壍 = buildDemoEstimates(outletDataset(), { seed: "savd-demo-v1" });
-        expect(竣壍.simulations.filter((駒壍) => 駒壍.type !== "BUDGET").map((曁壍) => `${曁壍.campaignId}:${曁壍.type}`)).toEqual(["t2:TARGET_CPA", "t4:TARGET_ROAS"]);
-        expect(竣壍.simulations.some((薰壍) => 薰壍.campaignId === "t3")).toBe(false);
+        const targets = est.simulations.filter((s) => s.type !== "BUDGET");
+        expect(targets.map((s) => `${s.campaignId}:${s.type}`)).toEqual(["c4:TARGET_ROAS"]);
+        const roas = targets[0]!;
+        expect(roas.points.map((p) => p.value)).toEqual([2.8, 3.4, 4, 4.6, 5.2, 6]);
+        expect(roas.points.every((p) => p.requiredBudget !== null && p.requiredBudget * 7 > p.cost)).toBe(true);
+        expect(roas.points[0]!.cost).toBeGreaterThan(roas.points[5]!.cost);
+        expect(roas.points[5]!.convValue / roas.points[5]!.cost).toBeGreaterThan(roas.points[0]!.convValue / roas.points[0]!.cost);
+        const outlet = buildDemoEstimates(outletDataset(), { seed: "savd-demo-v1" });
+        expect(outlet.simulations.filter((s) => s.type !== "BUDGET").map((s) => `${s.campaignId}:${s.type}`)).toEqual(["t2:TARGET_CPA", "t4:TARGET_ROAS"]);
+        expect(outlet.simulations.some((s) => s.campaignId === "t3")).toBe(false);
     });
     it("recommends a budget only for clearly budget-limited campaigns, with impacts read off the simulation", () => {
-        expect(甃壍.recommendations.map((功壍) => 功壍.campaignId)).toEqual(["c1"]);
-        const 熎壍 = 甃壍.recommendations[0]!;
-        const 遽壍 = 鏲壍.find((嵬壍) => 嵬壍.campaignId === "c1")!;
-        expect(熎壍).toMatchObject({ type: "CAMPAIGN_BUDGET", currentBudget: 420, recommendedBudget: 630, campaignIds: ["c1"], budgetId: "b-c1", dismissed: false });
-        expect(熎壍.options.map((籛壍) => 籛壍.budget)).toEqual([525, 630, 840]);
-        const 魊壍 = (根壍: number) => 遽壍.points.find((蜨壍) => 蜨壍.value === 根壍)!;
-        for (const 吗壍 of 熎壍.options) {
-            expect(吗壍.impact?.base).toMatchObject({ cost: 魊壍(420).cost, conversions: 魊壍(420).conversions });
-            expect(吗壍.impact?.potential).toMatchObject({ cost: 魊壍(吗壍.budget).cost, conversions: 魊壍(吗壍.budget).conversions, convValue: 魊壍(吗壍.budget).convValue, videoViews: null });
+        expect(est.recommendations.map((r) => r.campaignId)).toEqual(["c1"]);
+        const rec = est.recommendations[0]!;
+        const s = budgetSims.find((x) => x.campaignId === "c1")!;
+        expect(rec).toMatchObject({ type: "CAMPAIGN_BUDGET", currentBudget: 420, recommendedBudget: 630, campaignIds: ["c1"], budgetId: "b-c1", dismissed: false });
+        expect(rec.options.map((o) => o.budget)).toEqual([525, 630, 840]);
+        const at = (v: number) => s.points.find((p) => p.value === v)!;
+        for (const o of rec.options) {
+            expect(o.impact?.base).toMatchObject({ cost: at(420).cost, conversions: at(420).conversions });
+            expect(o.impact?.potential).toMatchObject({ cost: at(o.budget).cost, conversions: at(o.budget).conversions, convValue: at(o.budget).convValue, videoViews: null });
         }
-        expect(熎壍.impact).toEqual(熎壍.options[1]!.impact);
+        expect(rec.impact).toEqual(rec.options[1]!.impact);
         expect(buildDemoEstimates(outletDataset(), { seed: "savd-demo-v1" }).recommendations).toEqual([]);
     });
 });
@@ -342,48 +342,48 @@ describe("google estimates service (fixture)", () => {
     beforeEach(() => resetServerState());
     afterEach(() => restoreServerState());
     it("returns Google's estimates next to our model and states the policy", async () => {
-        const 猆壍 = await requestContext();
-        const 釵壍 = await getGoogleEstimatesView(猆壍, { objective: "conv_value" });
-        expect(釵壍).toMatchObject({ mode: "live", currency: "USD", dataThrough: "2026-09-28", objective: "conv_value", warnings: [] });
-        expect(釵壍.blank).toBeNull();
-        expect(釵壍.policy).toEqual(ESTIMATE_POLICY);
-        expect(釵壍.campaigns.map((廤壍) => 廤壍.campaignId)).toEqual(["c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8"]);
-        const 緓壍 = 釵壍.campaigns[0]!;
-        expect(緓壍.simulations.map((鳂壍) => 鳂壍.type)).toEqual(["BUDGET"]);
-        expect(緓壍.simulations[0]).toMatchObject({ days: 7, current: 420, stale: false });
-        expect(緓壍.simulations[0]!.perDay).toHaveLength(6);
-        expect(緓壍.decision).toMatchObject({ lead: "google_simulator", proposedDaily: 420, objective: "conv_value" });
-        expect(緓壍.modelCurve?.objective).toBe("conv_value");
-        expect(緓壍.modelCurve?.source).toBeUndefined();
-        expect(緓壍.simulatorCurve).toMatchObject({ source: "google_simulator", confidence: "high" });
-        expect(緓壍.note).toBeNull();
-        const 榱壍 = 釵壍.campaigns.find((袠壍) => 袠壍.campaignId === "c3")!;
-        expect(榱壍).toMatchObject({ type: "PMax", simulations: [], simulatorCurve: null, note: "Google returned no budget simulation for this campaign, so our model leads." });
-        expect(榱壍.decision?.model).toBeGreaterThan(0);
-        expect(釵壍.campaigns.find((喏壍) => 喏壍.campaignId === "c4")?.simulations.map((瑾壍) => 瑾壍.type)).toEqual(["BUDGET", "TARGET_ROAS"]);
-        expect(釵壍.recommendations).toHaveLength(1);
-        expect(釵壍.recommendations[0]).toMatchObject({ campaignId: "c1", campaignName: "Brand — Core Terms", campaignType: "Search", liveBudget: 420, recommendedBudget: 630, applied: false });
-        expect(釵壍.recommendations[0]!.deepLink).toContain("campaignId=c1");
+        const ctx = await requestContext();
+        const view = await getGoogleEstimatesView(ctx, { objective: "conv_value" });
+        expect(view).toMatchObject({ mode: "live", currency: "USD", dataThrough: "2026-09-28", objective: "conv_value", warnings: [] });
+        expect(view.blank).toBeNull();
+        expect(view.policy).toEqual(ESTIMATE_POLICY);
+        expect(view.campaigns.map((c) => c.campaignId)).toEqual(["c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8"]);
+        const c1 = view.campaigns[0]!;
+        expect(c1.simulations.map((s) => s.type)).toEqual(["BUDGET"]);
+        expect(c1.simulations[0]).toMatchObject({ days: 7, current: 420, stale: false });
+        expect(c1.simulations[0]!.perDay).toHaveLength(6);
+        expect(c1.decision).toMatchObject({ lead: "google_simulator", proposedDaily: 420, objective: "conv_value" });
+        expect(c1.modelCurve?.objective).toBe("conv_value");
+        expect(c1.modelCurve?.source).toBeUndefined();
+        expect(c1.simulatorCurve).toMatchObject({ source: "google_simulator", confidence: "high" });
+        expect(c1.note).toBeNull();
+        const c3 = view.campaigns.find((c) => c.campaignId === "c3")!;
+        expect(c3).toMatchObject({ type: "PMax", simulations: [], simulatorCurve: null, note: "Google returned no budget simulation for this campaign, so our model leads." });
+        expect(c3.decision?.model).toBeGreaterThan(0);
+        expect(view.campaigns.find((c) => c.campaignId === "c4")?.simulations.map((s) => s.type)).toEqual(["BUDGET", "TARGET_ROAS"]);
+        expect(view.recommendations).toHaveLength(1);
+        expect(view.recommendations[0]).toMatchObject({ campaignId: "c1", campaignName: "Brand — Core Terms", campaignType: "Search", liveBudget: 420, recommendedBudget: 630, applied: false });
+        expect(view.recommendations[0]!.deepLink).toContain("campaignId=c1");
     });
     it("degrades to our model with a warning when Google's estimates can't be read", async () => {
-        const 鍭壍 = await requestContext();
-        const 恜壍: RequestContext = { ...鍭壍, source: Object.assign(Object.create(Object.getPrototypeOf(鍭壍.source) as object) as typeof 鍭壍.source, 鍭壍.source, { getGoogleEstimates: vi.fn(async () => Promise.reject(new Error("boom"))) }) };
-        const 罋壍 = await getGoogleEstimatesView(恜壍, { objective: "conv_value" });
-        expect(罋壍.warnings).toEqual(["Google's simulators and recommendations are unavailable right now; every estimate here is our model's."]);
-        expect(罋壍.recommendations).toEqual([]);
-        expect(罋壍.campaigns.every((鸺壍) => 鸺壍.simulations.length === 0 && (鸺壍.decision === null || 鸺壍.decision.lead === "model"))).toBe(true);
-        const 欩壍 = await optimize(恜壍, optimizeRequestSchema.parse({}));
-        expect(欩壍.rows.every((記壍) => 記壍.curveSource === "model")).toBe(true);
-        expect(欩壍.warnings).toContain("Google's simulators and recommendations are unavailable right now; every estimate here is our model's.");
+        const ctx = await requestContext();
+        const broken: RequestContext = { ...ctx, source: Object.assign(Object.create(Object.getPrototypeOf(ctx.source) as object) as typeof ctx.source, ctx.source, { getGoogleEstimates: vi.fn(async () => Promise.reject(new Error("boom"))) }) };
+        const view = await getGoogleEstimatesView(broken, { objective: "conv_value" });
+        expect(view.warnings).toEqual(["Google's simulators and recommendations are unavailable right now; every estimate here is our model's."]);
+        expect(view.recommendations).toEqual([]);
+        expect(view.campaigns.every((c) => c.simulations.length === 0 && (c.decision === null || c.decision.lead === "model"))).toBe(true);
+        const opt = await optimize(broken, optimizeRequestSchema.parse({}));
+        expect(opt.rows.every((r) => r.curveSource === "model")).toBe(true);
+        expect(opt.warnings).toContain("Google's simulators and recommendations are unavailable right now; every estimate here is our model's.");
     });
 });
 describe("optimizer curve source (fixture)", () => {
     beforeEach(() => resetServerState());
     afterEach(() => restoreServerState());
     it("uses Google's simulator curves where the policy allows on auto, our model elsewhere, and keeps the total", async () => {
-        const 圇壍 = await requestContext();
-        const 痶壍 = await optimize(圇壍, optimizeRequestSchema.parse({}));
-        expect(Object.fromEntries(痶壍.rows.map((铥壍) => [铥壍.unitId, 铥壍.curveSource]))).toEqual({
+        const ctx = await requestContext();
+        const auto = await optimize(ctx, optimizeRequestSchema.parse({}));
+        expect(Object.fromEntries(auto.rows.map((r) => [r.unitId, r.curveSource]))).toEqual({
             c1: "google_simulator",
             c2: "google_simulator",
             c3: "model",
@@ -393,40 +393,40 @@ describe("optimizer curve source (fixture)", () => {
             c7: "model",
             c8: "google_simulator",
         });
-        const 懔壍 = await optimize(圇壍, optimizeRequestSchema.parse({ curveSource: "model" }));
-        expect(懔壍.rows.every((胃壍) => 胃壍.curveSource === "model")).toBe(true);
-        for (const 龲壍 of [痶壍, 懔壍]) {
-            expect(龲壍.totals.recommended).toBeCloseTo(龲壍.totals.current, 6);
-            expect(龲壍.rows.reduce((没壍, 讐壍) => 没壍 + 讐壍.recommended, 0)).toBeCloseTo(龲壍.totals.current, 6);
+        const modelOnly = await optimize(ctx, optimizeRequestSchema.parse({ curveSource: "model" }));
+        expect(modelOnly.rows.every((r) => r.curveSource === "model")).toBe(true);
+        for (const res of [auto, modelOnly]) {
+            expect(res.totals.recommended).toBeCloseTo(res.totals.current, 6);
+            expect(res.rows.reduce((s, r) => s + r.recommended, 0)).toBeCloseTo(res.totals.current, 6);
         }
-        expect(痶壍.totals.expectedCurrent).not.toBeCloseTo(懔壍.totals.expectedCurrent, 0);
-        expect(痶壍.curves).toMatchObject({ mode: "auto", google: 5, model: 3, available: 5 });
-        expect(痶壍.curves?.calibration).toBeGreaterThan(0.5);
-        expect(痶壍.curves?.calibration).toBeLessThan(1);
-        for (const 塿壍 of 痶壍.rows)
-            expect(塿壍.curveCalibration).toBe(塿壍.curveSource === "model" ? 痶壍.curves?.calibration : undefined);
-        const 睮壍 = (陝壍: typeof 痶壍) => 陝壍.rows.find((捌壍) => 捌壍.unitId === "c3");
-        expect(睮壍(痶壍)?.bound).not.toBe("max");
-        expect(睮壍(痶壍)?.recommended).toBeCloseTo(睮壍(懔壍)?.recommended ?? 0, -3);
-        expect(懔壍.curves).toEqual({ mode: "model", google: 0, model: 8, available: 0, calibration: null });
-        expect(懔壍.rows.every((舻壍) => 舻壍.curveCalibration === undefined)).toBe(true);
+        expect(auto.totals.expectedCurrent).not.toBeCloseTo(modelOnly.totals.expectedCurrent, 0);
+        expect(auto.curves).toMatchObject({ mode: "auto", google: 5, model: 3, available: 5 });
+        expect(auto.curves?.calibration).toBeGreaterThan(0.5);
+        expect(auto.curves?.calibration).toBeLessThan(1);
+        for (const r of auto.rows)
+            expect(r.curveCalibration).toBe(r.curveSource === "model" ? auto.curves?.calibration : undefined);
+        const pmax = (res: typeof auto) => res.rows.find((r) => r.unitId === "c3");
+        expect(pmax(auto)?.bound).not.toBe("max");
+        expect(pmax(auto)?.recommended).toBeCloseTo(pmax(modelOnly)?.recommended ?? 0, -3);
+        expect(modelOnly.curves).toEqual({ mode: "model", google: 0, model: 8, available: 0, calibration: null });
+        expect(modelOnly.rows.every((r) => r.curveCalibration === undefined)).toBe(true);
     });
     it("the scenario frontier follows the same curve source", async () => {
-        const 伪壍 = await requestContext();
-        const 渙壍 = await scenarios(伪壍, scenariosRequestSchema.parse({}));
-        const 贈壍 = await scenarios(伪壍, scenariosRequestSchema.parse({ curveSource: "model" }));
-        expect(渙壍.points).toHaveLength(贈壍.points.length);
-        expect(渙壍.points.find((姷壍) => 姷壍.pct === 0)?.expected).not.toBeCloseTo(贈壍.points.find((磦壍) => 磦壍.pct === 0)?.expected ?? 0, 0);
+        const ctx = await requestContext();
+        const auto = await scenarios(ctx, scenariosRequestSchema.parse({}));
+        const model = await scenarios(ctx, scenariosRequestSchema.parse({ curveSource: "model" }));
+        expect(auto.points).toHaveLength(model.points.length);
+        expect(auto.points.find((p) => p.pct === 0)?.expected).not.toBeCloseTo(model.points.find((p) => p.pct === 0)?.expected ?? 0, 0);
     });
 });
 describe("GET /api/budget/google-estimates (fixture)", () => {
     beforeEach(() => resetServerState());
     afterEach(() => restoreServerState());
     it("validates the query and answers with Google's estimates", async () => {
-        const 韕壍 = await GET(new Request("http://localhost:3000/api/budget/google-estimates?objective=conversions"));
-        expect(韕壍.status).toBe(200);
-        expect(韕壍.headers.get("cache-control")).toBe("no-store");
-        const 擄壍 = (await 韕壍.json()) as {
+        const res = await GET(new Request("http://localhost:3000/api/budget/google-estimates?objective=conversions"));
+        expect(res.status).toBe(200);
+        expect(res.headers.get("cache-control")).toBe("no-store");
+        const body = (await res.json()) as {
             mode: string;
             objective: string;
             blank: {
@@ -434,12 +434,12 @@ describe("GET /api/budget/google-estimates (fixture)", () => {
             } | null;
             campaigns: unknown[];
         };
-        expect(擄壍).toMatchObject({ mode: "live", objective: "conversions" });
-        expect(擄壍.blank).toBeNull();
-        expect(擄壍.campaigns).toHaveLength(8);
-        const 莳壍 = await GET(new Request("http://localhost:3000/api/budget/google-estimates?objective=clicks"));
-        expect(莳壍.status).toBe(400);
-        expect(((await 莳壍.json()) as {
+        expect(body).toMatchObject({ mode: "live", objective: "conversions" });
+        expect(body.blank).toBeNull();
+        expect(body.campaigns).toHaveLength(8);
+        const bad = await GET(new Request("http://localhost:3000/api/budget/google-estimates?objective=clicks"));
+        expect(bad.status).toBe(400);
+        expect(((await bad.json()) as {
             error: {
                 code: string;
             };

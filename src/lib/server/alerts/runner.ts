@@ -17,74 +17,74 @@ export interface RunOptions {
     digests?: boolean;
     perAccountDigests?: boolean;
 }
-function 蓿壍(凮壍: DispatchCounts, 烝壍: DispatchCounts): void {
-    for (const 迌壍 of Object.keys(烝壍) as (keyof DispatchCounts)[])
-        if (迌壍 !== "candidates")
-            凮壍[迌壍] += 烝壍[迌壍];
+function add(into: DispatchCounts, dispatchCounts: DispatchCounts): void {
+    for (const k of Object.keys(dispatchCounts) as (keyof DispatchCounts)[])
+        if (k !== "candidates")
+            into[k] += dispatchCounts[k];
 }
-export async function runAlerts(岻壍: RequestContext, 箪壍: RunOptions, 骙壍: DispatchDeps = defaultDispatchDeps(岻壍.account)): Promise<AlertRunSummary> {
-    const 枈壍: string[] = [];
-    const 虷壍 = await listChannels();
-    const 卦壍 = await effectiveRoutes(虷壍);
-    const 牕壍 = {
-        account: { id: 岻壍.accountId, name: 岻壍.account.name },
-        mode: 岻壍.source.mode,
-        dashboardUrl: dashboardLink("/anomalies", 岻壍.accountId),
-        channels: 虷壍,
-        routes: 卦壍,
-        dryRun: !!箪壍.dryRun,
-        force: !!箪壍.force,
+export async function runAlerts(ctx: RequestContext, opts: RunOptions, deps: DispatchDeps = defaultDispatchDeps(ctx.account)): Promise<AlertRunSummary> {
+    const notes: string[] = [];
+    const channels = await listChannels();
+    const routes = await effectiveRoutes(channels);
+    const dctx = {
+        account: { id: ctx.accountId, name: ctx.account.name },
+        mode: ctx.source.mode,
+        dashboardUrl: dashboardLink("/anomalies", ctx.accountId),
+        channels,
+        routes,
+        dryRun: !!opts.dryRun,
+        force: !!opts.force,
     };
-    let 酄壍: EvaluationResult = { signals: [], newOrEscalated: [], resolved: [] };
+    let evaluation: EvaluationResult = { signals: [], newOrEscalated: [], resolved: [] };
     try {
-        酄壍 = 箪壍.dryRun ? { signals: await listSignals(岻壍, { includeInactive: false }), newOrEscalated: [], resolved: [] } : await evaluateAndPersist(岻壍);
+        evaluation = opts.dryRun ? { signals: await listSignals(ctx, { includeInactive: false }), newOrEscalated: [], resolved: [] } : await evaluateAndPersist(ctx);
     }
-    catch (帳壍) {
-        const 索壍 = 帳壍 instanceof Error ? 帳壍.message : String(帳壍);
-        log.warn("Anomaly evaluation failed during an alert run", { error: 索壍 });
-        枈壍.push(`Anomaly evaluation failed: ${索壍}`);
+    catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        log.warn("Anomaly evaluation failed during an alert run", { error: message });
+        notes.push(`Anomaly evaluation failed: ${message}`);
     }
-    const 鰑壍 = emptyCounts();
-    const 椀壍: StoredDelivery[] = [];
-    if (!箪壍.dryRun) {
-        const 蟯壍 = await processDueDeliveries({ ...牕壍, currentSignals: 酄壍.signals }, 骙壍);
-        蓿壍(鰑壍, 蟯壍.counts);
-        椀壍.push(...蟯壍.deliveries);
+    const counts = emptyCounts();
+    const deliveries: StoredDelivery[] = [];
+    if (!opts.dryRun) {
+        const due = await processDueDeliveries({ ...dctx, currentSignals: evaluation.signals }, deps);
+        add(counts, due.counts);
+        deliveries.push(...due.deliveries);
     }
-    const 哞壍 = await dispatchSignals(牕壍, { signals: [...酄壍.newOrEscalated, ...酄壍.signals], resolved: 酄壍.resolved }, 骙壍);
-    蓿壍(鰑壍, 哞壍.counts);
-    鰑壍.candidates = 哞壍.counts.candidates;
-    椀壍.push(...哞壍.deliveries);
-    let 珍壍 = 0;
-    if (箪壍.digests && !箪壍.dryRun) {
-        const 銼壍 = await runDueDigests(岻壍, { routes: 卦壍, channels: 虷壍, signals: 酄壍.signals, force: 箪壍.force, perAccountKey: 箪壍.perAccountDigests }, 骙壍);
-        蓿壍(鰑壍, 銼壍.counts);
-        椀壍.push(...銼壍.deliveries);
-        珍壍 = 銼壍.digests;
+    const sent = await dispatchSignals(dctx, { signals: [...evaluation.newOrEscalated, ...evaluation.signals], resolved: evaluation.resolved }, deps);
+    add(counts, sent.counts);
+    counts.candidates = sent.counts.candidates;
+    deliveries.push(...sent.deliveries);
+    let digests = 0;
+    if (opts.digests && !opts.dryRun) {
+        const d = await runDueDigests(ctx, { routes, channels, signals: evaluation.signals, force: opts.force, perAccountKey: opts.perAccountDigests }, deps);
+        add(counts, d.counts);
+        deliveries.push(...d.deliveries);
+        digests = d.digests;
     }
-    if (!虷壍.some((徫壍) => 徫壍.enabled))
-        枈壍.push("No alert channels yet — add one on the Alerts page, connect Slack/Teams/Discord/Webhook on the Plugins page, or set SLACK_WEBHOOK_URL (TEAMS_/DISCORD_/ALERT_WEBHOOK_URL) in .env.");
-    if (岻壍.source.mode !== "live" && !箪壍.force)
-        枈壍.push("No live Google Ads data: deliveries are logged as suppressed. Run with force to send them anyway.");
-    if (!箪壍.dryRun && (鰑壍.sent || 鰑壍.failed)) {
-        await audit({ actor: 箪壍.actor, action: "alerts.run", target: 岻壍.accountId, mode: 岻壍.source.mode, summary: `Alert run: ${鰑壍.sent} sent, ${鰑壍.failed} failed, ${鰑壍.suppressed} suppressed`, details: { sent: 鰑壍.sent, failed: 鰑壍.failed, deferred: 鰑壍.deferred, forced: !!箪壍.force } });
+    if (!channels.some((c) => c.enabled))
+        notes.push("No alert channels yet — add one on the Alerts page, connect Slack/Teams/Discord/Webhook on the Plugins page, or set SLACK_WEBHOOK_URL (TEAMS_/DISCORD_/ALERT_WEBHOOK_URL) in .env.");
+    if (ctx.source.mode !== "live" && !opts.force)
+        notes.push("No live Google Ads data: deliveries are logged as suppressed. Run with force to send them anyway.");
+    if (!opts.dryRun && (counts.sent || counts.failed)) {
+        await audit({ actor: opts.actor, action: "alerts.run", target: ctx.accountId, mode: ctx.source.mode, summary: `Alert run: ${counts.sent} sent, ${counts.failed} failed, ${counts.suppressed} suppressed`, details: { sent: counts.sent, failed: counts.failed, deferred: counts.deferred, forced: !!opts.force } });
     }
     return {
-        accountId: 岻壍.accountId,
-        mode: 岻壍.source.mode,
-        dryRun: !!箪壍.dryRun,
-        forced: !!箪壍.force,
-        evaluated: 酄壍.signals.length,
-        candidates: 鰑壍.candidates,
-        sent: 鰑壍.sent,
-        suppressed: 鰑壍.suppressed,
-        failed: 鰑壍.failed,
-        deferred: 鰑壍.deferred,
-        deduped: 鰑壍.deduped,
-        pending: 鰑壍.pending,
-        retried: 鰑壍.retried,
-        digests: 珍壍,
-        deliveries: 椀壍.map(publicDelivery),
-        notes: 枈壍,
+        accountId: ctx.accountId,
+        mode: ctx.source.mode,
+        dryRun: !!opts.dryRun,
+        forced: !!opts.force,
+        evaluated: evaluation.signals.length,
+        candidates: counts.candidates,
+        sent: counts.sent,
+        suppressed: counts.suppressed,
+        failed: counts.failed,
+        deferred: counts.deferred,
+        deduped: counts.deduped,
+        pending: counts.pending,
+        retried: counts.retried,
+        digests,
+        deliveries: deliveries.map(publicDelivery),
+        notes,
     };
 }

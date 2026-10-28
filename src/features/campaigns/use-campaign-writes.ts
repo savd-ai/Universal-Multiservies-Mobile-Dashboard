@@ -8,47 +8,47 @@ type Negative = Extract<SimulateRequest, {
     type: "keywords.add_negatives";
 }>["negatives"][number];
 export function useCampaignWrites() {
-    const 悷壍 = useWriteAction();
-    const 羦壍 = useInvalidateCampaigns();
-    const [麕壍, 殄壍] = useState<ReadonlyMap<string, TargetStatus>>(() => new Map());
-    const [詳壍, 坢壍] = useState<string | null>(null);
-    const 癑壍 = (镀壍: readonly string[], 戯壍: TargetStatus | null) => 殄壍((脞壍) => {
-        const 不壍 = new Map(脞壍);
-        for (const 泼壍 of 镀壍) {
-            if (戯壍)
-                不壍.set(泼壍, 戯壍);
+    const write = useWriteAction();
+    const refresh = useInvalidateCampaigns();
+    const [pending, setPending] = useState<ReadonlyMap<string, TargetStatus>>(() => new Map());
+    const [busy, setBusy] = useState<string | null>(null);
+    const mark = (ids: readonly string[], status: TargetStatus | null) => setPending((prev) => {
+        const next = new Map(prev);
+        for (const id of ids) {
+            if (status)
+                next.set(id, status);
             else
-                不壍.delete(泼壍);
+                next.delete(id);
         }
-        return 不壍;
+        return next;
     });
-    const 诫壍 = async (壚壍: string, 矉壍: SimulateRequest) => {
-        坢壍(壚壍);
+    const exec = async (label: string, body: SimulateRequest) => {
+        setBusy(label);
         try {
-            const 隸壍 = await 悷壍.run(矉壍);
-            if (隸壍)
-                await 羦壍();
-            return 隸壍;
+            const action = await write.run(body);
+            if (action)
+                await refresh();
+            return action;
         }
         finally {
-            坢壍(null);
+            setBusy(null);
         }
     };
-    const 控壍 = async (芖壍: readonly string[], 侅壍: TargetStatus) => {
-        if (!芖壍.length)
+    const setStatus = async (ids: readonly string[], status: TargetStatus) => {
+        if (!ids.length)
             return null;
-        癑壍(芖壍, 侅壍);
+        mark(ids, status);
         try {
-            return await 诫壍(侅壍 === "Paused" ? "pause" : "enable", { type: 侅壍 === "Paused" ? "campaign.pause" : "campaign.enable", campaignIds: [...芖壍] });
+            return await exec(status === "Paused" ? "pause" : "enable", { type: status === "Paused" ? "campaign.pause" : "campaign.enable", campaignIds: [...ids] });
         }
         finally {
-            癑壍(芖壍, null);
+            mark(ids, null);
         }
     };
-    const 湴壍 = (赣壍: {
+    const setBudgets = (budgets: {
         campaignId: string;
         dailyBudget: number;
-    }[]) => (赣壍.length ? 诫壍("budget", { type: "campaign.set_budget", budgets: 赣壍 }) : Promise.resolve(null));
-    const 婒壍 = (祁壍: Negative[]) => (祁壍.length ? 诫壍("negatives", { type: "keywords.add_negatives", negatives: 祁壍 }) : Promise.resolve(null));
-    return { setStatus: 控壍, setBudgets: 湴壍, addNegatives: 婒壍, pending: 麕壍, busy: 詳壍, dialog: 悷壍.dialog };
+    }[]) => (budgets.length ? exec("budget", { type: "campaign.set_budget", budgets }) : Promise.resolve(null));
+    const addNegatives = (negatives: Negative[]) => (negatives.length ? exec("negatives", { type: "keywords.add_negatives", negatives }) : Promise.resolve(null));
+    return { setStatus, setBudgets, addNegatives, pending, busy, dialog: write.dialog };
 }

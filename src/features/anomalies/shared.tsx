@@ -7,83 +7,83 @@ import { useStatus } from "@/lib/api/hooks";
 import type { CampaignOption } from "@/lib/api/anomalies-ui";
 import { formatMetricValue } from "@/lib/domain/metrics/registry";
 import type { MetricFormat } from "@/lib/domain/types";
-const 謓壍 = { now: 0, timer: null as ReturnType<typeof setInterval> | null, listeners: new Set<() => void>() };
-function 堂壍(盱壍: () => void) {
-    謓壍.listeners.add(盱壍);
-    if (!謓壍.timer) {
-        謓壍.timer = setInterval(() => {
-            謓壍.now = Date.now();
-            謓壍.listeners.forEach((闠壍) => 闠壍());
+const clock = { now: 0, timer: null as ReturnType<typeof setInterval> | null, listeners: new Set<() => void>() };
+function subscribeClock(cb: () => void) {
+    clock.listeners.add(cb);
+    if (!clock.timer) {
+        clock.timer = setInterval(() => {
+            clock.now = Date.now();
+            clock.listeners.forEach((l) => l());
         }, 30000);
     }
     return () => {
-        謓壍.listeners.delete(盱壍);
-        if (!謓壍.listeners.size && 謓壍.timer) {
-            clearInterval(謓壍.timer);
-            謓壍.timer = null;
+        clock.listeners.delete(cb);
+        if (!clock.listeners.size && clock.timer) {
+            clearInterval(clock.timer);
+            clock.timer = null;
         }
     };
 }
-function 拏壍(): number | null {
-    if (!謓壍.now)
-        謓壍.now = Date.now();
-    return 謓壍.now;
+function clockSnapshot(): number | null {
+    if (!clock.now)
+        clock.now = Date.now();
+    return clock.now;
 }
 export function useNow(): number | null {
-    return useSyncExternalStore(堂壍, 拏壍, () => null);
+    return useSyncExternalStore(subscribeClock, clockSnapshot, () => null);
 }
-const 膾壍 = new Set<() => void>();
-const 亭壍 = (): NotificationPermission | "unsupported" => (typeof Notification === "undefined" ? "unsupported" : Notification.permission);
+const permListeners = new Set<() => void>();
+const permSnapshot = (): NotificationPermission | "unsupported" => (typeof Notification === "undefined" ? "unsupported" : Notification.permission);
 export function useNotificationPermission(): [
     NotificationPermission | "unsupported" | null,
     () => Promise<void>
 ] {
-    const 涜壍 = useSyncExternalStore((貋壍) => {
-        膾壍.add(貋壍);
-        return () => 膾壍.delete(貋壍);
-    }, 亭壍, () => null);
-    const 奺壍 = useCallback(async () => {
+    const perm = useSyncExternalStore((cb) => {
+        permListeners.add(cb);
+        return () => permListeners.delete(cb);
+    }, permSnapshot, () => null);
+    const requestPermission = useCallback(async () => {
         if (typeof Notification === "undefined")
             return;
         await Notification.requestPermission();
-        膾壍.forEach((硩壍) => 硩壍());
+        permListeners.forEach((l) => l());
     }, []);
-    return [涜壍, 奺壍];
+    return [perm, requestPermission];
 }
 export function useValueFormat(): {
-    fmt: (靘壍: MetricFormat, 摇壍: number | null | undefined) => string;
+    fmt: (format: MetricFormat, v: number | null | undefined) => string;
     currency: string;
     timeZone: string;
 } {
-    const 茶壍 = useStatus().data;
-    const 倥壍 = 茶壍?.display.currency || 茶壍?.account.currency || "USD";
-    const 演壍 = 茶壍 && 茶壍.display.currency && 茶壍.display.currency !== 茶壍.account.currency ? (茶壍.display.fxRates[茶壍.display.currency] ?? 1) : 1;
-    const 踃壍 = 茶壍?.account.timezone || "UTC";
-    const 嫲壍 = useCallback((秡壍: MetricFormat, 飐壍: number | null | undefined) => formatMetricValue(秡壍, 飐壍, 秡壍 === "money" ? { currency: 倥壍, fx: 演壍 } : {}), [倥壍, 演壍]);
-    return { fmt: 嫲壍, currency: 倥壍, timeZone: 踃壍 };
+    const d = useStatus().data;
+    const currency = d?.display.currency || d?.account.currency || "USD";
+    const fx = d && d.display.currency && d.display.currency !== d.account.currency ? (d.display.fxRates[d.display.currency] ?? 1) : 1;
+    const timeZone = d?.account.timezone || "UTC";
+    const fmt = useCallback((format: MetricFormat, v: number | null | undefined) => formatMetricValue(format, v, format === "money" ? { currency, fx } : {}), [currency, fx]);
+    return { fmt, currency, timeZone };
 }
-export function useDebouncedValue<T>(斿壍: T, 蒮壍: number): T {
-    const [冝壍, 炌壍] = useState(斿壍);
+export function useDebouncedValue<T>(value: T, ms: number): T {
+    const [v, setV] = useState(value);
     useEffect(() => {
-        if (Object.is(冝壍, 斿壍))
+        if (Object.is(v, value))
             return;
-        const 轻壍 = setTimeout(() => 炌壍(斿壍), 蒮壍);
-        return () => clearTimeout(轻壍);
-    }, [斿壍, 蒮壍, 冝壍]);
-    return 冝壍;
+        const t = setTimeout(() => setV(value), ms);
+        return () => clearTimeout(t);
+    }, [value, ms, v]);
+    return v;
 }
-export function cardDomId(屪壍: string): string {
-    return `signal-${屪壍.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+export function cardDomId(id: string): string {
+    return `signal-${id.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
 }
-export function ActionLink({ tone: 筙壍 = "muted", className: 驈壍, type: 朷壍 = "button", ...蘦壍 }: React.ComponentProps<"button"> & {
+export function ActionLink({ tone = "muted", className, type: value = "button", ...rest }: React.ComponentProps<"button"> & {
     tone?: "accent" | "muted" | "crit";
 }) {
-    return (<button type={朷壍} className={cn("text-[12px] whitespace-nowrap transition-colors disabled:opacity-50", 筙壍 === "accent" ? "text-accent hover:opacity-85" : 筙壍 === "crit" ? "text-crit hover:opacity-85" : "text-muted hover:text-fg", 驈壍)} {...蘦壍}/>);
+    return (<button type={value} className={cn("text-[12px] whitespace-nowrap transition-colors disabled:opacity-50", tone === "accent" ? "text-accent hover:opacity-85" : tone === "crit" ? "text-crit hover:opacity-85" : "text-muted hover:text-fg", className)} {...rest}/>);
 }
 interface NumberInputProps {
     id?: string;
     value: number;
-    onChange: (匕壍: number) => void;
+    onChange: (v: number) => void;
     min?: number;
     max?: number;
     step?: number;
@@ -93,90 +93,90 @@ interface NumberInputProps {
     className?: string;
     disabled?: boolean;
 }
-export function NumberInput({ id: 爄壍, value: 郳壍, onChange: 巢壍, min: 糑壍, max: 鯀壍, step: 梯壍, suffix: 螞壍, prefix: 咍壍, ariaLabel: 獼壍, className: 鉫壍, disabled: 彚壍 }: NumberInputProps) {
-    return (<span className={cn("inline-flex items-center gap-2", 鉫壍)}>
-      {咍壍 ? <span className="font-mono text-meta text-faint">{咍壍}</span> : null}
-      <Input id={爄壍} variant="field" type="number" inputMode="decimal" value={Number.isFinite(郳壍) ? 郳壍 : ""} min={糑壍} max={鯀壍} step={梯壍} disabled={彚壍} aria-label={獼壍} aria-invalid={!Number.isFinite(郳壍) || (糑壍 !== undefined && 郳壍 < 糑壍) || (鯀壍 !== undefined && 郳壍 > 鯀壍) || undefined} onChange={(繉壍) => 巢壍(繉壍.target.value === "" ? Number.NaN : 繉壍.target.valueAsNumber)} className="w-24 min-w-0 px-3 py-2 tabular aria-[invalid=true]:border-crit/60"/>
-      {螞壍 ? <span className="font-mono text-meta text-faint">{螞壍}</span> : null}
+export function NumberInput({ id, value, onChange, min, max, step, suffix, prefix, ariaLabel, className, disabled }: NumberInputProps) {
+    return (<span className={cn("inline-flex items-center gap-2", className)}>
+      {prefix ? <span className="font-mono text-meta text-faint">{prefix}</span> : null}
+      <Input id={id} variant="field" type="number" inputMode="decimal" value={Number.isFinite(value) ? value : ""} min={min} max={max} step={step} disabled={disabled} aria-label={ariaLabel} aria-invalid={!Number.isFinite(value) || (min !== undefined && value < min) || (max !== undefined && value > max) || undefined} onChange={(e) => onChange(e.target.value === "" ? Number.NaN : e.target.valueAsNumber)} className="w-24 min-w-0 px-3 py-2 tabular aria-[invalid=true]:border-crit/60"/>
+      {suffix ? <span className="font-mono text-meta text-faint">{suffix}</span> : null}
     </span>);
 }
-export function ToggleChips<T extends string>({ options, value: 鴸壍, onChange: 樧壍, ariaLabel: 褖壍, className: 嘅壍 }: {
+export function ToggleChips<T extends string>({ options, value, onChange, ariaLabel, className }: {
     options: readonly {
         value: T;
         label: React.ReactNode;
     }[];
     value: readonly T[];
-    onChange: (瓴壍: T[]) => void;
+    onChange: (v: T[]) => void;
     ariaLabel: string;
     className?: string;
 }) {
-    return (<div role="group" aria-label={褖壍} className={cn("flex flex-wrap gap-1.5", 嘅壍)}>
-      {options.map((鏣壍) => {
-            const 惒壍 = 鴸壍.includes(鏣壍.value);
-            return (<Chip key={鏣壍.value} active={惒壍} onClick={() => 樧壍(惒壍 ? 鴸壍.filter((翁壍) => 翁壍 !== 鏣壍.value) : [...鴸壍, 鏣壍.value])} className="px-3 py-1">
-            {鏣壍.label}
+    return (<div role="group" aria-label={ariaLabel} className={cn("flex flex-wrap gap-1.5", className)}>
+      {options.map((o) => {
+            const on = value.includes(o.value);
+            return (<Chip key={o.value} active={on} onClick={() => onChange(on ? value.filter((v) => v !== o.value) : [...value, o.value])} className="px-3 py-1">
+            {o.label}
           </Chip>);
         })}
     </div>);
 }
-export function CampaignChecklist({ campaigns: 麰壍, value: 殟壍, onChange: 誎壍, label: 坽壍 = "campaigns", emptyLabel: 癬壍 = "All campaigns" }: {
+export function CampaignChecklist({ campaigns, value, onChange, label = "campaigns", emptyLabel = "All campaigns" }: {
     campaigns: readonly CampaignOption[] | undefined;
     value: readonly string[];
-    onChange: (镛壍: string[]) => void;
+    onChange: (ids: string[]) => void;
     label?: string;
     emptyLabel?: string;
 }) {
-    const [扊壍, 脹壍] = useState("");
-    const 丨壍 = useMemo(() => {
-        const 洗壍 = 扊壍.trim().toLowerCase();
-        return (麰壍 ?? []).filter((谆壍) => !洗壍 || 谆壍.name.toLowerCase().includes(洗壍));
-    }, [麰壍, 扊壍]);
-    const 壵壍 = new Set(殟壍);
+    const [q, setQ] = useState("");
+    const list = useMemo(() => {
+        const needle = q.trim().toLowerCase();
+        return (campaigns ?? []).filter((c) => !needle || c.name.toLowerCase().includes(needle));
+    }, [campaigns, q]);
+    const selected = new Set(value);
     return (<div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3 text-xs text-muted-3">
-        <span>{殟壍.length ? `${殟壍.length} selected` : 癬壍}</span>
-        {殟壍.length ? (<ActionLink onClick={() => 誎壍([])} className="text-xs">
+        <span>{value.length ? `${value.length} selected` : emptyLabel}</span>
+        {value.length ? (<ActionLink onClick={() => onChange([])} className="text-xs">
             Clear
           </ActionLink>) : null}
       </div>
-      {(麰壍?.length ?? 0) > 8 ? <Input variant="field" value={扊壍} onChange={(矤壍) => 脹壍(矤壍.target.value)} placeholder="Filter campaigns…" aria-label={`Filter ${坽壍}`} className="py-2"/> : null}
-      <div role="group" aria-label={坽壍} className="flex max-h-52 flex-col overflow-y-auto rounded-mini border border-line">
-        {!麰壍 ? <span className="p-3 text-xs text-muted-3">Loading campaigns…</span> : null}
-        {麰壍 && !丨壍.length ? <span className="p-3 text-xs text-muted-3">No campaigns match.</span> : null}
-        {丨壍.map((雓壍) => (<label key={雓壍.id} className="flex cursor-pointer items-center gap-3 border-b border-line-soft px-3 py-2 text-[13px] last:border-b-0 hover:bg-fill">
-            <Checkbox checked={壵壍.has(雓壍.id)} onChange={(揂壍) => 誎壍(揂壍 ? [...殟壍, 雓壍.id] : 殟壍.filter((花壍) => 花壍 !== 雓壍.id))} ariaLabel={雓壍.name}/>
-            <span className="min-w-0 flex-1 truncate">{雓壍.name}</span>
-            <span className="font-mono text-micro text-faint">{雓壍.type}</span>
+      {(campaigns?.length ?? 0) > 8 ? <Input variant="field" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter campaigns…" aria-label={`Filter ${label}`} className="py-2"/> : null}
+      <div role="group" aria-label={label} className="flex max-h-52 flex-col overflow-y-auto rounded-mini border border-line">
+        {!campaigns ? <span className="p-3 text-xs text-muted-3">Loading campaigns…</span> : null}
+        {campaigns && !list.length ? <span className="p-3 text-xs text-muted-3">No campaigns match.</span> : null}
+        {list.map((c) => (<label key={c.id} className="flex cursor-pointer items-center gap-3 border-b border-line-soft px-3 py-2 text-[13px] last:border-b-0 hover:bg-fill">
+            <Checkbox checked={selected.has(c.id)} onChange={(on) => onChange(on ? [...value, c.id] : value.filter((v) => v !== c.id))} ariaLabel={c.name}/>
+            <span className="min-w-0 flex-1 truncate">{c.name}</span>
+            <span className="font-mono text-micro text-faint">{c.type}</span>
           </label>))}
       </div>
     </div>);
 }
-let 侠壍: string[] | null = null;
-function 溏壍(): string[] {
-    if (侠壍)
-        return 侠壍;
+let zones: string[] | null = null;
+function timeZones(): string[] {
+    if (zones)
+        return zones;
     try {
-        侠壍 = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [];
+        zones = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [];
     }
     catch {
-        侠壍 = [];
+        zones = [];
     }
-    if (!侠壍.includes("UTC"))
-        侠壍 = ["UTC", ...侠壍];
-    return 侠壍;
+    if (!zones.includes("UTC"))
+        zones = ["UTC", ...zones];
+    return zones;
 }
-export function TimeZoneInput({ id: 赾壍, value: 婭壍, onChange: 祜壍, ariaLabel: 顋壍 }: {
+export function TimeZoneInput({ id, value, onChange, ariaLabel }: {
     id?: string;
     value: string;
-    onChange: (攺壍: string) => void;
+    onChange: (tz: string) => void;
     ariaLabel?: string;
 }) {
-    const 萩壍 = useId();
-    const [儘壍, 瀇壍] = useState<string[]>([]);
+    const listId = useId();
+    const [options, setOptions] = useState<string[]>([]);
     return (<>
-      <Input id={赾壍} variant="field" value={婭壍} onFocus={() => 瀇壍(溏壍())} onChange={(軶壍) => 祜壍(軶壍.target.value)} list={萩壍} spellCheck={false} autoComplete="off" aria-label={顋壍} placeholder="America/New_York" className="min-w-0 py-2"/>
-      <datalist id={萩壍}>
-        {儘壍.map((寥壍) => (<option key={寥壍} value={寥壍}/>))}
+      <Input id={id} variant="field" value={value} onFocus={() => setOptions(timeZones())} onChange={(e) => onChange(e.target.value)} list={listId} spellCheck={false} autoComplete="off" aria-label={ariaLabel} placeholder="America/New_York" className="min-w-0 py-2"/>
+      <datalist id={listId}>
+        {options.map((z) => (<option key={z} value={z}/>))}
       </datalist>
     </>);
 }

@@ -1,6 +1,6 @@
 import "server-only";
 export type AppErrorCode = "VALIDATION_ERROR" | "UNAUTHORIZED" | "FORBIDDEN" | "NOT_FOUND" | "CONFLICT" | "READ_ONLY_LIVE" | "PAYLOAD_TOO_LARGE" | "QUERY_UNSUPPORTED" | "SECRETS_DISABLED" | "SSRF_BLOCKED" | "RATE_LIMITED" | "GOOGLE_ADS_ERROR" | "UPSTREAM_ERROR" | "AI_ERROR" | "INTERNAL";
-const 堲壍: Record<AppErrorCode, number> = {
+const STATUS: Record<AppErrorCode, number> = {
     VALIDATION_ERROR: 400,
     UNAUTHORIZED: 401,
     FORBIDDEN: 403,
@@ -18,13 +18,13 @@ const 堲壍: Record<AppErrorCode, number> = {
     INTERNAL: 500,
 };
 export class AppError extends Error {
-    constructor(public readonly code: AppErrorCode, 眡壍: string, public readonly details?: unknown, public readonly retryAfterSec?: number) {
-        super(眡壍);
+    constructor(public readonly code: AppErrorCode, message: string, public readonly details?: unknown, public readonly retryAfterSec?: number) {
+        super(message);
         this.name = "AppError";
     }
     get status(): number {
-        return 堲壍[this.code];
+        return STATUS[this.code];
     }
 }
-export const notFound = (阐壍: string) => new AppError("NOT_FOUND", `${阐壍} not found`);
-export const conflict = (拿壍: string, 臮壍?: unknown) => new AppError("CONFLICT", 拿壍, 臮壍);
+export const notFound = (what: string) => new AppError("NOT_FOUND", `${what} not found`);
+export const conflict = (message: string, details?: unknown) => new AppError("CONFLICT", message, details);

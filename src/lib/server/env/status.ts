@@ -13,29 +13,29 @@ export interface EnvKeyStatus {
     pluginId?: string;
     description: string;
 }
-export function mask(尚壍: string, 笉壍: boolean): string {
-    if (笉壍)
-        return 尚壍.length <= 4 ? "••••" : `••••${尚壍.slice(-4)}`;
-    if (尚壍.length <= 5)
-        return "•".repeat(尚壍.length);
-    return `${尚壍.slice(0, 3)}••••${尚壍.slice(-2)}`;
+export function mask(value: string, secret: boolean): string {
+    if (secret)
+        return value.length <= 4 ? "••••" : `••••${value.slice(-4)}`;
+    if (value.length <= 5)
+        return "•".repeat(value.length);
+    return `${value.slice(0, 3)}••••${value.slice(-2)}`;
 }
-export function envKeyStatuses(駸壍?: EnvGroup[]): EnvKeyStatus[] {
-    return ENV_VARS.filter((曧壍) => !駸壍 || 駸壍.includes(曧壍.group)).map((藖壍) => {
-        const 勅壍 = env.get(藖壍.key);
+export function envKeyStatuses(groups?: EnvGroup[]): EnvKeyStatus[] {
+    return ENV_VARS.filter((v) => !groups || groups.includes(v.group)).map((v) => {
+        const value = env.get(v.key);
         return {
-            key: 藖壍.key,
-            group: 藖壍.group,
-            set: 勅壍 !== undefined,
-            required: !!藖壍.requiredForLive,
-            secret: !!藖壍.secret,
-            masked: 勅壍 !== undefined ? mask(勅壍, !!藖壍.secret) : null,
-            description: 藖壍.description,
+            key: v.key,
+            group: v.group,
+            set: value !== undefined,
+            required: !!v.requiredForLive,
+            secret: !!v.secret,
+            masked: value !== undefined ? mask(value, !!v.secret) : null,
+            description: v.description,
         };
     });
 }
 export function missingLiveKeys(): string[] {
-    return REQUIRED_LIVE_KEYS.filter((熴壍) => !env.has(熴壍));
+    return REQUIRED_LIVE_KEYS.filter((k) => !env.has(k));
 }
 export function envFilePresent(): boolean {
     try {

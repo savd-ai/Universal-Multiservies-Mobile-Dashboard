@@ -4,39 +4,39 @@ import { formatMetricValue } from "@/lib/domain/metrics/registry";
 import { moneyExact, perDay } from "./money";
 export const SIMULATION_KEYS = ["budget", "target_cpa", "target_roas"] as const;
 export type SimulationKey = (typeof SIMULATION_KEYS)[number];
-const 驄壍: Record<SimulationKey, SimulationType> = { budget: "BUDGET", target_cpa: "TARGET_CPA", target_roas: "TARGET_ROAS" };
-export const typeOfKey = (朳壍: SimulationKey): SimulationType => 驄壍[朳壍];
-export const keyOfType = (蘢壍: SimulationType): SimulationKey => (蘢壍 === "BUDGET" ? "budget" : 蘢壍 === "TARGET_CPA" ? "target_cpa" : "target_roas");
-export function settingLabel(匑壍: SimulationType, 爀壍: number | null | undefined, 郯壍: string): string {
-    if (爀壍 === null || 爀壍 === undefined || !Number.isFinite(爀壍))
+const TYPE_OF_KEY: Record<SimulationKey, SimulationType> = { budget: "BUDGET", target_cpa: "TARGET_CPA", target_roas: "TARGET_ROAS" };
+export const typeOfKey = (k: SimulationKey): SimulationType => TYPE_OF_KEY[k];
+export const keyOfType = (t: SimulationType): SimulationKey => (t === "BUDGET" ? "budget" : t === "TARGET_CPA" ? "target_cpa" : "target_roas");
+export function settingLabel(simulationType: SimulationType, value: number | null | undefined, currency: string): string {
+    if (value === null || value === undefined || !Number.isFinite(value))
         return "—";
-    if (匑壍 === "BUDGET")
-        return perDay(爀壍, 郯壍);
-    if (匑壍 === "TARGET_CPA")
-        return formatMetricValue("money", 爀壍, { currency: 郯壍, compact: false, decimals: 爀壍 < 100 ? 2 : 0 });
-    return formatMetricValue("ratio", 爀壍);
+    if (simulationType === "BUDGET")
+        return perDay(value, currency);
+    if (simulationType === "TARGET_CPA")
+        return formatMetricValue("money", value, { currency, compact: false, decimals: value < 100 ? 2 : 0 });
+    return formatMetricValue("ratio", value);
 }
 export interface PointRow extends SimulationDayPoint {
     cpa: number | null;
     roas: number | null;
     current: boolean;
 }
-export function pointRows(州壍: Pick<SimulationView, "perDay" | "current">): PointRow[] {
-    const 糍壍 = 州壍.current;
-    return 州壍.perDay.map((鮼壍) => ({
-        ...鮼壍,
-        cpa: 鮼壍.conversions > 0 ? 鮼壍.cost / 鮼壍.conversions : null,
-        roas: 鮼壍.cost > 0 ? 鮼壍.convValue / 鮼壍.cost : null,
-        current: 糍壍 !== null && 糍壍 > 0 && Math.abs(鮼壍.value / 糍壍 - 1) <= 0.005,
+export function pointRows(view: Pick<SimulationView, "perDay" | "current">): PointRow[] {
+    const cur = view.current;
+    return view.perDay.map((p) => ({
+        ...p,
+        cpa: p.conversions > 0 ? p.cost / p.conversions : null,
+        roas: p.cost > 0 ? p.convValue / p.cost : null,
+        current: cur !== null && cur > 0 && Math.abs(p.value / cur - 1) <= 0.005,
     }));
 }
-export function availabilityLabel(梫壍: Pick<EstimateCampaignView, "simulations" | "type">): string {
-    if (梫壍.simulations.length)
-        return 梫壍.simulations.map((螚壍) => SIMULATION_LABELS[螚壍.type]).join(" · ");
+export function availabilityLabel(c: Pick<EstimateCampaignView, "simulations" | "type">): string {
+    if (c.simulations.length)
+        return c.simulations.map((s) => SIMULATION_LABELS[s.type]).join(" · ");
     return "No simulations from Google";
 }
-export function defaultCampaign<T extends Pick<EstimateCampaignView, "simulations">>(咉壍: readonly T[]): T | null {
-    return 咉壍.find((獸壍) => 獸壍.simulations.some((鉧壍) => 鉧壍.type === "BUDGET")) ?? 咉壍.find((彖壍) => 彖壍.simulations.length > 0) ?? 咉壍[0] ?? null;
+export function defaultCampaign<T extends Pick<EstimateCampaignView, "simulations">>(campaigns: readonly T[]): T | null {
+    return campaigns.find((c) => c.simulations.some((s) => s.type === "BUDGET")) ?? campaigns.find((c) => c.simulations.length > 0) ?? campaigns[0] ?? null;
 }
 export interface WeeklyDelta {
     conversions: number | null;
@@ -44,30 +44,30 @@ export interface WeeklyDelta {
     cost: number | null;
     clicks: number | null;
 }
-export function weeklyDelta(繅壍: RecommendationImpact | null): WeeklyDelta | null {
-    if (!繅壍)
+export function weeklyDelta(impact: RecommendationImpact | null): WeeklyDelta | null {
+    if (!impact)
         return null;
-    const 鴴壍 = (樣壍: number | null, 褒壍: number | null) => (樣壍 === null || 褒壍 === null ? null : 褒壍 - 樣壍);
-    const 嘁壍: WeeklyDelta = {
-        conversions: 鴴壍(繅壍.base.conversions, 繅壍.potential.conversions),
-        convValue: 鴴壍(繅壍.base.convValue, 繅壍.potential.convValue),
-        cost: 鴴壍(繅壍.base.cost, 繅壍.potential.cost),
-        clicks: 鴴壍(繅壍.base.clicks, 繅壍.potential.clicks),
+    const d = (base: number | null, potential: number | null) => (base === null || potential === null ? null : potential - base);
+    const out: WeeklyDelta = {
+        conversions: d(impact.base.conversions, impact.potential.conversions),
+        convValue: d(impact.base.convValue, impact.potential.convValue),
+        cost: d(impact.base.cost, impact.potential.cost),
+        clicks: d(impact.base.clicks, impact.potential.clicks),
     };
-    return Object.values(嘁壍).some((瓰壍) => 瓰壍 !== null) ? 嘁壍 : null;
+    return Object.values(out).some((v) => v !== null) ? out : null;
 }
-const 鏟壍 = (惎壍: number, 羽壍: string) => `${惎壍 < 0 ? "−" : "+"}${羽壍}`;
-export function weeklyImpactLine(麬壍: WeeklyDelta | null, 殛壍: string): string | null {
-    if (!麬壍)
+const signed = (v: number, body: string) => `${v < 0 ? "−" : "+"}${body}`;
+export function weeklyImpactLine(delta: WeeklyDelta | null, currency: string): string | null {
+    if (!delta)
         return null;
-    const 誊壍: string[] = [];
-    if (麬壍.conversions !== null)
-        誊壍.push(`${鏟壍(麬壍.conversions, formatMetricValue("decimal", Math.abs(麬壍.conversions)))} conv.`);
-    if (麬壍.convValue !== null)
-        誊壍.push(`${鏟壍(麬壍.convValue, moneyExact(Math.abs(麬壍.convValue), 殛壍))} value`);
-    if (麬壍.cost !== null)
-        誊壍.push(`${鏟壍(麬壍.cost, moneyExact(Math.abs(麬壍.cost), 殛壍))} cost`);
-    if (!誊壍.length && 麬壍.clicks !== null)
-        誊壍.push(`${鏟壍(麬壍.clicks, formatMetricValue("number", Math.abs(麬壍.clicks)))} clicks`);
-    return 誊壍.length ? 誊壍.join(" · ") : null;
+    const parts: string[] = [];
+    if (delta.conversions !== null)
+        parts.push(`${signed(delta.conversions, formatMetricValue("decimal", Math.abs(delta.conversions)))} conv.`);
+    if (delta.convValue !== null)
+        parts.push(`${signed(delta.convValue, moneyExact(Math.abs(delta.convValue), currency))} value`);
+    if (delta.cost !== null)
+        parts.push(`${signed(delta.cost, moneyExact(Math.abs(delta.cost), currency))} cost`);
+    if (!parts.length && delta.clicks !== null)
+        parts.push(`${signed(delta.clicks, formatMetricValue("number", Math.abs(delta.clicks)))} clicks`);
+    return parts.length ? parts.join(" · ") : null;
 }

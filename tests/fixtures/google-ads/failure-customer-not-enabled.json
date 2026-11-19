@@ -1,0 +1,21 @@
+{
+  "error": {
+    "code": 403,
+    "message": "The caller does not have permission",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.ads.googleads.v25.errors.GoogleAdsFailure",
+        "errors": [
+          {
+            "errorCode": {
+              "authorizationError": "CUSTOMER_NOT_ENABLED"
+            },
+            "message": "The customer account can't be accessed because it is not yet enabled or has been deactivated."
+          }
+        ],
+        "requestId": "fixture-req-not-enabled"
+      }
+    ]
+  }
+}

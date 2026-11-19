@@ -1,0 +1,7 @@
+[
+  {
+    "results": [{ "customer": { "id": "2345678901", "descriptiveName": "Acme Europe", "currencyCode": "EUR", "timeZone": "Europe/Berlin", "testAccount": true } }],
+    "fieldMask": "customer.id,customer.descriptiveName,customer.currencyCode,customer.timeZone,customer.manager,customer.testAccount",
+    "requestId": "fixture-req-customer-eu"
+  }
+]

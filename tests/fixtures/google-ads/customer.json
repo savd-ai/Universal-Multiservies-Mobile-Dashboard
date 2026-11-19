@@ -1,0 +1,7 @@
+[
+  {
+    "results": [{ "customer": { "id": "1234567890", "descriptiveName": "Acme Outdoor", "currencyCode": "USD", "timeZone": "America/New_York" } }],
+    "fieldMask": "customer.id,customer.descriptiveName,customer.currencyCode,customer.timeZone,customer.manager,customer.testAccount",
+    "requestId": "fixture-req-customer"
+  }
+]

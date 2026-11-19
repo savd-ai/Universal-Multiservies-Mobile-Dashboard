@@ -1,0 +1,36 @@
+[
+  {
+    "results": [
+      {
+        "campaign": { "id": "111", "name": "Search | Brand", "status": "ENABLED", "advertisingChannelType": "SEARCH", "biddingStrategyType": "TARGET_CPA", "targetCpa": { "targetCpaMicros": "28500000" }, "startDateTime": "2025-01-15 00:00:00", "endDateTime": "2037-12-30 23:59:59" },
+        "campaignBudget": { "id": "9001", "amountMicros": "420000000", "period": "DAILY" }
+      },
+      {
+        "campaign": { "id": "222", "name": "PMax | All products", "status": "ENABLED", "advertisingChannelType": "PERFORMANCE_MAX", "biddingStrategyType": "MAXIMIZE_CONVERSION_VALUE", "maximizeConversionValue": { "targetRoas": 3.5 }, "startDateTime": "2025-03-01 00:00:00" },
+        "campaignBudget": { "id": "9002", "amountMicros": "900000000", "period": "DAILY" }
+      },
+      {
+        "campaign": { "id": "333", "name": "Shopping | Feed", "status": "PAUSED", "advertisingChannelType": "SHOPPING", "biddingStrategyType": "TARGET_SPEND" },
+        "campaignBudget": { "id": "9003", "amountMicros": "150000000", "explicitlyShared": true, "period": "DAILY" }
+      },
+      {
+        "campaign": { "id": "444", "name": "Video | Launch", "status": "ENABLED", "advertisingChannelType": "VIDEO", "biddingStrategyType": "TARGET_CPV", "startDateTime": "2026-09-01 00:00:00", "endDateTime": "2026-10-31 23:59:59" },
+        "campaignBudget": { "id": "9004", "totalAmountMicros": "5000000000", "period": "CUSTOM_PERIOD" }
+      },
+      {
+        "campaign": { "id": "555", "name": "Demand Gen | Prospecting", "status": "ENABLED", "advertisingChannelType": "DEMAND_GEN", "biddingStrategyType": "MAXIMIZE_CONVERSIONS", "maximizeConversions": { "targetCpaMicros": "35000000" } },
+        "campaignBudget": { "id": "9003", "amountMicros": "150000000", "explicitlyShared": true, "period": "DAILY" }
+      },
+      {
+        "campaign": { "id": "666", "name": "App | Installs", "status": "ENABLED", "advertisingChannelType": "MULTI_CHANNEL", "biddingStrategyType": "ENHANCED_CPC" },
+        "campaignBudget": { "id": "9006", "amountMicros": "50000000", "period": "DAILY" }
+      },
+      {
+        "campaign": { "id": "777", "name": "Smart | Local", "status": "ENABLED", "advertisingChannelType": "SMART", "biddingStrategyType": "TARGET_ROAS", "targetRoas": { "targetRoas": 4 } },
+        "campaignBudget": { "id": "9007", "amountMicros": "25000000", "period": "DAILY" }
+      }
+    ],
+    "fieldMask": "campaign.id,campaign.name,campaign.status,campaign.advertisingChannelType,campaign.biddingStrategyType,campaign.targetCpa.targetCpaMicros,campaign.maximizeConversions.targetCpaMicros,campaign.targetRoas.targetRoas,campaign.maximizeConversionValue.targetRoas,campaign.startDateTime,campaign.endDateTime,campaignBudget.id,campaignBudget.amountMicros,campaignBudget.explicitlyShared,campaignBudget.period",
+    "requestId": "fixture-req-campaigns"
+  }
+]

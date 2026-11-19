@@ -1,0 +1,28 @@
+{
+  "error": {
+    "code": 429,
+    "message": "Resource has been exhausted (e.g. check quota).",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.ads.googleads.v25.errors.GoogleAdsFailure",
+        "errors": [
+          {
+            "errorCode": {
+              "quotaError": "RESOURCE_EXHAUSTED"
+            },
+            "message": "Daily operation limit reached.",
+            "details": {
+              "quotaErrorDetails": {
+                "rateScope": "DEVELOPER",
+                "rateName": "Number of operations for explorer access",
+                "retryDelay": "43200s"
+              }
+            }
+          }
+        ],
+        "requestId": "fixture-req-quota-daily"
+      }
+    ]
+  }
+}

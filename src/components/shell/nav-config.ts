@@ -1,0 +1,104 @@
+import type { Permission } from "@/lib/domain/auth/roles";
+
+// The sections. Index numbers render as the prototype's mono "01 · Overview" eyebrows; headlines use exactly one
+// *accent* word (Space Grotesk + italic Newsreader). Entries with a `permission` are hidden from roles without it
+// (the server enforces the same rules).
+
+export interface NavEntry {
+  key: string;
+  href: string;
+  label: string;
+  eyebrow: string;
+  headline: string;
+  description?: string;
+  badge?: "anomalies" | "budget";
+  tabs?: { href: string; label: string; exact?: boolean; permission?: Permission }[];
+  permission?: Permission;
+}
+
+export const NAV: NavEntry[] = [
+  { key: "overview", href: "/overview", label: "Overview", eyebrow: "Overview", headline: "What is *actually* driving your growth?" },
+  { key: "campaigns", href: "/campaigns", label: "Campaigns", eyebrow: "Campaigns", headline: "Every campaign, *measured*" },
+  { key: "budget", href: "/budget", label: "Budget planner", eyebrow: "Budget planner", headline: "Spend *smarter*, not louder", badge: "budget" },
+  {
+    key: "anomalies",
+    href: "/anomalies",
+    label: "Anomalies",
+    eyebrow: "Anomalies",
+    headline: "Signal, *before* it becomes cost",
+    badge: "anomalies",
+    tabs: [
+      { href: "/anomalies", label: "Signals", exact: true },
+      { href: "/anomalies/rules", label: "Rules", permission: "rules.manage" },
+      { href: "/anomalies/notifications", label: "Notifications", permission: "alerts.manage" },
+      { href: "/anomalies/history", label: "History" },
+    ],
+  },
+  {
+    key: "ai",
+    href: "/ai",
+    label: "AI studio",
+    eyebrow: "AI studio",
+    headline: "Campaigns your data is *asking* for",
+    tabs: [
+      { href: "/ai", label: "Ideas", exact: true },
+      { href: "/ai/blueprint", label: "Blueprint" },
+      { href: "/ai/ad-copy", label: "Ad copy" },
+      { href: "/ai/negatives", label: "Negative keywords" },
+    ],
+  },
+  { key: "explore", href: "/explore", label: "Explore", eyebrow: "Explore", headline: "Ask the data a *better* question" },
+  { key: "channels", href: "/channels", label: "Channels", eyebrow: "Channels", headline: "Every platform, one *ledger*" },
+  {
+    key: "plugins",
+    href: "/plugins",
+    label: "Plugins",
+    eyebrow: "Plugins",
+    headline: "One spine, *every* channel",
+    description: "Connect ad platforms, analytics and commerce sources. Connected ad platforms appear in the cross-channel views; alert plugins receive critical anomalies.",
+    permission: "plugins.manage",
+  },
+  {
+    key: "data-source",
+    href: "/data-source",
+    label: "Data source",
+    eyebrow: "Data source",
+    headline: "Own the *pipeline*",
+    tabs: [
+      { href: "/data-source", label: "Connection", exact: true },
+      { href: "/data-source/warehouse", label: "Warehouse" },
+      { href: "/data-source/activity", label: "Activity log" },
+    ],
+    permission: "system.manage",
+  },
+  {
+    key: "clients",
+    href: "/clients",
+    label: "Clients",
+    eyebrow: "Clients",
+    headline: "Every client, one *view*",
+    description: "Every account you can open, side by side: spend and results against the comparison period, month pacing and open signals, grouped by client.",
+    permission: "portfolio.read",
+  },
+  {
+    key: "access",
+    href: "/access",
+    label: "Access",
+    eyebrow: "Access",
+    headline: "Who sees *what*",
+    description: "Invite people, choose their role and decide which client they belong to. Client users only ever see their own accounts.",
+    tabs: [
+      { href: "/access", label: "Users", exact: true },
+      { href: "/access/clients", label: "Clients", permission: "clients.manage" },
+    ],
+    permission: "users.manage",
+  },
+];
+
+export function navIndex(key: string): number {
+  return NAV.findIndex((n) => n.key === key) + 1;
+}
+
+export function navFor(pathname: string): NavEntry | undefined {
+  return NAV.find((n) => pathname === n.href || pathname.startsWith(`${n.href}/`));
+}

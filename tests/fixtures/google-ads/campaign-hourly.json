@@ -1,0 +1,11 @@
+[
+  {
+    "results": [
+      { "segments": { "date": "2026-09-20" }, "campaign": { "id": "111" }, "metrics": { "impressions": "20", "clicks": "1", "costMicros": "400000" } },
+      { "segments": { "date": "2026-09-20", "hour": 9 }, "campaign": { "id": "111" }, "metrics": { "impressions": "150", "clicks": "9", "costMicros": "4200000", "conversions": 1 } },
+      { "segments": { "date": "2026-09-20", "hour": 23 }, "campaign": { "id": "111" }, "metrics": { "impressions": "35", "clicks": "2", "costMicros": "900000" } }
+    ],
+    "fieldMask": "segments.date,segments.hour,campaign.id,metrics.impressions,metrics.clicks,metrics.costMicros,metrics.conversions,metrics.conversionsValue",
+    "requestId": "fixture-req-hourly"
+  }
+]

@@ -1,0 +1,21 @@
+{
+  "error": {
+    "code": 400,
+    "message": "Request contains an invalid argument.",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.ads.googleads.v25.errors.GoogleAdsFailure",
+        "errors": [
+          {
+            "errorCode": {
+              "requestError": "INVALID_CUSTOMER_ID"
+            },
+            "message": "Invalid customer ID '123-456-7890'."
+          }
+        ],
+        "requestId": "fixture-req-invalid-cid"
+      }
+    ]
+  }
+}

@@ -1,0 +1,84 @@
+/* SAVD design tokens — ported verbatim from the reference HTML (Google Ads Dashboard - Standalone.html).
+   Light is the default theme (as in the prototype); dark overrides use :root[data-theme="dark"] so they win on
+   specificity regardless of source order (the prototype declared dark first on an inner element). */
+
+:root {
+  color-scheme: light;
+  --bg: #f2f2f7;
+  --bg-deep: #ffffff;
+  --surface: #ffffff;
+  --text: #1c1c1e;
+  --muted: #48484a;
+  /* muted-3 / faint are one step darker than the reference (#6C6C70 / #8E8E93) so small labels meet WCAG AA 4.5:1 */
+  --muted-3: #5f5f64;
+  --faint: #6e6e73;
+  --fg-rgb: 60, 60, 67;
+  --card: #ffffff;
+  --card-accent: linear-gradient(158deg, rgba(0, 163, 138, 0.1), #ffffff 70%);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px -12px rgba(0, 0, 0, 0.1);
+  --header: rgba(242, 242, 247, 0.78);
+  --blur: saturate(180%) blur(20px);
+  --input: rgba(118, 118, 128, 0.12);
+  /* reference #00806C is 4.3:1 on teal tints; #007864 keeps the hue at ≥ 4.7:1 */
+  --accent: #007864;
+  --accent-line: #00a38a;
+  --on-accent: #ffffff;
+  --knob: #ffffff;
+  --crit: #d70015;
+  --crit-t: rgba(255, 59, 48, 0.12);
+  --warn: #c93400;
+  --warn-t: rgba(255, 149, 0, 0.14);
+  --teal-t: rgba(0, 163, 138, 0.12);
+  --glow: rgba(0, 163, 138, 0.06);
+  --logo-ink: #16171a;
+  --logo-d: #027368;
+
+  /* validated categorical palette (dataviz validate_palette.js, cards #FFFFFF) — no status hues */
+  --series-1: #00a38a;
+  --series-2: #2a78d6;
+  --series-3: #c2549a;
+  --series-4: #4a3aa7;
+  --series-5: #8f9a2b;
+  --series-6: #a24bc2;
+  --series-other: rgba(60, 60, 67, 0.35);
+  --mint: #5fe3cd;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b0c0e;
+  --bg-deep: #08090a;
+  --surface: #0e0f11;
+  --text: #f5f5f3;
+  --muted: #a8abb2;
+  /* lighter than the reference (#8C9298 / #6E7177) for 4.5:1 on the dark cards */
+  --muted-3: #9aa0a6;
+  --faint: #888c92;
+  --fg-rgb: 255, 255, 255;
+  --card: linear-gradient(158deg, #122523, #0b0e12);
+  --card-accent: linear-gradient(158deg, rgba(4, 191, 157, 0.12), #0b0e12);
+  --shadow: 0 24px 54px -28px rgba(0, 0, 0, 0.7);
+  --header: rgba(11, 12, 14, 0.92);
+  --blur: none;
+  --input: rgba(0, 0, 0, 0.25);
+  --accent: #04bf9d;
+  --accent-line: #04bf9d;
+  --on-accent: #0e0f11;
+  --knob: #f5f5f3;
+  --crit: oklch(0.72 0.15 30);
+  --crit-t: oklch(0.72 0.15 30 / 0.14);
+  --warn: oklch(0.84 0.12 82);
+  --warn-t: oklch(0.84 0.12 82 / 0.13);
+  --teal-t: rgba(4, 191, 157, 0.14);
+  --glow: rgba(4, 191, 157, 0.1);
+  --logo-ink: #f5f5f3;
+  --logo-d: #04bf9d;
+
+  --series-1: #0a9e84;
+  --series-2: #3987e5;
+  --series-3: #d55181;
+  --series-4: #9085e9;
+  --series-5: #8f9a2b;
+  --series-6: #c06bd8;
+  --series-other: rgba(255, 255, 255, 0.35);
+}

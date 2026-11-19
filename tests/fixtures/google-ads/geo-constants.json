@@ -1,0 +1,11 @@
+[
+  {
+    "results": [
+      { "geoTargetConstant": { "id": "2840", "countryCode": "US", "targetType": "Country" } },
+      { "geoTargetConstant": { "id": "2704", "countryCode": "VN", "targetType": "Country" } },
+      { "geoTargetConstant": { "id": "2124", "countryCode": "CA", "targetType": "Country" } }
+    ],
+    "fieldMask": "geoTargetConstant.id,geoTargetConstant.countryCode,geoTargetConstant.targetType",
+    "requestId": "fixture-req-geo-constants"
+  }
+]

@@ -1,0 +1,125 @@
+[
+  {
+    "results": [
+      {
+        "changeEvent": {
+          "resourceName": "customers/1234567890/changeEvents/1758795247123456~0~0",
+          "changeDateTime": "2026-09-25 10:14:07.123456",
+          "changeResourceType": "CAMPAIGN_BUDGET",
+          "changeResourceName": "customers/1234567890/campaignBudgets/9001",
+          "resourceChangeOperation": "UPDATE",
+          "changedFields": "amountMicros",
+          "oldResource": { "campaignBudget": { "amountMicros": "420000000" } },
+          "newResource": { "campaignBudget": { "amountMicros": "455000000" } },
+          "clientType": "GOOGLE_ADS_WEB_CLIENT",
+          "userEmail": "jane.doe@acme.example"
+        }
+      },
+      {
+        "changeEvent": {
+          "resourceName": "customers/1234567890/changeEvents/1758708847000000~1~0",
+          "changeDateTime": "2026-09-24 09:34:07.000000",
+          "changeResourceType": "CAMPAIGN",
+          "changeResourceName": "customers/1234567890/campaigns/555",
+          "resourceChangeOperation": "UPDATE",
+          "changedFields": "biddingStrategyType",
+          "oldResource": { "campaign": { "biddingStrategyType": "TARGET_CPA" } },
+          "newResource": { "campaign": { "biddingStrategyType": "MAXIMIZE_CONVERSIONS" } },
+          "clientType": "GOOGLE_ADS_WEB_CLIENT",
+          "campaign": "customers/1234567890/campaigns/555",
+          "userEmail": "jane.doe@acme.example"
+        }
+      },
+      {
+        "changeEvent": {
+          "resourceName": "customers/1234567890/changeEvents/1758553200000000~0~0",
+          "changeDateTime": "2026-09-22 16:40:00.000000",
+          "changeResourceType": "AD",
+          "changeResourceName": "customers/1234567890/ads/88001",
+          "resourceChangeOperation": "UPDATE",
+          "changedFields": "finalUrls",
+          "oldResource": { "ad": { "finalUrls": ["https://acme.example/shop"] } },
+          "newResource": { "ad": { "finalUrls": ["https://acme.example/shop?promo=fall"] } },
+          "clientType": "GOOGLE_ADS_EDITOR",
+          "campaign": "customers/1234567890/campaigns/222",
+          "adGroup": "customers/1234567890/adGroups/5001",
+          "userEmail": "mike@acme.example"
+        }
+      },
+      {
+        "changeEvent": {
+          "resourceName": "customers/1234567890/changeEvents/1758362400000000~0~1",
+          "changeDateTime": "2026-09-20 11:00:00.000000",
+          "changeResourceType": "AD_GROUP_CRITERION",
+          "changeResourceName": "customers/1234567890/adGroupCriteria/5001~7003",
+          "resourceChangeOperation": "CREATE",
+          "changedFields": "adGroup,status,keyword.text,keyword.matchType",
+          "newResource": { "adGroupCriterion": { "adGroup": "customers/1234567890/adGroups/5001", "status": "ENABLED", "keyword": { "text": "waterproof boots", "matchType": "PHRASE" } } },
+          "clientType": "GOOGLE_ADS_API",
+          "campaign": "customers/1234567890/campaigns/111",
+          "adGroup": "customers/1234567890/adGroups/5001",
+          "userEmail": "api-bot@acme.example"
+        }
+      },
+      {
+        "changeEvent": {
+          "resourceName": "customers/1234567890/changeEvents/1758189600000000~0~0",
+          "changeDateTime": "2026-09-18 08:00:00.000000",
+          "changeResourceType": "CAMPAIGN",
+          "changeResourceName": "customers/1234567890/campaigns/333",
+          "resourceChangeOperation": "UPDATE",
+          "changedFields": "status",
+          "oldResource": { "campaign": { "status": "ENABLED" } },
+          "newResource": { "campaign": { "status": "PAUSED" } },
+          "clientType": "GOOGLE_ADS_EDITOR",
+          "campaign": "customers/1234567890/campaigns/333"
+        }
+      },
+      {
+        "changeEvent": {
+          "resourceName": "customers/1234567890/changeEvents/1757498400000000~0~0",
+          "changeDateTime": "2026-09-10 12:00:00.000000",
+          "changeResourceType": "CAMPAIGN",
+          "changeResourceName": "customers/1234567890/campaigns/222",
+          "resourceChangeOperation": "UPDATE",
+          "changedFields": "maximizeConversionValue.targetRoas",
+          "oldResource": { "campaign": { "maximizeConversionValue": { "targetRoas": 3.5 } } },
+          "newResource": { "campaign": { "maximizeConversionValue": { "targetRoas": 4 } } },
+          "clientType": "GOOGLE_ADS_WEB_CLIENT",
+          "campaign": "customers/1234567890/campaigns/222",
+          "userEmail": "x"
+        }
+      },
+      {
+        "changeEvent": {
+          "resourceName": "customers/1234567890/changeEvents/1757412000000000~0~0",
+          "changeDateTime": "2026-09-09 10:00:00.000000",
+          "changeResourceType": "CUSTOMER_ASSET",
+          "changeResourceName": "customers/1234567890/customerAssets/123~SITELINK",
+          "resourceChangeOperation": "CREATE",
+          "changedFields": "asset,fieldType",
+          "newResource": { "customerAsset": { "asset": "customers/1234567890/assets/123", "fieldType": "SITELINK" } },
+          "clientType": "GOOGLE_ADS_WEB_CLIENT",
+          "userEmail": "jane.doe@acme.example"
+        }
+      },
+      {
+        "changeEvent": {
+          "resourceName": "customers/1234567890/changeEvents/1755252000000000~0~0",
+          "changeDateTime": "2026-08-15 10:00:00.000000",
+          "changeResourceType": "CAMPAIGN",
+          "changeResourceName": "customers/1234567890/campaigns/111",
+          "resourceChangeOperation": "UPDATE",
+          "changedFields": "name",
+          "oldResource": { "campaign": { "name": "Brand" } },
+          "newResource": { "campaign": { "name": "Search | Brand" } },
+          "clientType": "GOOGLE_ADS_WEB_CLIENT",
+          "campaign": "customers/1234567890/campaigns/111",
+          "userEmail": "jane.doe@acme.example"
+        }
+      }
+    ],
+    "fieldMask": "changeEvent.resourceName,changeEvent.changeDateTime,changeEvent.changeResourceType,changeEvent.changeResourceName,changeEvent.resourceChangeOperation,changeEvent.changedFields,changeEvent.oldResource,changeEvent.newResource,changeEvent.clientType,changeEvent.campaign,changeEvent.adGroup,changeEvent.userEmail",
+    "requestId": "fixture-req-change-events"
+  }
+]

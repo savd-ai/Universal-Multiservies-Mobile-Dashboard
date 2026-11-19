@@ -1,0 +1,118 @@
+"use client";
+
+import { useState } from "react";
+import { ReadOnlyLiveError, useIsLive, useRevertAction, useSimulateAction } from "@/lib/api/actions";
+import { useCan } from "@/lib/api/auth";
+import { saveBlob } from "@/lib/api/client";
+import type { ReadOnlyAlternatives, SimulateRequest } from "@/lib/domain/contracts/actions";
+import { Button } from "./button";
+import { CodeBlock } from "./surfaces";
+import { Modal } from "./overlays";
+import { SimulatedBadge } from "./status";
+import { toast } from "./toast";
+
+// Write-action guard. Demo: the action runs as a labeled simulation (revertible, audited). Live: the control is
+// disabled with the read-only explanation; `alternatives` (deep link, change list, Editor CSV) are offered instead.
+// Roles without "actions.simulate" (client viewers) see the control disabled with a note (the API refuses it too).
+
+export const READ_ONLY_COPY = "Read-only: this dashboard never changes Google Ads.";
+export const NO_PERMISSION_COPY = "Your role can't make changes here.";
+
+/** Wrap a write control. In live mode renders it disabled with a tooltip-like note; in demo mode adds the badge. */
+export function LiveGuard({ children, deepLink, badge = true, className }: { children: React.ReactNode; deepLink?: string; badge?: boolean; className?: string }) {
+  const live = useIsLive();
+  const allowed = useCan()("actions.simulate");
+  if (!allowed) {
+    return (
+      <span className={className} title={NO_PERMISSION_COPY}>
+        <span className="pointer-events-none inline-flex opacity-45" aria-disabled>
+          {children}
+        </span>
+      </span>
+    );
+  }
+  if (live) {
+    return (
+      <span className={className} title={READ_ONLY_COPY}>
+        <span className="pointer-events-none inline-flex opacity-45" aria-disabled>
+          {children}
+        </span>
+        {deepLink ? (
+          <a href={deepLink} target="_blank" rel="noreferrer noopener" className="ml-2 text-xs whitespace-nowrap">
+            Open in Google Ads ↗
+          </a>
+        ) : null}
+      </span>
+    );
+  }
+  return (
+    <span className={className ?? "inline-flex max-w-full flex-wrap items-center gap-2"}>
+      {children}
+      {badge ? <SimulatedBadge /> : null}
+    </span>
+  );
+}
+
+/** Run a simulated write with the standard toast (+ Undo) and the live-mode fallback dialog. */
+export function useWriteAction() {
+  const simulate = useSimulateAction();
+  const revert = useRevertAction();
+  const [alternatives, setAlternatives] = useState<ReadOnlyAlternatives | null>(null);
+  const run = async (body: SimulateRequest, opts: { success?: string } = {}) => {
+    try {
+      const action = await simulate.mutateAsync(body);
+      toast(opts.success ?? `${action.summary} · simulated`, {
+        action: { label: "Undo", onClick: () => void revert.mutateAsync(action.id).then(() => toast("Reverted")) },
+      });
+      return action;
+    } catch (err) {
+      if (err instanceof ReadOnlyLiveError) {
+        setAlternatives(err.alternatives ?? { deepLinks: [], changeList: [], editorCsv: "" });
+        return null;
+      }
+      toast((err as Error).message || "Action failed", { tone: "crit" });
+      return null;
+    }
+  };
+  const dialog = <ReadOnlyDialog alternatives={alternatives} onClose={() => setAlternatives(null)} />;
+  return { run, pending: simulate.isPending, dialog };
+}
+
+export function ReadOnlyDialog({ alternatives, onClose }: { alternatives: ReadOnlyAlternatives | null; onClose: () => void }) {
+  return (
+    <Modal
+      open={!!alternatives}
+      onOpenChange={(o) => !o && onClose()}
+      eyebrow="Read-only"
+      title="Make this change in Google Ads"
+      description={`${READ_ONLY_COPY} Use a deep link, copy the change list, or import the CSV into Google Ads Editor.`}
+      width={560}
+      footer={
+        <>
+          {alternatives?.editorCsv ? (
+            <Button variant="outline" onClick={() => saveBlob(new Blob([alternatives.editorCsv], { type: "text/csv" }), "ads-editor-changes.csv")}>
+              Download Editor CSV
+            </Button>
+          ) : null}
+          {alternatives?.changeList.length ? (
+            <Button variant="outline" onClick={() => void navigator.clipboard.writeText(alternatives.changeList.join("\n")).then(() => toast("Change list copied"))}>
+              Copy change list
+            </Button>
+          ) : null}
+          <Button variant="accent" onClick={onClose}>
+            Done
+          </Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        {alternatives?.deepLinks.map((l) => (
+          <a key={l.url} href={l.url} target="_blank" rel="noreferrer noopener" className="text-[13px]">
+            {l.label} ↗
+          </a>
+        ))}
+        {alternatives?.changeList.length ? <CodeBlock className="max-h-56">{alternatives.changeList.join("\n")}</CodeBlock> : null}
+      </div>
+    </Modal>
+  );
+}

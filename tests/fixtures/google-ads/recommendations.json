@@ -1,0 +1,73 @@
+[
+  {
+    "results": [
+      {
+        "recommendation": {
+          "resourceName": "customers/1234567890/recommendations/9101~111",
+          "type": "CAMPAIGN_BUDGET",
+          "campaigns": ["customers/1234567890/campaigns/111"],
+          "campaignBudget": "customers/1234567890/campaignBudgets/9001",
+          "dismissed": false,
+          "impact": {
+            "baseMetrics": { "impressions": 49000, "clicks": 2940, "costMicros": "2940000000", "conversions": 98, "conversionsValue": 10290 },
+            "potentialMetrics": { "impressions": 63500, "clicks": 3800, "costMicros": "3480000000", "conversions": 114.5, "conversionsValue": 12010 }
+          },
+          "campaignBudgetRecommendation": {
+            "currentBudgetAmountMicros": "420000000",
+            "recommendedBudgetAmountMicros": "560000000",
+            "budgetOptions": [
+              {
+                "budgetAmountMicros": "700000000",
+                "impact": {
+                  "baseMetrics": { "impressions": 49000, "clicks": 2940, "costMicros": "2940000000", "conversions": 98, "conversionsValue": 10290 },
+                  "potentialMetrics": { "impressions": 72000, "clicks": 4300, "costMicros": "3900000000", "conversions": 124, "conversionsValue": 13000 }
+                }
+              },
+              {
+                "budgetAmountMicros": "490000000",
+                "impact": {
+                  "baseMetrics": { "impressions": 49000, "clicks": 2940, "costMicros": "2940000000", "conversions": 98 },
+                  "potentialMetrics": { "impressions": 56000, "clicks": 3350, "costMicros": "3200000000", "conversions": 106.8 }
+                }
+              },
+              {
+                "budgetAmountMicros": "560000000",
+                "impact": {
+                  "baseMetrics": { "impressions": 49000, "clicks": 2940, "costMicros": "2940000000", "conversions": 98, "conversionsValue": 10290 },
+                  "potentialMetrics": { "impressions": 63500, "clicks": 3800, "costMicros": "3480000000", "conversions": 114.5, "conversionsValue": 12010 }
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "recommendation": {
+          "resourceName": "customers/1234567890/recommendations/9102~shared",
+          "type": "CAMPAIGN_BUDGET",
+          "campaigns": ["customers/1234567890/campaigns/333", "customers/1234567890/campaigns/555"],
+          "campaignBudget": "customers/1234567890/campaignBudgets/9003",
+          "campaignBudgetRecommendation": { "currentBudgetAmountMicros": "150000000", "recommendedBudgetAmountMicros": "190000000" }
+        }
+      },
+      {
+        "recommendation": {
+          "resourceName": "customers/1234567890/recommendations/9103~777",
+          "type": "CAMPAIGN_BUDGET",
+          "campaigns": ["customers/1234567890/campaigns/777"],
+          "campaignBudget": "customers/1234567890/campaignBudgets/9007",
+          "dismissed": true,
+          "campaignBudgetRecommendation": { "currentBudgetAmountMicros": "25000000", "recommendedBudgetAmountMicros": "40000000" }
+        }
+      },
+      {
+        "recommendation": {
+          "resourceName": "customers/1234567890/recommendations/9104~bad",
+          "campaigns": ["customers/1234567890/campaigns/111"]
+        }
+      }
+    ],
+    "fieldMask": "recommendation.resourceName,recommendation.type,recommendation.campaign,recommendation.campaigns,recommendation.campaignBudget,recommendation.dismissed,recommendation.impact,recommendation.campaignBudgetRecommendation",
+    "requestId": "fixture-req-recommendations"
+  }
+]

@@ -1,0 +1,13 @@
+[
+  {
+    "results": [
+      { "segments": { "date": "2026-09-20", "device": "MOBILE" }, "campaign": { "id": "111" }, "metrics": { "impressions": "700", "clicks": "38", "costMicros": "18000000", "conversions": 1.75, "conversionsValue": 180 } },
+      { "segments": { "date": "2026-09-20", "device": "DESKTOP" }, "campaign": { "id": "111" }, "metrics": { "impressions": "400", "clicks": "18", "costMicros": "10500000", "conversions": 1.25, "conversionsValue": 130.5 } },
+      { "segments": { "date": "2026-09-20", "device": "TABLET" }, "campaign": { "id": "111" }, "metrics": { "impressions": "100", "clicks": "4", "costMicros": "2000000" } },
+      { "segments": { "date": "2026-09-20", "device": "CONNECTED_TV" }, "campaign": { "id": "222" }, "metrics": { "impressions": "2500", "clicks": "5", "costMicros": "6000000" } },
+      { "segments": { "date": "2026-09-20", "device": "UNKNOWN" }, "campaign": { "id": "222" }, "metrics": { "impressions": "10", "costMicros": "10000" } }
+    ],
+    "fieldMask": "segments.date,segments.device,campaign.id,metrics.impressions,metrics.clicks,metrics.costMicros,metrics.conversions,metrics.conversionsValue",
+    "requestId": "fixture-req-device"
+  }
+]

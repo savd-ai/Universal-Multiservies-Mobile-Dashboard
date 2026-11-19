@@ -1,0 +1,11 @@
+[
+  {
+    "results": [
+      { "segments": { "date": "2026-09-20" }, "campaign": { "id": "111" }, "adGroup": { "id": "5001" }, "adGroupCriterion": { "criterionId": "7001", "qualityInfo": { "qualityScore": 8 } }, "metrics": { "impressions": "400", "clicks": "30", "costMicros": "15000000", "conversions": 1.5, "conversionsValue": 150 } },
+      { "segments": { "date": "2026-09-20" }, "campaign": { "id": "111" }, "adGroup": { "id": "5002" }, "adGroupCriterion": { "criterionId": "7001", "qualityInfo": { "qualityScore": 6 } }, "metrics": { "impressions": "100", "clicks": "5", "costMicros": "2500000" } },
+      { "segments": { "date": "2026-09-20" }, "campaign": { "id": "111" }, "adGroup": { "id": "5001" }, "adGroupCriterion": { "criterionId": "7002" }, "metrics": { "impressions": "50", "clicks": "1", "costMicros": "700000" } }
+    ],
+    "fieldMask": "segments.date,campaign.id,adGroup.id,adGroupCriterion.criterionId,adGroupCriterion.qualityInfo.qualityScore,metrics.impressions,metrics.clicks,metrics.costMicros,metrics.conversions,metrics.conversionsValue",
+    "requestId": "fixture-req-keyword-daily"
+  }
+]

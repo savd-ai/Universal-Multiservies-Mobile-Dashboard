@@ -1,0 +1,63 @@
+"use client";
+
+import dynamic from "next/dynamic";
+import { Dialog } from "radix-ui";
+import { Suspense } from "react";
+import { IconButton } from "@/components/ui/button";
+import { useUi } from "@/stores/ui";
+import { CommandPalette } from "./command-palette";
+import { DemoBanner, PageFooter } from "./page-chrome";
+import { ShortcutsDialog, useGlobalShortcuts } from "./shortcuts";
+import { Sidebar } from "./sidebar";
+import { TopBar } from "./top-bar";
+
+// The dashboard frame: 236px sidebar + main (glow in the top-right corner, as in the prototype). Sidebar becomes a
+// 72px rail under 1024px and a drawer under 640px.
+
+const ChatDrawer = dynamic(() => import("@/features/ai-chat/chat-drawer").then((m) => m.ChatDrawer), { ssr: false });
+const CampaignDrawerHost = dynamic(() => import("@/features/campaigns/campaign-drawer").then((m) => m.CampaignDrawerHost), { ssr: false });
+
+export function AppShell({ children }: { children: React.ReactNode }) {
+  useGlobalShortcuts();
+  const mobileNav = useUi((s) => s.mobileNavOpen);
+  const setMobileNav = useUi((s) => s.setMobileNav);
+  return (
+    <div className="grid grid-cols-1 min-h-dvh bg-page text-fg sm:grid-cols-[72px_minmax(0,1fr)] lg:grid-cols-[236px_minmax(0,1fr)]">
+      <div className="no-print hidden sm:block lg:hidden">
+        <Sidebar rail />
+      </div>
+      <div className="no-print hidden lg:block">
+        <Sidebar />
+      </div>
+      <Dialog.Root open={mobileNav} onOpenChange={setMobileNav}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-[rgba(8,9,10,0.6)] sm:hidden" />
+          <Dialog.Content className="fixed inset-y-0 left-0 z-40 w-[min(280px,85vw)] sm:hidden">
+            <Dialog.Title className="sr-only">Navigation</Dialog.Title>
+            <Dialog.Description className="sr-only">Pages</Dialog.Description>
+            <Sidebar onNavigate={() => setMobileNav(false)} />
+            <Dialog.Close asChild>
+              <IconButton label="Close navigation" size="md" className="absolute top-5 right-3">
+                ×
+              </IconButton>
+            </Dialog.Close>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+      <main className="flex min-w-0 flex-col bg-glow">
+        <TopBar onMenu={() => setMobileNav(true)} />
+        <DemoBanner />
+        <div className="flex min-w-0 flex-col gap-6 px-4 pt-7 pb-10 sm:px-9">
+          <Suspense fallback={null}>{children}</Suspense>
+          <PageFooter />
+        </div>
+      </main>
+      <CommandPalette />
+      <ShortcutsDialog />
+      <Suspense fallback={null}>
+        <ChatDrawer />
+        <CampaignDrawerHost />
+      </Suspense>
+    </div>
+  );
+}

@@ -1,0 +1,7 @@
+[
+  {
+    "results": [{ "customer": { "id": "9876543210", "descriptiveName": "Acme Agency MCC", "currencyCode": "USD", "timeZone": "America/New_York", "manager": true } }],
+    "fieldMask": "customer.id,customer.descriptiveName,customer.currencyCode,customer.timeZone,customer.manager,customer.testAccount",
+    "requestId": "fixture-req-customer-manager"
+  }
+]

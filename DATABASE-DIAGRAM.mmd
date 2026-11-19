@@ -1,0 +1,214 @@
+---
+title: SAVD Ads Intelligence · analytics warehouse (SQLite, schema v1)
+---
+%% Source of DATABASE-DIAGRAM.png (npm run docs:diagrams). Keep in sync with src/lib/server/warehouse/schema.ts.
+%% Solid lines: enforced foreign keys. Dashed lines: logical links (facts may arrive before an entity's name).
+%% Every table except meta, schema_migration and sync_run has account_id → dim_account (ON DELETE CASCADE).
+%% base_measures = impressions, clicks (INTEGER) · cost, conversions, conv_value (REAL, account currency).
+erDiagram
+    direction LR
+
+    dim_account ||--o{ dim_campaign : "has"
+    dim_campaign ||--o{ dim_campaign_history : "versions (type 2)"
+    dim_campaign ||..o{ dim_ad_group : "contains"
+    dim_ad_group ||..o{ dim_keyword : "contains"
+
+    dim_campaign ||..o{ fact_campaign_daily : "per day"
+    dim_campaign ||..o{ fact_campaign_device_daily : "per day × device"
+    dim_campaign ||..o{ fact_campaign_geo_daily : "per day × country"
+    dim_campaign ||..o{ fact_campaign_hourly : "per day × hour"
+    dim_ad_group ||..o{ fact_ad_group_daily : "per day"
+    dim_keyword ||..o{ fact_keyword_daily : "per day"
+    dim_ad_group ||..o{ fact_search_term_monthly : "per month × term"
+
+    dim_account ||--o{ change_event : "change history"
+    dim_campaign ||..o{ google_simulation : "simulated by Google"
+    dim_account ||--o{ google_recommendation : "budget advice"
+
+    dim_account ||--o{ sync_ledger : "stored periods"
+    sync_run ||..o{ sync_ledger : "stored by"
+
+    dim_account {
+        TEXT account_id PK
+        TEXT name
+        TEXT currency
+        TEXT time_zone
+        TEXT manager_id "MCC"
+        TEXT first_seen_at
+        TEXT last_seen_at
+    }
+    dim_campaign {
+        TEXT account_id PK, FK
+        TEXT campaign_id PK
+        TEXT name
+        TEXT type
+        TEXT status
+        TEXT bidding_strategy
+        REAL target_cpa
+        REAL target_roas
+        TEXT budget_id
+        REAL budget_daily
+        INTEGER budget_shared
+        TEXT budget_period
+        TEXT start_date
+        TEXT end_date
+    }
+    dim_campaign_history {
+        TEXT account_id PK, FK
+        TEXT campaign_id PK, FK
+        TEXT valid_from PK
+        TEXT valid_to "NULL = current"
+        TEXT status
+        TEXT bidding_strategy
+        REAL target_cpa
+        REAL target_roas
+        TEXT budget_id
+        REAL budget_daily
+        INTEGER budget_shared
+        TEXT budget_period
+    }
+    dim_ad_group {
+        TEXT account_id PK, FK
+        TEXT ad_group_id PK
+        TEXT campaign_id
+        TEXT name
+        TEXT status
+    }
+    dim_keyword {
+        TEXT account_id PK, FK
+        TEXT keyword_id PK "adGroup~criterion"
+        TEXT ad_group_id
+        TEXT campaign_id
+        TEXT text
+        TEXT match_type
+        TEXT status
+        REAL quality_score
+        REAL cpc_bid
+    }
+    fact_campaign_daily {
+        TEXT account_id PK, FK
+        TEXT date PK
+        TEXT campaign_id PK
+        NUM base_measures
+        REAL is_search_impr
+        REAL is_eligible
+        REAL is_lost_budget
+        REAL is_lost_rank
+    }
+    fact_campaign_device_daily {
+        TEXT account_id PK, FK
+        TEXT date PK
+        TEXT campaign_id PK
+        TEXT device PK
+        NUM base_measures
+    }
+    fact_campaign_geo_daily {
+        TEXT account_id PK, FK
+        TEXT date PK
+        TEXT campaign_id PK
+        TEXT country PK "ISO-3166"
+        NUM base_measures
+    }
+    fact_campaign_hourly {
+        TEXT account_id PK, FK
+        TEXT date PK
+        TEXT campaign_id PK
+        INTEGER hour PK
+        NUM base_measures
+    }
+    fact_ad_group_daily {
+        TEXT account_id PK, FK
+        TEXT date PK
+        TEXT campaign_id PK
+        TEXT ad_group_id PK
+        NUM base_measures
+    }
+    fact_keyword_daily {
+        TEXT account_id PK, FK
+        TEXT date PK
+        TEXT campaign_id PK
+        TEXT ad_group_id PK
+        TEXT keyword_id PK
+        NUM base_measures
+        REAL qs_weight "QS × impressions"
+        REAL qs_impr
+    }
+    fact_search_term_monthly {
+        TEXT account_id PK, FK
+        TEXT month PK "YYYY-MM"
+        TEXT campaign_id PK
+        TEXT ad_group_id PK
+        TEXT search_term PK
+        TEXT st_match_type PK
+        TEXT st_status
+        TEXT keyword_id
+        NUM base_measures
+    }
+    change_event {
+        TEXT account_id PK, FK
+        TEXT event_id PK
+        TEXT ts "account time zone"
+        TEXT date
+        TEXT resource_type
+        TEXT operation
+        TEXT campaign_id
+        TEXT ad_group_id
+        TEXT changed_fields "JSON"
+        TEXT diffs "JSON before → after"
+        TEXT summary
+        TEXT client_type
+        TEXT actor "masked"
+    }
+    google_simulation {
+        TEXT account_id PK, FK
+        TEXT campaign_id PK
+        TEXT type PK "BUDGET, TARGET_CPA, TARGET_ROAS"
+        TEXT modification PK
+        TEXT start_date PK
+        TEXT end_date PK
+        TEXT points "JSON window totals"
+        TEXT first_seen_at
+        TEXT last_seen_at
+    }
+    google_recommendation {
+        TEXT account_id PK, FK
+        TEXT recommendation_id PK
+        TEXT captured_on PK
+        TEXT campaign_ids "JSON"
+        TEXT budget_id
+        REAL current_budget
+        REAL recommended_budget
+        TEXT impact "JSON weekly"
+        TEXT options "JSON"
+    }
+    sync_run {
+        TEXT run_id PK
+        TEXT mode "live or demo"
+        TEXT trigger "manual, schedule, cron, cli"
+        TEXT scope
+        TEXT started_at
+        TEXT finished_at
+        TEXT status
+        INTEGER requests
+        INTEGER rows_written
+        TEXT details "JSON"
+    }
+    sync_ledger {
+        TEXT account_id PK, FK
+        TEXT table_id PK
+        TEXT period_start PK
+        TEXT period_end
+        INTEGER row_count
+        TEXT fetched_at
+        INTEGER settled "fetched after restatement"
+        TEXT run_id
+    }
+    meta {
+        TEXT key PK
+        TEXT value
+    }
+    schema_migration {
+        INTEGER version PK
+        TEXT name
+        TEXT applied_at
+    }

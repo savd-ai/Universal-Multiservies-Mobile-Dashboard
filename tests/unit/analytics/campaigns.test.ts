@@ -1,0 +1,70 @@
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { getPacingReport, optimize, forecast } from "@/lib/server/budget/service";
+import { changeImpact, getCampaignDetail, listCampaigns, listChangeEvents } from "@/lib/server/campaigns";
+import { requestContext } from "@/lib/server/context";
+import { optimizeRequestSchema } from "@/lib/domain/contracts/budget";
+import { resetServerState, restoreServerState } from "./helpers";
+
+describe("campaigns & budget services on demo data", () => {
+  beforeEach(() => resetServerState());
+  afterEach(() => restoreServerState());
+
+  it("lists campaigns with metrics, compare, sparklines and worst open signal", async () => {
+    const ctx = await requestContext();
+    const res = await listCampaigns(ctx, { range: "last_30d", compare: "previous_period" });
+    expect(res.rows).toHaveLength(8);
+    expect(res.range).toMatchObject({ start: "2026-08-30", end: "2026-09-28", days: 30 });
+    expect(res.rows.every((r) => r.spark.length === 30 && r.prev)).toBe(true);
+    expect(res.totals.cost).toBeCloseTo(res.rows.reduce((s, r) => s + r.metrics.cost, 0), 1);
+    expect(res.totals.cpa).toBeCloseTo(res.totals.cost / res.totals.conversions, 6); // ratio of sums
+    const c8 = res.rows.find((r) => r.id === "c8")!;
+    expect(c8.worstSeverity).toBe("critical");
+    expect(c8.deepLink).toContain("campaignId=c8");
+    expect(res.rows.find((r) => r.id === "c4")?.worstSeverity).toBeNull();
+  });
+
+  it("builds the campaign detail payload", async () => {
+    const ctx = await requestContext();
+    const d = await getCampaignDetail(ctx, "c2", { range: "last_30d" });
+    expect(d.campaign.name).toBe("Generic — Running Shoes");
+    expect(d.daily).toHaveLength(30);
+    expect(d.prev).toBeDefined();
+    expect(d.devices.length).toBeGreaterThan(1);
+    expect(d.adGroups).toHaveLength(4);
+    expect(d.keywords.length).toBeGreaterThan(5);
+    expect(d.keywords[0]).toMatchObject({ matchType: expect.any(String), qs: expect.any(Number) });
+    expect(d.searchTerms.length).toBeLessThanOrEqual(50);
+    expect(d.hourDow.conversions).toHaveLength(7);
+    const hourConv = d.hourDow.conversions.flat().reduce((a, b) => a + b, 0);
+    expect(hourConv).toBeCloseTo(d.kpis.conversions, 0);
+    expect(d.pacing?.unitId).toBe("c2");
+    await expect(getCampaignDetail(ctx, "nope", {})).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("measures change impact with a Welch t-test and lists change events", async () => {
+    const ctx = await requestContext();
+    const events = await listChangeEvents(ctx, { campaignId: "c6" });
+    const bid = events.events.find((e) => e.changed_fields.includes("bidding_strategy_type"))!;
+    expect(bid).toBeDefined();
+    const impact = await changeImpact(ctx, "c6", bid.id);
+    expect(impact.before.days).toBe(14);
+    expect(impact.after.days).toBe(4);
+    const cost = impact.metrics.find((m) => m.metric === "cost")!;
+    expect(cost.deltaPct!).toBeGreaterThan(0.3);
+    expect(cost.significant).toBe(true);
+    expect(impact.note).toMatch(/preliminary/);
+  });
+
+  it("pacing, optimizer and forecast through the service", async () => {
+    const ctx = await requestContext();
+    const pacing = await getPacingReport(ctx);
+    expect(pacing.month).toBe("2026-09");
+    const opt = await optimize(ctx, optimizeRequestSchema.parse({}));
+    expect(opt.totals.recommended).toBeCloseTo(pacing.totals.monthlyTarget, 6);
+    const heur = await optimize(ctx, optimizeRequestSchema.parse({ strategy: "roas_heuristic" }));
+    expect(heur.totals.recommended).toBeCloseTo(pacing.totals.monthlyTarget, 6);
+    const f = await forecast(ctx, { metric: "cost", horizon: 30 });
+    expect(f.points).toHaveLength(30);
+    expect(f.backtestMape!).toBeLessThan(0.35);
+  });
+});

@@ -1,0 +1,19 @@
+node_modules
+.next
+out
+coverage
+test-results
+playwright-report
+blob-report
+.env
+.env.*
+!.env.example
+data
+.e2e-data
+parity
+reference/decoded
+.agents
+.claude
+*.log
+.DS_Store
+Google Ads Dashboard - Standalone.html

@@ -1,0 +1,11 @@
+[
+  {
+    "results": [
+      { "segments": { "date": "2026-09-20" }, "campaign": { "id": "111" }, "adGroup": { "id": "5001" }, "metrics": { "impressions": "1000", "clicks": "52", "costMicros": "26000000", "conversions": 2.5, "conversionsValue": 260.5 } },
+      { "segments": { "date": "2026-09-20" }, "campaign": { "id": "111" }, "adGroup": { "id": "5002" }, "metrics": { "impressions": "150", "clicks": "6", "costMicros": "3500000", "conversions": 0.5, "conversionsValue": 50 } },
+      { "segments": { "date": "2026-09-20" }, "campaign": { "id": "111" }, "adGroup": { "id": "5099" }, "metrics": { "impressions": "50", "clicks": "2", "costMicros": "1000000" } }
+    ],
+    "fieldMask": "segments.date,campaign.id,adGroup.id,metrics.impressions,metrics.clicks,metrics.costMicros,metrics.conversions,metrics.conversionsValue",
+    "requestId": "fixture-req-ad-group-daily"
+  }
+]

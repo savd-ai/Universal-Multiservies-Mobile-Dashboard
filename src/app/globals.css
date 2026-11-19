@@ -1,0 +1,424 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+/* Static brand constants */
+@theme {
+  --color-*: initial;
+  --color-white: #fff;
+  --color-black: #000;
+  --color-transparent: transparent;
+  --color-teal: #04bf9d;
+  --color-teal-deep: #027368;
+  --color-mint: #5fe3cd;
+  --color-ink: #16171a;
+  --color-on-teal: #0e0f11;
+
+  --radius-card: 16px;
+  --radius-mini: 12px;
+  --radius-pill: 100px;
+
+  --text-micro: 10px;
+  --text-meta: 11px;
+  --text-eyebrow: 12px;
+  --text-h1: 40px;
+  --text-h1--line-height: 1.02;
+  --text-h1--letter-spacing: -0.03em;
+
+  --tracking-eyebrow: 0.16em;
+  --tracking-meta: 0.14em;
+  --tracking-label: 0.12em;
+  --tracking-title: -0.01em;
+
+  --shadow-pop: 0 24px 54px -20px rgba(0, 0, 0, 0.35);
+  --shadow-modal: 0 30px 80px -20px rgba(0, 0, 0, 0.55);
+  --shadow-drawer: -30px 0 60px -20px rgba(0, 0, 0, 0.45);
+  --shadow-toast: 0 20px 40px -12px rgba(0, 0, 0, 0.45);
+  --shadow-knob: 0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.16);
+
+  --breakpoint-wide: 1180px;
+
+  --animate-fade-up: fade-up 0.35s ease-out both;
+  --animate-fade-up-fast: fade-up 0.25s ease-out both;
+  --animate-shimmer: shimmer 1.4s ease-in-out infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes shimmer {
+    0%,
+    100% {
+      opacity: 0.35;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+}
+
+/* Runtime-switching tokens → bg-page text-fg text-muted border-line … */
+@theme inline {
+  --color-page: var(--bg);
+  --color-deep: var(--bg-deep);
+  --color-surface: var(--surface);
+  --color-fg: var(--text);
+  --color-muted: var(--muted);
+  --color-muted-3: var(--muted-3);
+  --color-faint: var(--faint);
+  --color-tone: rgb(var(--fg-rgb));
+  --color-line: rgba(var(--fg-rgb), 0.1);
+  --color-line-soft: rgba(var(--fg-rgb), 0.06);
+  --color-line-strong: rgba(var(--fg-rgb), 0.14);
+  --color-fill: rgba(var(--fg-rgb), 0.03);
+  --color-accent: var(--accent);
+  --color-accent-line: var(--accent-line);
+  --color-on-accent: var(--on-accent);
+  --color-teal-t: var(--teal-t);
+  --color-crit: var(--crit);
+  --color-crit-t: var(--crit-t);
+  --color-warn: var(--warn);
+  --color-warn-t: var(--warn-t);
+  --color-input: var(--input);
+  --color-knob: var(--knob);
+  --color-header: var(--header);
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
+  --color-series-4: var(--series-4);
+  --color-series-5: var(--series-5);
+  --color-series-6: var(--series-6);
+
+  --font-display: var(--nf-display), "Space Grotesk", sans-serif;
+  --font-serif: var(--nf-serif), "Newsreader", serif;
+  --font-sans: var(--nf-sans), "Plus Jakarta Sans", sans-serif;
+  --font-mono: var(--nf-mono), "IBM Plex Mono", monospace;
+
+  --shadow-card: var(--shadow);
+}
+
+@utility bg-card {
+  background: var(--card);
+}
+@utility bg-card-accent {
+  background: var(--card-accent);
+}
+@utility bg-glow {
+  background: radial-gradient(900px 480px at 88% -12%, var(--glow), transparent 60%);
+}
+@utility backdrop-header {
+  /* unprefixed last: the CSS optimizer keeps only the final one of an equivalent pair */
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+}
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-eyebrow);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--accent);
+}
+@utility meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: var(--tracking-meta);
+  text-transform: uppercase;
+  color: var(--faint);
+}
+@utility label-mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--muted-3);
+}
+@utility h1-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-h1);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    /* the reference sets no line-height (browser "normal"); preflight's 1.5 would loosen every card */
+    line-height: normal;
+  }
+  body {
+    font-family: var(--font-sans);
+    margin: 0;
+    min-height: 100dvh;
+    /* phones: a long token (an env var name, a URL) wraps instead of pushing the page sideways, and nothing that
+       escapes its box can widen the page (clip, unlike hidden, makes no scroll container, so sticky headers work) */
+    overflow-wrap: break-word;
+    overflow-x: clip;
+  }
+  a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  a:hover {
+    opacity: 0.85;
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent-line);
+    outline-offset: 2px;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(var(--fg-rgb), 0.12);
+    border-radius: 100px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  input,
+  select,
+  textarea,
+  button {
+    font-family: inherit;
+    color: inherit;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--faint);
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  html.theme-switching * {
+    transition:
+      background-color 0.25s,
+      color 0.25s,
+      border-color 0.25s !important;
+  }
+  input[type="range"] {
+    accent-color: var(--accent);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Tab rows (section tabs, in-page tabs): one row that scrolls sideways on phones, without a visible scrollbar;
+     wider screens wrap as before. The active tab is scrolled into view by useActiveTabInView(). */
+  .tab-row {
+    position: relative;
+    display: flex;
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+  .tab-row > * {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  @media (max-width: 639.98px) {
+    .tab-row {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tab-row::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  /* ECharts tooltip (HTML is escaped by the builders) */
+  .savd-tip {
+    /* ECharts appends the tooltip to <body>; keep it out of flow even before its first show */
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    min-width: 170px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(var(--fg-rgb), 0.12) !important;
+    background: var(--surface) !important;
+    color: var(--text) !important;
+    box-shadow: 0 24px 54px -20px rgba(0, 0, 0, 0.45) !important;
+    font-family: var(--font-sans);
+    font-size: 13px;
+  }
+  .savd-tip:empty {
+    display: none !important;
+  }
+  .savd-tip .tip-date {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted-3);
+  }
+  .savd-tip .tip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+  }
+  .savd-tip .tip-key {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+  }
+  .savd-tip .tip-line {
+    width: 14px;
+    height: 2px;
+    border-radius: 2px;
+  }
+  .savd-tip .tip-val {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* react-grid-layout (own CSS; the package ships none we import) */
+  .react-grid-layout {
+    position: relative;
+    transition: height 200ms ease;
+  }
+  .react-grid-item {
+    transition: transform 200ms ease;
+  }
+  .react-grid-item.react-draggable-dragging {
+    transition: none;
+    z-index: 3;
+    opacity: 0.92;
+  }
+  .react-grid-item.resizing {
+    z-index: 3;
+    opacity: 0.92;
+  }
+  .react-grid-placeholder {
+    background: rgba(4, 191, 157, 0.1);
+    border: 1px dashed rgba(4, 191, 157, 0.45);
+    border-radius: 16px;
+    transition: transform 100ms ease;
+    z-index: 2;
+  }
+  .react-resizable-handle {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    z-index: 4;
+  }
+  .react-resizable-handle-se {
+    right: 4px;
+    bottom: 4px;
+    cursor: se-resize;
+    background:
+      linear-gradient(135deg, transparent 55%, rgba(4, 191, 157, 0.7) 55%, rgba(4, 191, 157, 0.7) 62%, transparent 62%),
+      linear-gradient(135deg, transparent 72%, rgba(4, 191, 157, 0.7) 72%, rgba(4, 191, 157, 0.7) 79%, transparent 79%);
+  }
+  .react-resizable-handle-e {
+    right: 0;
+    top: 50%;
+    margin-top: -12px;
+    width: 8px;
+    height: 24px;
+    cursor: ew-resize;
+  }
+  .react-resizable-handle-s {
+    bottom: 0;
+    left: 50%;
+    margin-left: -12px;
+    width: 24px;
+    height: 8px;
+    cursor: ns-resize;
+  }
+}
+
+/* Dashboard grid (view mode): 12 columns, 8px rows, 16px gaps → an item h rows tall is 24·h − 16 px, the same math
+   as react-grid-layout in edit mode. Items are auto-placed in reading order with explicit columns and row spans, so
+   a widget that grows to fit its content pushes the ones below it instead of overlapping them. */
+.dash-grid {
+  display: grid;
+  gap: 16px;
+  grid-auto-rows: 8px;
+  grid-template-columns: minmax(0, 1fr);
+}
+.dash-item {
+  grid-column: 1 / -1;
+  grid-row: span var(--h);
+}
+@media (min-width: 1180px) {
+  .dash-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .dash-item {
+    grid-column: var(--x) / span var(--w);
+  }
+}
+
+/* Phones: iOS Safari zooms the page into any focused field whose text is under 16px, so fields use 16px there.
+   Unlayered on purpose: it wins over the text-size utilities (which live in @layer utilities). */
+@media (max-width: 639.98px) {
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+  html,
+  :root[data-theme="dark"] {
+    --bg: #ffffff;
+    --bg-deep: #ffffff;
+    --surface: #ffffff;
+    --card: #ffffff;
+    --text: #1c1c1e;
+    --muted: #48484a;
+    --muted-3: #6c6c70;
+    --faint: #8e8e93;
+    --fg-rgb: 60, 60, 67;
+    --shadow: none;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-avoid-break {
+    break-inside: avoid;
+  }
+  .dash-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .dash-item {
+    grid-column: var(--x) / span var(--w);
+    break-inside: avoid;
+  }
+}

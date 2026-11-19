@@ -1,0 +1,103 @@
+[
+  {
+    "results": [
+      {
+        "campaignSimulation": {
+          "campaignId": "111",
+          "type": "BUDGET",
+          "modificationMethod": "UNIFORM",
+          "startDate": "2026-09-20",
+          "endDate": "2026-09-26",
+          "budgetPointList": {
+            "points": [
+              { "budgetAmountMicros": "630000000", "requiredCpcBidCeilingMicros": "1200000", "biddableConversions": 126.35, "biddableConversionsValue": 13100.5, "clicks": "4200", "costMicros": "3570000000", "impressions": "70000", "topSlotImpressions": "41000" },
+              { "budgetAmountMicros": "210000000", "biddableConversions": 49, "biddableConversionsValue": 5145, "clicks": "1470", "costMicros": "1470000000", "impressions": "24500", "topSlotImpressions": "15000" },
+              { "budgetAmountMicros": "420000000", "biddableConversions": 98, "biddableConversionsValue": 10290, "clicks": "2940", "costMicros": "2940000000", "impressions": "49000", "topSlotImpressions": "30100" },
+              { "budgetAmountMicros": "840000000", "biddableConversions": 140.7, "biddableConversionsValue": 14560, "clicks": "4760", "costMicros": "4060000000", "impressions": "80500", "topSlotImpressions": "46000" },
+              { "biddableConversions": 3, "clicks": "40", "costMicros": "90000000", "impressions": "900" },
+              { "budgetAmountMicros": "105000000" }
+            ]
+          }
+        }
+      },
+      {
+        "campaignSimulation": {
+          "campaignId": "111",
+          "type": "TARGET_CPA",
+          "modificationMethod": "UNIFORM",
+          "startDate": "2026-09-20",
+          "endDate": "2026-09-26",
+          "targetCpaPointList": {
+            "points": [
+              { "targetCpaMicros": "34200000", "requiredBudgetAmountMicros": "520000000", "biddableConversions": 112, "biddableConversionsValue": 11760, "appInstalls": 0, "inAppActions": 0, "clicks": "3500", "costMicros": "3640000000", "impressions": "58000", "topSlotImpressions": "36000" },
+              { "targetCpaMicros": "28500000", "requiredBudgetAmountMicros": "430000000", "biddableConversions": 98, "biddableConversionsValue": 10290, "clicks": "2940", "costMicros": "2940000000", "impressions": "49000" },
+              { "targetCpaMicros": "22800000", "biddableConversions": 80.5, "biddableConversionsValue": 8452.5, "clicks": "2300", "costMicros": "2100000000", "impressions": "40000" }
+            ]
+          }
+        }
+      },
+      {
+        "campaignSimulation": {
+          "campaignId": "555",
+          "type": "TARGET_CPA",
+          "modificationMethod": "SCALING",
+          "startDate": "2026-09-20",
+          "endDate": "2026-09-26",
+          "targetCpaPointList": {
+            "points": [
+              { "targetCpaScalingModifier": 1.2, "requiredBudgetAmountMicros": "190000000", "biddableConversions": 36, "clicks": "2100", "costMicros": "1260000000", "impressions": "90000" },
+              { "targetCpaScalingModifier": 0.8, "requiredBudgetAmountMicros": "120000000", "biddableConversions": 26, "clicks": "1500", "costMicros": "780000000", "impressions": "64000" },
+              { "targetCpaScalingModifier": 1, "requiredBudgetAmountMicros": "150000000", "biddableConversions": 31, "clicks": "1800", "costMicros": "1015000000", "impressions": "77000" }
+            ]
+          }
+        }
+      },
+      {
+        "campaignSimulation": {
+          "campaignId": "333",
+          "type": "TARGET_ROAS",
+          "modificationMethod": "DEFAULT",
+          "startDate": "2026-09-20",
+          "endDate": "2026-09-26",
+          "targetRoasPointList": {
+            "points": [
+              { "targetRoas": 3.5, "requiredBudgetAmountMicros": "180000000", "biddableConversions": 22, "biddableConversionsValue": 3960, "clicks": "900", "costMicros": "1130000000", "impressions": "60000", "topSlotImpressions": "0" },
+              { "targetRoas": 5, "requiredBudgetAmountMicros": "110000000", "biddableConversions": 15.5, "biddableConversionsValue": 2790, "clicks": "560", "costMicros": "558000000", "impressions": "38000" }
+            ]
+          }
+        }
+      },
+      {
+        "campaignSimulation": {
+          "type": "BUDGET",
+          "modificationMethod": "UNIFORM",
+          "startDate": "2026-09-20",
+          "endDate": "2026-09-26",
+          "budgetPointList": { "points": [{ "budgetAmountMicros": "100000000", "clicks": "10", "costMicros": "70000000" }] }
+        }
+      },
+      {
+        "campaignSimulation": {
+          "campaignId": "777",
+          "type": "TARGET_ROAS",
+          "modificationMethod": "UNIFORM",
+          "startDate": "2026-09-26",
+          "endDate": "2026-09-20",
+          "targetRoasPointList": { "points": [{ "targetRoas": 4, "clicks": "10", "costMicros": "7000000" }] }
+        }
+      },
+      {
+        "campaignSimulation": {
+          "campaignId": "777",
+          "type": "TARGET_ROAS",
+          "modificationMethod": "UNIFORM",
+          "startDate": "2026-09-20",
+          "endDate": "2026-09-26",
+          "targetRoasPointList": { "points": [] }
+        }
+      }
+    ],
+    "fieldMask": "campaignSimulation.campaignId,campaignSimulation.type,campaignSimulation.modificationMethod,campaignSimulation.startDate,campaignSimulation.endDate,campaignSimulation.budgetPointList.points,campaignSimulation.targetCpaPointList.points,campaignSimulation.targetRoasPointList.points",
+    "requestId": "fixture-req-simulations"
+  }
+]

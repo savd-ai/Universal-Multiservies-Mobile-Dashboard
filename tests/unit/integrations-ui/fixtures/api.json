@@ -1,0 +1,2867 @@
+{
+ "status": {
+  "mode": "demo",
+  "reason": {
+   "code": "no_env"
+  },
+  "reasonText": "No Google Ads credentials found in .env. Every number below is generated demo data for a sample account.",
+  "account": {
+   "id": "4821193307",
+   "name": "Acme Running Co.",
+   "currency": "USD",
+   "timezone": "America/New_York",
+   "isManager": false,
+   "parentId": "1112223333",
+   "mode": "demo"
+  },
+  "accounts": [
+   {
+    "id": "4821193307",
+    "name": "Acme Running Co.",
+    "currency": "USD",
+    "timezone": "America/New_York",
+    "isManager": false,
+    "parentId": "1112223333",
+    "mode": "demo"
+   },
+   {
+    "id": "9876543210",
+    "name": "Trail Gear Outlet",
+    "currency": "USD",
+    "timezone": "America/New_York",
+    "isManager": false,
+    "parentId": "1112223333",
+    "mode": "demo"
+   }
+  ],
+  "manager": {
+   "id": "1112223333",
+   "name": "SAVD Demo Agency (MCC)"
+  },
+  "today": "2026-09-29",
+  "dataThrough": "2026-09-28",
+  "demoProfile": "realistic",
+  "googleAds": {
+   "apiVersion": "v25",
+   "envFile": false,
+   "missingKeys": [
+    "GOOGLE_ADS_CLIENT_ID",
+    "GOOGLE_ADS_CLIENT_SECRET",
+    "GOOGLE_ADS_REFRESH_TOKEN",
+    "GOOGLE_ADS_CUSTOMER_ID"
+   ],
+   "health": null
+  },
+  "ai": {
+   "provider": "demo",
+   "model": null,
+   "configured": [],
+   "reason": "No AI key in .env (ANTHROPIC_API_KEY, OPENAI_API_KEY or GEMINI_API_KEY)",
+   "fallbacksEnabled": false
+  },
+  "plugins": {
+   "connected": 2,
+   "live": 0,
+   "demo": 2
+  },
+  "store": {
+   "driver": "file",
+   "writable": true
+  },
+  "scheduler": {
+   "enabled": false,
+   "intervalMinutes": 60,
+   "lastRunAt": null
+  },
+  "security": {
+   "basicAuth": false,
+   "encryption": false,
+   "readOnly": true
+  },
+  "display": {
+   "currency": "USD",
+   "fxRates": {
+    "VND": 25400
+   }
+  },
+  "env": [
+   {
+    "key": "GOOGLE_ADS_DEVELOPER_TOKEN",
+    "group": "google_ads",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "description": "Optional legacy developer token. Google sunset developer tokens on 2026-09-09: the header is still sent when set but ignored — access levels come from the Google Cloud project that owns the OAuth client."
+   },
+   {
+    "key": "GOOGLE_ADS_CLIENT_ID",
+    "group": "google_ads",
+    "set": false,
+    "required": true,
+    "secret": false,
+    "masked": null,
+    "description": "OAuth 2.0 client id from the Google Cloud project with Google Ads API access (Explorer or higher for production accounts)."
+   },
+   {
+    "key": "GOOGLE_ADS_CLIENT_SECRET",
+    "group": "google_ads",
+    "set": false,
+    "required": true,
+    "secret": true,
+    "masked": null,
+    "description": "OAuth 2.0 client secret."
+   },
+   {
+    "key": "GOOGLE_ADS_REFRESH_TOKEN",
+    "group": "google_ads",
+    "set": false,
+    "required": true,
+    "secret": true,
+    "masked": null,
+    "description": "Refresh token with the https://www.googleapis.com/auth/adwords scope."
+   },
+   {
+    "key": "GOOGLE_ADS_CUSTOMER_ID",
+    "group": "google_ads",
+    "set": false,
+    "required": true,
+    "secret": false,
+    "masked": null,
+    "description": "Default client account id (dashes allowed), e.g. 482-119-3307."
+   },
+   {
+    "key": "GOOGLE_ADS_LOGIN_CUSTOMER_ID",
+    "group": "google_ads",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Manager (MCC) id \u2014 sent as login-customer-id and enables the account switcher."
+   },
+   {
+    "key": "GOOGLE_ADS_API_VERSION",
+    "group": "google_ads",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "REST API version."
+   },
+   {
+    "key": "GOOGLE_ADS_CACHE_TTL_SECONDS",
+    "group": "google_ads",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Cache lifetime for hot (recent) report chunks."
+   },
+   {
+    "key": "GOOGLE_ADS_RESTATEMENT_DAYS",
+    "group": "google_ads",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Recent days treated as hot because conversions restate."
+   },
+   {
+    "key": "GOOGLE_ADS_MAX_CONCURRENCY",
+    "group": "google_ads",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Parallel Google Ads API requests."
+   },
+   {
+    "key": "GOOGLE_ADS_TIMEOUT_MS",
+    "group": "google_ads",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Per-request timeout."
+   },
+   {
+    "key": "GOOGLE_ADS_UI_URL_TEMPLATE",
+    "group": "google_ads",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Deep link used for read-only 'Open in Google Ads' actions."
+   },
+   {
+    "key": "DASHBOARD_FORCE_DEMO",
+    "group": "google_ads",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Always show demo data, even when credentials exist."
+   },
+   {
+    "key": "DEMO_PROFILE",
+    "group": "demo",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "realistic = stable data anchored to yesterday; prototype = the reference HTML's exact dataset (ends 2026-09-28)."
+   },
+   {
+    "key": "DEMO_SEED",
+    "group": "demo",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Seed for the demo generator."
+   },
+   {
+    "key": "DEMO_TIMEZONE",
+    "group": "demo",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Demo account time zone (the anchor is yesterday there)."
+   },
+   {
+    "key": "DEMO_CURRENCY",
+    "group": "demo",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Demo account currency."
+   },
+   {
+    "key": "DEMO_ANCHOR_DATE",
+    "group": "demo",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Pin the last day of demo data (YYYY-MM-DD) for screenshots and tests."
+   },
+   {
+    "key": "DEMO_SCENARIOS",
+    "group": "demo",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "extended = prototype anomalies + tracking break + budget-limited scenario; basic = prototype only."
+   },
+   {
+    "key": "AI_PROVIDER",
+    "group": "ai",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "auto | anthropic | openai | gemini | demo. auto picks the first provider with a key."
+   },
+   {
+    "key": "ANTHROPIC_API_KEY",
+    "group": "ai",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "description": "Enables Claude."
+   },
+   {
+    "key": "ANTHROPIC_MODEL",
+    "group": "ai",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Claude model id."
+   },
+   {
+    "key": "OPENAI_API_KEY",
+    "group": "ai",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "description": "Enables OpenAI."
+   },
+   {
+    "key": "OPENAI_MODEL",
+    "group": "ai",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "OpenAI model id."
+   },
+   {
+    "key": "GEMINI_API_KEY",
+    "group": "ai",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "description": "Enables Gemini."
+   },
+   {
+    "key": "GEMINI_MODEL",
+    "group": "ai",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Gemini model id."
+   },
+   {
+    "key": "AI_EFFORT",
+    "group": "ai",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Override reasoning effort for every AI feature (low | medium | high)."
+   },
+   {
+    "key": "AI_RATE_LIMIT_PER_MIN",
+    "group": "ai",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "AI requests per minute per client."
+   },
+   {
+    "key": "AI_DAILY_REQUEST_LIMIT",
+    "group": "ai",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Daily cap on AI requests (cost guard)."
+   },
+   {
+    "key": "AI_MAX_CONCURRENCY",
+    "group": "ai",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Parallel AI calls."
+   },
+   {
+    "key": "AI_TIMEOUT_MS",
+    "group": "ai",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Upstream AI timeout."
+   },
+   {
+    "key": "AI_DISABLED",
+    "group": "ai",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Always use the demo engine."
+   },
+   {
+    "key": "SLACK_WEBHOOK_URL",
+    "group": "alerts",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "description": "Slack incoming webhook URL."
+   },
+   {
+    "key": "TEAMS_WEBHOOK_URL",
+    "group": "alerts",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "description": "Microsoft Teams Workflows webhook URL (Office 365 connector URLs were retired in 2026)."
+   },
+   {
+    "key": "DISCORD_WEBHOOK_URL",
+    "group": "alerts",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "description": "Discord webhook URL."
+   },
+   {
+    "key": "ALERT_WEBHOOK_URL",
+    "group": "alerts",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "description": "Generic JSON webhook URL."
+   },
+   {
+    "key": "ALERT_WEBHOOK_SECRET",
+    "group": "alerts",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "description": "HMAC-SHA256 signing secret for the generic webhook (X-SAVD-Signature)."
+   },
+   {
+    "key": "ALERTS_SCHEDULER_ENABLED",
+    "group": "alerts",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Evaluate alerts on a timer inside a long-running Node server."
+   },
+   {
+    "key": "ALERTS_INTERVAL_MINUTES",
+    "group": "alerts",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Scheduler interval (minimum 5)."
+   },
+   {
+    "key": "ALERTS_DEMO_DISPATCH",
+    "group": "alerts",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Allow real webhook sends while showing demo data."
+   },
+   {
+    "key": "ALERTS_ALL_ACCOUNTS",
+    "group": "alerts",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Evaluate every accessible account under the manager (MCC), not just the active one."
+   },
+   {
+    "key": "ALERTS_DIGEST_AI",
+    "group": "alerts",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Let the configured AI provider write the daily digest summary (numbers stay server-computed)."
+   },
+   {
+    "key": "CRON_SECRET",
+    "group": "alerts",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "description": "Bearer token for /api/cron/alerts (external cron)."
+   },
+   {
+    "key": "APP_BASE_URL",
+    "group": "alerts",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Public base URL used in alert links and the CSRF origin check."
+   },
+   {
+    "key": "PLUGINS_ALLOW_PRIVATE_NETWORK",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Allow custom plugins/webhooks to reach private network addresses (cloud metadata stays blocked)."
+   },
+   {
+    "key": "PLUGINS_ALLOW_HTTP",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Allow plain http:// endpoints."
+   },
+   {
+    "key": "PLUGINS_FETCH_TIMEOUT_MS",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Timeout for plugin and webhook requests."
+   },
+   {
+    "key": "PLUGINS_MAX_RESPONSE_BYTES",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Response size cap for plugin requests."
+   },
+   {
+    "key": "DEV_MOCK_PLATFORM",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Expose the mock ad platform used by tests and the plugin builder demo."
+   },
+   {
+    "key": "META_ADS_ACCESS_TOKEN",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "pluginId": "meta",
+    "description": "Reserved for a future live meta connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "META_ADS_AD_ACCOUNT_ID",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "pluginId": "meta",
+    "description": "Reserved for a future live meta connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "MICROSOFT_ADS_DEVELOPER_TOKEN",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "pluginId": "microsoft",
+    "description": "Reserved for a future live microsoft connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "MICROSOFT_ADS_ACCOUNT_ID",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "pluginId": "microsoft",
+    "description": "Reserved for a future live microsoft connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "TIKTOK_ADS_ACCESS_TOKEN",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "pluginId": "tiktok",
+    "description": "Reserved for a future live tiktok connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "TIKTOK_ADS_ADVERTISER_ID",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "pluginId": "tiktok",
+    "description": "Reserved for a future live tiktok connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "LINKEDIN_ADS_ACCESS_TOKEN",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "pluginId": "linkedin",
+    "description": "Reserved for a future live linkedin connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "LINKEDIN_ADS_ACCOUNT_ID",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "pluginId": "linkedin",
+    "description": "Reserved for a future live linkedin connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "AMAZON_ADS_REFRESH_TOKEN",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "pluginId": "amazon",
+    "description": "Reserved for a future live amazon connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "AMAZON_ADS_PROFILE_ID",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "pluginId": "amazon",
+    "description": "Reserved for a future live amazon connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "PINTEREST_ADS_ACCESS_TOKEN",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "pluginId": "pinterest",
+    "description": "Reserved for a future live pinterest connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "PINTEREST_ADS_AD_ACCOUNT_ID",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "pluginId": "pinterest",
+    "description": "Reserved for a future live pinterest connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "SNAPCHAT_ADS_ACCESS_TOKEN",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "pluginId": "snapchat",
+    "description": "Reserved for a future live snapchat connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "SNAPCHAT_ADS_AD_ACCOUNT_ID",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "pluginId": "snapchat",
+    "description": "Reserved for a future live snapchat connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "REDDIT_ADS_ACCESS_TOKEN",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "pluginId": "reddit",
+    "description": "Reserved for a future live reddit connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "REDDIT_ADS_ACCOUNT_ID",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "pluginId": "reddit",
+    "description": "Reserved for a future live reddit connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "GA4_PROPERTY_ID",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "pluginId": "ga4",
+    "description": "Reserved for a future live ga4 connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "GA4_SERVICE_ACCOUNT_JSON",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "pluginId": "ga4",
+    "description": "Reserved for a future live ga4 connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "SHOPIFY_STORE_DOMAIN",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "pluginId": "shopify",
+    "description": "Reserved for a future live shopify connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "SHOPIFY_ADMIN_API_TOKEN",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "pluginId": "shopify",
+    "description": "Reserved for a future live shopify connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "WOOCOMMERCE_STORE_URL",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "pluginId": "woocommerce",
+    "description": "Reserved for a future live woocommerce connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "WOOCOMMERCE_CONSUMER_SECRET",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "pluginId": "woocommerce",
+    "description": "Reserved for a future live woocommerce connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "GOOGLE_SHEETS_SPREADSHEET_ID",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "pluginId": "google-sheets",
+    "description": "Reserved for a future live google-sheets connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "pluginId": "google-sheets",
+    "description": "Reserved for a future live google-sheets connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "BIGQUERY_PROJECT_ID",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "pluginId": "bigquery",
+    "description": "Reserved for a future live bigquery connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "BIGQUERY_SERVICE_ACCOUNT_JSON",
+    "group": "plugins",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "pluginId": "bigquery",
+    "description": "Reserved for a future live bigquery connector (demo data in v1; presence is reported only)."
+   },
+   {
+    "key": "DASHBOARD_BASIC_AUTH",
+    "group": "security",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "description": "user:password \u2014 protects every page and API route with HTTP Basic auth."
+   },
+   {
+    "key": "APP_ENCRYPTION_KEY",
+    "group": "security",
+    "set": false,
+    "required": false,
+    "secret": true,
+    "masked": null,
+    "description": "32-byte key (base64 or hex) that encrypts secrets saved from the UI. Generate with `npm run gen:key`."
+   },
+   {
+    "key": "TRUST_PROXY",
+    "group": "security",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Use the first X-Forwarded-For hop for rate-limit keys."
+   },
+   {
+    "key": "DATA_DIR",
+    "group": "security",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Where the JSON store lives."
+   },
+   {
+    "key": "STORE_DRIVER",
+    "group": "security",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "file | memory."
+   },
+   {
+    "key": "LOG_LEVEL",
+    "group": "security",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "debug | info | warn | error."
+   },
+   {
+    "key": "DASHBOARD_CURRENCY",
+    "group": "display",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "Display currency override (defaults to the account currency)."
+   },
+   {
+    "key": "FX_RATES",
+    "group": "display",
+    "set": false,
+    "required": false,
+    "secret": false,
+    "masked": null,
+    "description": "JSON map of display conversion rates from the account currency, e.g. {\"VND\":25400}."
+   }
+  ],
+  "generatedAt": "2026-09-29T13:13:27.899Z"
+ },
+ "plugins": {
+  "plugins": [
+   {
+    "manifest": {
+     "id": "meta",
+     "name": "Meta Ads",
+     "version": "1.0.0",
+     "kind": "builtin",
+     "category": "ad_platform",
+     "description": "Facebook and Instagram spend, conversions and ROAS, normalized to the same attribution window.",
+     "icon": {
+      "abbr": "MT"
+     },
+     "capabilities": [
+      "metrics.read"
+     ],
+     "live": false,
+     "env": [
+      {
+       "key": "META_ADS_ACCESS_TOKEN",
+       "label": "Access token",
+       "secret": true,
+       "required": true
+      },
+      {
+       "key": "META_ADS_AD_ACCOUNT_ID",
+       "label": "Ad account ID",
+       "secret": false,
+       "required": true
+      }
+     ],
+     "configFields": [
+      {
+       "key": "accessToken",
+       "label": "Access token",
+       "type": "secret",
+       "required": false
+      },
+      {
+       "key": "adAccountId",
+       "label": "Ad account ID",
+       "type": "text",
+       "required": false
+      }
+     ],
+     "refresh": "hourly"
+    },
+    "connected": true,
+    "mode": "demo",
+    "status": "connected",
+    "reason": "Demo connector in v1 \u2014 build a live one with the custom plugin builder.",
+    "envDetected": [
+     {
+      "key": "META_ADS_ACCESS_TOKEN",
+      "set": false
+     },
+     {
+      "key": "META_ADS_AD_ACCOUNT_ID",
+      "set": false
+     }
+    ],
+    "custom": false
+   },
+   {
+    "manifest": {
+     "id": "microsoft",
+     "name": "Microsoft Advertising",
+     "version": "1.0.0",
+     "kind": "builtin",
+     "category": "ad_platform",
+     "description": "Bing search campaigns \u2014 often the cheapest incremental search volume.",
+     "icon": {
+      "abbr": "MS"
+     },
+     "capabilities": [
+      "metrics.read"
+     ],
+     "live": false,
+     "env": [
+      {
+       "key": "MICROSOFT_ADS_DEVELOPER_TOKEN",
+       "label": "Developer token",
+       "secret": true,
+       "required": true
+      },
+      {
+       "key": "MICROSOFT_ADS_ACCOUNT_ID",
+       "label": "Account ID",
+       "secret": false,
+       "required": true
+      }
+     ],
+     "configFields": [
+      {
+       "key": "developerToken",
+       "label": "Developer token",
+       "type": "secret",
+       "required": false
+      },
+      {
+       "key": "accountId",
+       "label": "Account ID",
+       "type": "text",
+       "required": false
+      }
+     ],
+     "refresh": "hourly"
+    },
+    "connected": false,
+    "mode": "off",
+    "status": "available",
+    "reason": "Demo connector in v1 \u2014 build a live one with the custom plugin builder.",
+    "envDetected": [
+     {
+      "key": "MICROSOFT_ADS_DEVELOPER_TOKEN",
+      "set": false
+     },
+     {
+      "key": "MICROSOFT_ADS_ACCOUNT_ID",
+      "set": false
+     }
+    ],
+    "custom": false
+   },
+   {
+    "manifest": {
+     "id": "tiktok",
+     "name": "TikTok Ads",
+     "version": "1.0.0",
+     "kind": "builtin",
+     "category": "ad_platform",
+     "description": "Spark Ads and in-feed video performance, side by side with YouTube.",
+     "icon": {
+      "abbr": "TT"
+     },
+     "capabilities": [
+      "metrics.read"
+     ],
+     "live": false,
+     "env": [
+      {
+       "key": "TIKTOK_ADS_ACCESS_TOKEN",
+       "label": "Access token",
+       "secret": true,
+       "required": true
+      },
+      {
+       "key": "TIKTOK_ADS_ADVERTISER_ID",
+       "label": "Advertiser ID",
+       "secret": false,
+       "required": true
+      }
+     ],
+     "configFields": [
+      {
+       "key": "accessToken",
+       "label": "Access token",
+       "type": "secret",
+       "required": false
+      },
+      {
+       "key": "advertiserId",
+       "label": "Advertiser ID",
+       "type": "text",
+       "required": false
+      }
+     ],
+     "refresh": "hourly"
+    },
+    "connected": false,
+    "mode": "off",
+    "status": "available",
+    "reason": "Demo connector in v1 \u2014 build a live one with the custom plugin builder.",
+    "envDetected": [
+     {
+      "key": "TIKTOK_ADS_ACCESS_TOKEN",
+      "set": false
+     },
+     {
+      "key": "TIKTOK_ADS_ADVERTISER_ID",
+      "set": false
+     }
+    ],
+    "lastTest": {
+     "at": "2026-09-29T12:32:17.187Z",
+     "ok": true,
+     "message": "Demo connector \u2014 no live test in v1"
+    },
+    "custom": false
+   },
+   {
+    "manifest": {
+     "id": "linkedin",
+     "name": "LinkedIn Ads",
+     "version": "1.0.0",
+     "kind": "builtin",
+     "category": "ad_platform",
+     "description": "B2B audiences and lead-gen form conversions.",
+     "icon": {
+      "abbr": "LI"
+     },
+     "capabilities": [
+      "metrics.read"
+     ],
+     "live": false,
+     "env": [
+      {
+       "key": "LINKEDIN_ADS_ACCESS_TOKEN",
+       "label": "Access token",
+       "secret": true,
+       "required": true
+      },
+      {
+       "key": "LINKEDIN_ADS_ACCOUNT_ID",
+       "label": "Account ID",
+       "secret": false,
+       "required": true
+      }
+     ],
+     "configFields": [
+      {
+       "key": "accessToken",
+       "label": "Access token",
+       "type": "secret",
+       "required": false
+      },
+      {
+       "key": "accountId",
+       "label": "Account ID",
+       "type": "text",
+       "required": false
+      }
+     ],
+     "refresh": "hourly"
+    },
+    "connected": false,
+    "mode": "off",
+    "status": "available",
+    "reason": "Demo connector in v1 \u2014 build a live one with the custom plugin builder.",
+    "envDetected": [
+     {
+      "key": "LINKEDIN_ADS_ACCESS_TOKEN",
+      "set": false
+     },
+     {
+      "key": "LINKEDIN_ADS_ACCOUNT_ID",
+      "set": false
+     }
+    ],
+    "custom": false
+   },
+   {
+    "manifest": {
+     "id": "amazon",
+     "name": "Amazon Ads",
+     "version": "1.0.0",
+     "kind": "builtin",
+     "category": "ad_platform",
+     "description": "Sponsored Products and Brands spend with ACoS/ROAS next to Shopping.",
+     "icon": {
+      "abbr": "AZ"
+     },
+     "capabilities": [
+      "metrics.read"
+     ],
+     "live": false,
+     "env": [
+      {
+       "key": "AMAZON_ADS_REFRESH_TOKEN",
+       "label": "Refresh token",
+       "secret": true,
+       "required": true
+      },
+      {
+       "key": "AMAZON_ADS_PROFILE_ID",
+       "label": "Profile ID",
+       "secret": false,
+       "required": true
+      }
+     ],
+     "configFields": [
+      {
+       "key": "refreshToken",
+       "label": "Refresh token",
+       "type": "secret",
+       "required": false
+      },
+      {
+       "key": "profileId",
+       "label": "Profile ID",
+       "type": "text",
+       "required": false
+      }
+     ],
+     "refresh": "hourly"
+    },
+    "connected": false,
+    "mode": "off",
+    "status": "available",
+    "reason": "Demo connector in v1 \u2014 build a live one with the custom plugin builder.",
+    "envDetected": [
+     {
+      "key": "AMAZON_ADS_REFRESH_TOKEN",
+      "set": false
+     },
+     {
+      "key": "AMAZON_ADS_PROFILE_ID",
+      "set": false
+     }
+    ],
+    "custom": false
+   },
+   {
+    "manifest": {
+     "id": "pinterest",
+     "name": "Pinterest Ads",
+     "version": "1.0.0",
+     "kind": "builtin",
+     "category": "ad_platform",
+     "description": "Idea and shopping pins \u2014 useful for gift-season inspiration traffic.",
+     "icon": {
+      "abbr": "PI"
+     },
+     "capabilities": [
+      "metrics.read"
+     ],
+     "live": false,
+     "env": [
+      {
+       "key": "PINTEREST_ADS_ACCESS_TOKEN",
+       "label": "Access token",
+       "secret": true,
+       "required": true
+      },
+      {
+       "key": "PINTEREST_ADS_AD_ACCOUNT_ID",
+       "label": "Ad account ID",
+       "secret": false,
+       "required": true
+      }
+     ],
+     "configFields": [
+      {
+       "key": "accessToken",
+       "label": "Access token",
+       "type": "secret",
+       "required": false
+      },
+      {
+       "key": "adAccountId",
+       "label": "Ad account ID",
+       "type": "text",
+       "required": false
+      }
+     ],
+     "refresh": "hourly"
+    },
+    "connected": false,
+    "mode": "off",
+    "status": "available",
+    "reason": "Demo connector in v1 \u2014 build a live one with the custom plugin builder.",
+    "envDetected": [
+     {
+      "key": "PINTEREST_ADS_ACCESS_TOKEN",
+      "set": false
+     },
+     {
+      "key": "PINTEREST_ADS_AD_ACCOUNT_ID",
+      "set": false
+     }
+    ],
+    "custom": false
+   },
+   {
+    "manifest": {
+     "id": "snapchat",
+     "name": "Snapchat Ads",
+     "version": "1.0.0",
+     "kind": "builtin",
+     "category": "ad_platform",
+     "description": "Story and Spotlight placements for younger audiences.",
+     "icon": {
+      "abbr": "SC"
+     },
+     "capabilities": [
+      "metrics.read"
+     ],
+     "live": false,
+     "env": [
+      {
+       "key": "SNAPCHAT_ADS_ACCESS_TOKEN",
+       "label": "Access token",
+       "secret": true,
+       "required": true
+      },
+      {
+       "key": "SNAPCHAT_ADS_AD_ACCOUNT_ID",
+       "label": "Ad account ID",
+       "secret": false,
+       "required": true
+      }
+     ],
+     "configFields": [
+      {
+       "key": "accessToken",
+       "label": "Access token",
+       "type": "secret",
+       "required": false
+      },
+      {
+       "key": "adAccountId",
+       "label": "Ad account ID",
+       "type": "text",
+       "required": false
+      }
+     ],
+     "refresh": "hourly"
+    },
+    "connected": false,
+    "mode": "off",
+    "status": "available",
+    "reason": "Demo connector in v1 \u2014 build a live one with the custom plugin builder.",
+    "envDetected": [
+     {
+      "key": "SNAPCHAT_ADS_ACCESS_TOKEN",
+      "set": false
+     },
+     {
+      "key": "SNAPCHAT_ADS_AD_ACCOUNT_ID",
+      "set": false
+     }
+    ],
+    "custom": false
+   },
+   {
+    "manifest": {
+     "id": "reddit",
+     "name": "Reddit Ads",
+     "version": "1.0.0",
+     "kind": "builtin",
+     "category": "ad_platform",
+     "description": "Community-targeted conversation ads for enthusiast audiences.",
+     "icon": {
+      "abbr": "RD"
+     },
+     "capabilities": [
+      "metrics.read"
+     ],
+     "live": false,
+     "env": [
+      {
+       "key": "REDDIT_ADS_ACCESS_TOKEN",
+       "label": "Access token",
+       "secret": true,
+       "required": true
+      },
+      {
+       "key": "REDDIT_ADS_ACCOUNT_ID",
+       "label": "Account ID",
+       "secret": false,
+       "required": true
+      }
+     ],
+     "configFields": [
+      {
+       "key": "accessToken",
+       "label": "Access token",
+       "type": "secret",
+       "required": false
+      },
+      {
+       "key": "accountId",
+       "label": "Account ID",
+       "type": "text",
+       "required": false
+      }
+     ],
+     "refresh": "hourly"
+    },
+    "connected": false,
+    "mode": "off",
+    "status": "available",
+    "reason": "Demo connector in v1 \u2014 build a live one with the custom plugin builder.",
+    "envDetected": [
+     {
+      "key": "REDDIT_ADS_ACCESS_TOKEN",
+      "set": false
+     },
+     {
+      "key": "REDDIT_ADS_ACCOUNT_ID",
+      "set": false
+     }
+    ],
+    "custom": false
+   },
+   {
+    "manifest": {
+     "id": "ga4",
+     "name": "Google Analytics 4",
+     "version": "1.0.0",
+     "kind": "builtin",
+     "category": "analytics",
+     "description": "Sessions, engaged conversions and revenue for attribution cross-checks.",
+     "icon": {
+      "abbr": "GA"
+     },
+     "capabilities": [
+      "metrics.read"
+     ],
+     "live": false,
+     "env": [
+      {
+       "key": "GA4_PROPERTY_ID",
+       "label": "Property ID",
+       "secret": false,
+       "required": true
+      },
+      {
+       "key": "GA4_SERVICE_ACCOUNT_JSON",
+       "label": "Service account JSON",
+       "secret": true,
+       "required": true
+      }
+     ],
+     "configFields": [
+      {
+       "key": "propertyId",
+       "label": "Property ID",
+       "type": "text",
+       "required": false
+      },
+      {
+       "key": "serviceAccountJson",
+       "label": "Service account JSON",
+       "type": "secret",
+       "required": false
+      }
+     ],
+     "refresh": "hourly"
+    },
+    "connected": true,
+    "mode": "demo",
+    "status": "connected",
+    "reason": "Demo connector in v1 \u2014 build a live one with the custom plugin builder.",
+    "envDetected": [
+     {
+      "key": "GA4_PROPERTY_ID",
+      "set": false
+     },
+     {
+      "key": "GA4_SERVICE_ACCOUNT_JSON",
+      "set": false
+     }
+    ],
+    "custom": false
+   },
+   {
+    "manifest": {
+     "id": "shopify",
+     "name": "Shopify",
+     "version": "1.0.0",
+     "kind": "builtin",
+     "category": "commerce",
+     "description": "Orders and net revenue as the source of truth for ROAS and MER.",
+     "icon": {
+      "abbr": "SH"
+     },
+     "capabilities": [
+      "metrics.read"
+     ],
+     "live": false,
+     "env": [
+      {
+       "key": "SHOPIFY_STORE_DOMAIN",
+       "label": "Store domain",
+       "secret": false,
+       "required": true
+      },
+      {
+       "key": "SHOPIFY_ADMIN_API_TOKEN",
+       "label": "Admin API token",
+       "secret": true,
+       "required": true
+      }
+     ],
+     "configFields": [
+      {
+       "key": "storeDomain",
+       "label": "Store domain",
+       "type": "text",
+       "required": false
+      },
+      {
+       "key": "adminApiToken",
+       "label": "Admin API token",
+       "type": "secret",
+       "required": false
+      }
+     ],
+     "refresh": "hourly"
+    },
+    "connected": false,
+    "mode": "off",
+    "status": "available",
+    "reason": "Demo connector in v1 \u2014 build a live one with the custom plugin builder.",
+    "envDetected": [
+     {
+      "key": "SHOPIFY_STORE_DOMAIN",
+      "set": false
+     },
+     {
+      "key": "SHOPIFY_ADMIN_API_TOKEN",
+      "set": false
+     }
+    ],
+    "custom": false
+   },
+   {
+    "manifest": {
+     "id": "woocommerce",
+     "name": "WooCommerce",
+     "version": "1.0.0",
+     "kind": "builtin",
+     "category": "commerce",
+     "description": "Order revenue from a WooCommerce store for blended MER.",
+     "icon": {
+      "abbr": "WC"
+     },
+     "capabilities": [
+      "metrics.read"
+     ],
+     "live": false,
+     "env": [
+      {
+       "key": "WOOCOMMERCE_STORE_URL",
+       "label": "Store URL",
+       "secret": false,
+       "required": true
+      },
+      {
+       "key": "WOOCOMMERCE_CONSUMER_SECRET",
+       "label": "Consumer secret",
+       "secret": true,
+       "required": true
+      }
+     ],
+     "configFields": [
+      {
+       "key": "storeUrl",
+       "label": "Store URL",
+       "type": "url",
+       "required": false
+      },
+      {
+       "key": "consumerSecret",
+       "label": "Consumer secret",
+       "type": "secret",
+       "required": false
+      }
+     ],
+     "refresh": "hourly"
+    },
+    "connected": false,
+    "mode": "off",
+    "status": "available",
+    "reason": "Demo connector in v1 \u2014 build a live one with the custom plugin builder.",
+    "envDetected": [
+     {
+      "key": "WOOCOMMERCE_STORE_URL",
+      "set": false
+     },
+     {
+      "key": "WOOCOMMERCE_CONSUMER_SECRET",
+      "set": false
+     }
+    ],
+    "custom": false
+   },
+   {
+    "manifest": {
+     "id": "google-sheets",
+     "name": "Google Sheets",
+     "version": "1.0.0",
+     "kind": "builtin",
+     "category": "export",
+     "description": "Scheduled export of any widget to a sheet, daily or weekly.",
+     "icon": {
+      "abbr": "GS"
+     },
+     "capabilities": [
+      "export.write"
+     ],
+     "live": false,
+     "env": [
+      {
+       "key": "GOOGLE_SHEETS_SPREADSHEET_ID",
+       "label": "Spreadsheet ID",
+       "secret": false,
+       "required": true
+      },
+      {
+       "key": "GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON",
+       "label": "Service account JSON",
+       "secret": true,
+       "required": true
+      }
+     ],
+     "configFields": [
+      {
+       "key": "spreadsheetUrl",
+       "label": "Spreadsheet URL",
+       "type": "url",
+       "required": false
+      }
+     ],
+     "refresh": "hourly"
+    },
+    "connected": false,
+    "mode": "off",
+    "status": "available",
+    "reason": "Demo connector in v1 \u2014 build a live one with the custom plugin builder.",
+    "envDetected": [
+     {
+      "key": "GOOGLE_SHEETS_SPREADSHEET_ID",
+      "set": false
+     },
+     {
+      "key": "GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON",
+      "set": false
+     }
+    ],
+    "custom": false
+   },
+   {
+    "manifest": {
+     "id": "bigquery",
+     "name": "BigQuery",
+     "version": "1.0.0",
+     "kind": "builtin",
+     "category": "export",
+     "description": "Nightly export of fact tables to a dataset for your own modelling.",
+     "icon": {
+      "abbr": "BQ"
+     },
+     "capabilities": [
+      "export.write"
+     ],
+     "live": false,
+     "env": [
+      {
+       "key": "BIGQUERY_PROJECT_ID",
+       "label": "Project ID",
+       "secret": false,
+       "required": true
+      },
+      {
+       "key": "BIGQUERY_SERVICE_ACCOUNT_JSON",
+       "label": "Service account JSON",
+       "secret": true,
+       "required": true
+      }
+     ],
+     "configFields": [
+      {
+       "key": "projectId",
+       "label": "Project ID",
+       "type": "text",
+       "required": false
+      },
+      {
+       "key": "dataset",
+       "label": "Dataset",
+       "type": "text",
+       "required": false
+      }
+     ],
+     "refresh": "hourly"
+    },
+    "connected": false,
+    "mode": "off",
+    "status": "available",
+    "reason": "Demo connector in v1 \u2014 build a live one with the custom plugin builder.",
+    "envDetected": [
+     {
+      "key": "BIGQUERY_PROJECT_ID",
+      "set": false
+     },
+     {
+      "key": "BIGQUERY_SERVICE_ACCOUNT_JSON",
+      "set": false
+     }
+    ],
+    "custom": false
+   },
+   {
+    "manifest": {
+     "id": "slack",
+     "name": "Slack",
+     "version": "1.0.0",
+     "kind": "builtin",
+     "category": "alerts",
+     "description": "Push critical anomalies, pacing warnings and a daily digest to a channel.",
+     "icon": {
+      "abbr": "SL"
+     },
+     "capabilities": [
+      "alerts.send"
+     ],
+     "live": true,
+     "env": [
+      {
+       "key": "SLACK_WEBHOOK_URL",
+       "label": "Incoming webhook URL",
+       "secret": true,
+       "required": true
+      }
+     ],
+     "configFields": [
+      {
+       "key": "url",
+       "label": "Webhook URL",
+       "type": "secret",
+       "required": true,
+       "placeholder": "https://hooks.slack.com/services/\u2026"
+      },
+      {
+       "key": "mention",
+       "label": "Mention (optional)",
+       "type": "text",
+       "required": false,
+       "placeholder": "@here"
+      }
+     ],
+     "refresh": "manual"
+    },
+    "connected": false,
+    "mode": "off",
+    "status": "available",
+    "envDetected": [
+     {
+      "key": "SLACK_WEBHOOK_URL",
+      "set": false
+     }
+    ],
+    "custom": false
+   },
+   {
+    "manifest": {
+     "id": "teams",
+     "name": "Microsoft Teams",
+     "version": "1.0.0",
+     "kind": "builtin",
+     "category": "alerts",
+     "description": "Adaptive Card alerts through a Teams Workflows webhook.",
+     "icon": {
+      "abbr": "MT"
+     },
+     "capabilities": [
+      "alerts.send"
+     ],
+     "live": true,
+     "env": [
+      {
+       "key": "TEAMS_WEBHOOK_URL",
+       "label": "Workflows webhook URL",
+       "secret": true,
+       "required": true
+      }
+     ],
+     "configFields": [
+      {
+       "key": "url",
+       "label": "Workflows webhook URL",
+       "type": "secret",
+       "required": true,
+       "placeholder": "https://\u2026logic.azure.com/\u2026"
+      }
+     ],
+     "refresh": "manual"
+    },
+    "connected": false,
+    "mode": "off",
+    "status": "available",
+    "envDetected": [
+     {
+      "key": "TEAMS_WEBHOOK_URL",
+      "set": false
+     }
+    ],
+    "custom": false
+   },
+   {
+    "manifest": {
+     "id": "discord",
+     "name": "Discord",
+     "version": "1.0.0",
+     "kind": "builtin",
+     "category": "alerts",
+     "description": "Rich embed alerts posted to a Discord channel webhook.",
+     "icon": {
+      "abbr": "DC"
+     },
+     "capabilities": [
+      "alerts.send"
+     ],
+     "live": true,
+     "env": [
+      {
+       "key": "DISCORD_WEBHOOK_URL",
+       "label": "Webhook URL",
+       "secret": true,
+       "required": true
+      }
+     ],
+     "configFields": [
+      {
+       "key": "url",
+       "label": "Webhook URL",
+       "type": "secret",
+       "required": true,
+       "placeholder": "https://discord.com/api/webhooks/\u2026"
+      }
+     ],
+     "refresh": "manual"
+    },
+    "connected": false,
+    "mode": "off",
+    "status": "available",
+    "envDetected": [
+     {
+      "key": "DISCORD_WEBHOOK_URL",
+      "set": false
+     }
+    ],
+    "custom": false
+   },
+   {
+    "manifest": {
+     "id": "webhook",
+     "name": "Webhook",
+     "version": "1.0.0",
+     "kind": "builtin",
+     "category": "alerts",
+     "description": "Signed JSON POST (X-SAVD-Signature: sha256=\u2026) to any endpoint \u2014 PagerDuty, Zapier, n8n, your own service.",
+     "icon": {
+      "abbr": "WH"
+     },
+     "capabilities": [
+      "alerts.send"
+     ],
+     "live": true,
+     "env": [
+      {
+       "key": "ALERT_WEBHOOK_URL",
+       "label": "Webhook URL",
+       "secret": true,
+       "required": true
+      },
+      {
+       "key": "ALERT_WEBHOOK_SECRET",
+       "label": "Signing secret",
+       "secret": true,
+       "required": false
+      }
+     ],
+     "configFields": [
+      {
+       "key": "url",
+       "label": "Endpoint URL",
+       "type": "secret",
+       "required": true,
+       "placeholder": "https://"
+      },
+      {
+       "key": "signingSecret",
+       "label": "Signing secret (optional)",
+       "type": "secret",
+       "required": false
+      }
+     ],
+     "refresh": "manual"
+    },
+    "connected": false,
+    "mode": "off",
+    "status": "available",
+    "envDetected": [
+     {
+      "key": "ALERT_WEBHOOK_URL",
+      "set": false
+     },
+     {
+      "key": "ALERT_WEBHOOK_SECRET",
+      "set": false
+     }
+    ],
+    "custom": false
+   }
+  ],
+  "encryption": false
+ },
+ "pluginMeta": {
+  "manifest": {
+   "id": "meta",
+   "name": "Meta Ads",
+   "version": "1.0.0",
+   "kind": "builtin",
+   "category": "ad_platform",
+   "description": "Facebook and Instagram spend, conversions and ROAS, normalized to the same attribution window.",
+   "icon": {
+    "abbr": "MT"
+   },
+   "capabilities": [
+    "metrics.read"
+   ],
+   "live": false,
+   "env": [
+    {
+     "key": "META_ADS_ACCESS_TOKEN",
+     "label": "Access token",
+     "secret": true,
+     "required": true
+    },
+    {
+     "key": "META_ADS_AD_ACCOUNT_ID",
+     "label": "Ad account ID",
+     "secret": false,
+     "required": true
+    }
+   ],
+   "configFields": [
+    {
+     "key": "accessToken",
+     "label": "Access token",
+     "type": "secret",
+     "required": false
+    },
+    {
+     "key": "adAccountId",
+     "label": "Ad account ID",
+     "type": "text",
+     "required": false
+    }
+   ],
+   "refresh": "hourly"
+  },
+  "connected": true,
+  "mode": "demo",
+  "status": "connected",
+  "reason": "Demo connector in v1 \u2014 build a live one with the custom plugin builder.",
+  "envDetected": [
+   {
+    "key": "META_ADS_ACCESS_TOKEN",
+    "set": false
+   },
+   {
+    "key": "META_ADS_AD_ACCOUNT_ID",
+    "set": false
+   }
+  ],
+  "custom": false,
+  "config": {},
+  "secrets": {}
+ },
+ "pluginSlack": {
+  "manifest": {
+   "id": "slack",
+   "name": "Slack",
+   "version": "1.0.0",
+   "kind": "builtin",
+   "category": "alerts",
+   "description": "Push critical anomalies, pacing warnings and a daily digest to a channel.",
+   "icon": {
+    "abbr": "SL"
+   },
+   "capabilities": [
+    "alerts.send"
+   ],
+   "live": true,
+   "env": [
+    {
+     "key": "SLACK_WEBHOOK_URL",
+     "label": "Incoming webhook URL",
+     "secret": true,
+     "required": true
+    }
+   ],
+   "configFields": [
+    {
+     "key": "url",
+     "label": "Webhook URL",
+     "type": "secret",
+     "required": true,
+     "placeholder": "https://hooks.slack.com/services/\u2026"
+    },
+    {
+     "key": "mention",
+     "label": "Mention (optional)",
+     "type": "text",
+     "required": false,
+     "placeholder": "@here"
+    }
+   ],
+   "refresh": "manual"
+  },
+  "connected": false,
+  "mode": "off",
+  "status": "available",
+  "envDetected": [
+   {
+    "key": "SLACK_WEBHOOK_URL",
+    "set": false
+   }
+  ],
+  "custom": false,
+  "config": {},
+  "secrets": {}
+ },
+ "channels": {
+  "range": {
+   "start": "2026-09-22",
+   "end": "2026-09-28",
+   "days": 7
+  },
+  "currency": "USD",
+  "dates": [
+   "2026-09-22",
+   "2026-09-23",
+   "2026-09-24",
+   "2026-09-25",
+   "2026-09-26",
+   "2026-09-27",
+   "2026-09-28"
+  ],
+  "platforms": [
+   {
+    "id": "google_ads",
+    "label": "Google Ads",
+    "mode": "demo",
+    "reason": "No Google Ads credentials found in .env. Every number below is generated demo data for a sample account.",
+    "kind": "ad_platform",
+    "cost": 29576.59,
+    "impressions": 5256118,
+    "clicks": 49426,
+    "conversions": 1561.01,
+    "conv_value": 148980,
+    "roas": 5.037091835130418,
+    "cpa": 18.94708554077168,
+    "cpc": 0.5984014486302757,
+    "ctr": 0.00940351795754966,
+    "share": 0.6169591545975849,
+    "trend": [
+     4376.49,
+     4387.15,
+     4239.75,
+     4404.89,
+     3917.09,
+     3935.84,
+     4315.38
+    ]
+   },
+   {
+    "id": "meta",
+    "label": "Meta Ads",
+    "mode": "demo",
+    "reason": "Demo connector in v1",
+    "kind": "ad_platform",
+    "cost": 18362.71,
+    "impressions": 1911163,
+    "clicks": 24891,
+    "conversions": 552.01,
+    "conv_value": 52075.71,
+    "roas": 2.835949051093221,
+    "cpa": 33.265176355500806,
+    "cpc": 0.737724880478888,
+    "ctr": 0.013024006848186156,
+    "share": 0.3830408454024151,
+    "trend": [
+     2741.14,
+     2642.28,
+     2645.34,
+     2825.28,
+     2485.24,
+     2525.84,
+     2497.59
+    ]
+   }
+  ],
+  "analytics": [
+   {
+    "id": "ga4",
+    "label": "Google Analytics 4",
+    "mode": "demo",
+    "reason": "Demo connector in v1",
+    "kind": "analytics",
+    "sessions": 117425,
+    "conversions": 2044.7,
+    "conv_value": 165381.34,
+    "trend": [
+     16559,
+     17085,
+     16656,
+     16609,
+     15385,
+     16370,
+     18761
+    ]
+   }
+  ],
+  "commerce": [],
+  "totals": {
+   "cost": 47939.3,
+   "impressions": 7167281,
+   "clicks": 74317,
+   "conversions": 2113.02,
+   "conv_value": 201055.71,
+   "roas": 4.1939642422813845,
+   "cpa": 22.687575129435597,
+   "store_revenue": null,
+   "orders": null,
+   "sessions": 117425,
+   "mer": null,
+   "trend": [
+    7117.63,
+    7029.43,
+    6885.09,
+    7230.17,
+    6402.33,
+    6461.68,
+    6812.97
+   ]
+  },
+  "sources": [
+   {
+    "id": "google_ads",
+    "label": "Google Ads",
+    "mode": "demo",
+    "reason": "No Google Ads credentials found in .env. Every number below is generated demo data for a sample account."
+   },
+   {
+    "id": "meta",
+    "label": "Meta Ads",
+    "mode": "demo",
+    "reason": "Demo connector in v1"
+   },
+   {
+    "id": "ga4",
+    "label": "Google Analytics 4",
+    "mode": "demo",
+    "reason": "Demo connector in v1"
+   }
+  ],
+  "warnings": [
+   "Conversions use each platform's own attribution window \u2014 blended totals can double-count journeys that touch several platforms."
+  ]
+ },
+ "settings": {
+  "displayCurrency": null,
+  "fxRates": {
+   "VND": 25400
+  },
+  "refreshSeconds": 0,
+  "businessContext": "Acme Running Co. sells running shoes, trail gear and apparel online (US-first). Peak season: Q4.",
+  "brandTerms": [
+   "acme"
+  ],
+  "competitorTerms": [
+   "stridemax",
+   "peakpace",
+   "velora"
+  ],
+  "goals": {
+   "monthlyConversions": null,
+   "monthlyRevenue": null,
+   "targetCpa": null,
+   "targetRoas": null
+  },
+  "activeAccountId": null,
+  "onboardingDismissed": false
+ },
+ "accounts": {
+  "accounts": [
+   {
+    "id": "4821193307",
+    "name": "Acme Running Co.",
+    "currency": "USD",
+    "timezone": "America/New_York",
+    "isManager": false,
+    "parentId": "1112223333",
+    "mode": "demo"
+   },
+   {
+    "id": "9876543210",
+    "name": "Trail Gear Outlet",
+    "currency": "USD",
+    "timezone": "America/New_York",
+    "isManager": false,
+    "parentId": "1112223333",
+    "mode": "demo"
+   }
+  ],
+  "active": "4821193307",
+  "manager": {
+   "id": "1112223333",
+   "name": "SAVD Demo Agency (MCC)"
+  },
+  "mode": "demo"
+ },
+ "audit": {
+  "entries": [
+   {
+    "ts": "2026-09-29T13:10:56.988Z",
+    "actor": "user",
+    "action": "budget.plan.delete",
+    "target": "f635f31f-fdac-4f8f-9ffe-41cd3df504a8",
+    "mode": "demo",
+    "summary": "Deleted budget plan \u201cProbe plan\u201d"
+   },
+   {
+    "ts": "2026-09-29T12:42:48.306Z",
+    "actor": "user",
+    "action": "plugin.custom.delete",
+    "target": "custom-zz-ui-probe",
+    "mode": "demo",
+    "summary": "Deleted custom plugin custom-zz-ui-probe"
+   },
+   {
+    "ts": "2026-09-29T12:42:38.497Z",
+    "actor": "user",
+    "action": "plugin.sync",
+    "target": "custom-zz-ui-probe",
+    "mode": "demo",
+    "summary": "Synced ZZ UI probe",
+    "details": {
+     "ok": false,
+     "rows": null
+    }
+   },
+   {
+    "ts": "2026-09-29T12:42:12.164Z",
+    "actor": "user",
+    "action": "plugin.custom.create",
+    "target": "custom-zz-ui-probe",
+    "mode": "demo",
+    "summary": "Registered custom plugin ZZ UI probe",
+    "details": {
+     "baseUrl": "mock://platform"
+    }
+   },
+   {
+    "ts": "2026-09-29T12:42:07.545Z",
+    "actor": "user",
+    "action": "simulate.revert",
+    "target": "e9655e64-cee4-4c19-a888-904f0b739990",
+    "mode": "demo",
+    "summary": "Reverted: Paused 'Search \u2014 Competitor Terms'",
+    "details": {
+     "actionId": "e9655e64-cee4-4c19-a888-904f0b739990",
+     "accountId": "4821193307",
+     "type": "campaign.pause"
+    }
+   },
+   {
+    "ts": "2026-09-29T12:42:07.064Z",
+    "actor": "user",
+    "action": "simulate.campaign.pause",
+    "target": "c8",
+    "mode": "demo",
+    "summary": "Paused 'Search \u2014 Competitor Terms' (simulated)",
+    "details": {
+     "actionId": "e9655e64-cee4-4c19-a888-904f0b739990",
+     "accountId": "4821193307"
+    }
+   },
+   {
+    "ts": "2026-09-29T12:38:27.239Z",
+    "actor": "user",
+    "action": "budget.plan.create",
+    "target": "f635f31f-fdac-4f8f-9ffe-41cd3df504a8",
+    "mode": "demo",
+    "summary": "Created budget plan \u201cProbe plan\u201d (2026-10, 2026-11, 2026-12)"
+   },
+   {
+    "ts": "2026-09-29T12:37:20.321Z",
+    "actor": "user",
+    "action": "simulate.revert",
+    "target": "872969b0-d8b1-4d43-9286-0d4e0dcff6d3",
+    "mode": "demo",
+    "summary": "Reverted: Paused 'Generic \u2014 Running Shoes'",
+    "details": {
+     "actionId": "872969b0-d8b1-4d43-9286-0d4e0dcff6d3",
+     "accountId": "4821193307",
+     "type": "campaign.pause"
+    }
+   },
+   {
+    "ts": "2026-09-29T12:37:20.180Z",
+    "actor": "user",
+    "action": "simulate.campaign.pause",
+    "target": "c2",
+    "mode": "demo",
+    "summary": "Paused 'Generic \u2014 Running Shoes' (simulated)",
+    "details": {
+     "actionId": "872969b0-d8b1-4d43-9286-0d4e0dcff6d3",
+     "accountId": "4821193307"
+    }
+   },
+   {
+    "ts": "2026-09-29T12:36:12.937Z",
+    "actor": "user",
+    "action": "plugin.disconnect",
+    "target": "tiktok",
+    "mode": "demo",
+    "summary": "Disconnected TikTok Ads"
+   },
+   {
+    "ts": "2026-09-29T12:36:12.857Z",
+    "actor": "user",
+    "action": "plugin.connect",
+    "target": "tiktok",
+    "mode": "demo",
+    "summary": "Connected TikTok Ads",
+    "details": {
+     "fields": [
+      "advertiserId"
+     ]
+    }
+   },
+   {
+    "ts": "2026-09-29T12:36:01.831Z",
+    "actor": "user",
+    "action": "plugin.custom.delete",
+    "target": "custom-mock",
+    "mode": "demo",
+    "summary": "Deleted custom plugin custom-mock"
+   }
+  ]
+ },
+ "actions": {
+  "actions": [
+   {
+    "accountId": "4821193307",
+    "type": "campaign.pause",
+    "targets": [
+     "c8"
+    ],
+    "summary": "Paused 'Search \u2014 Competitor Terms'",
+    "before": {
+     "statuses": {
+      "c8": "Enabled"
+     }
+    },
+    "after": {
+     "statuses": {
+      "c8": "Paused"
+     }
+    },
+    "id": "e9655e64-cee4-4c19-a888-904f0b739990",
+    "createdAt": "2026-09-29T12:42:07.025Z",
+    "updatedAt": "2026-09-29T12:42:07.536Z",
+    "version": 2,
+    "revertedAt": "2026-09-29T12:42:07.536Z"
+   },
+   {
+    "accountId": "4821193307",
+    "type": "campaign.pause",
+    "targets": [
+     "c2"
+    ],
+    "summary": "Paused 'Generic \u2014 Running Shoes'",
+    "before": {
+     "statuses": {
+      "c2": "Enabled"
+     }
+    },
+    "after": {
+     "statuses": {
+      "c2": "Paused"
+     }
+    },
+    "id": "872969b0-d8b1-4d43-9286-0d4e0dcff6d3",
+    "createdAt": "2026-09-29T12:37:20.168Z",
+    "updatedAt": "2026-09-29T12:37:20.315Z",
+    "version": 2,
+    "revertedAt": "2026-09-29T12:37:20.314Z"
+   },
+   {
+    "accountId": "4821193307",
+    "type": "campaign.set_budget",
+    "targets": [
+     "c6"
+    ],
+    "summary": "Set daily budget of 'Display \u2014 Cart Remarketing' to $350 (was $260)",
+    "before": {
+     "budgets": [
+      {
+       "campaignId": "c6",
+       "dailyBudget": 260
+      }
+     ]
+    },
+    "after": {
+     "budgets": [
+      {
+       "campaignId": "c6",
+       "dailyBudget": 350
+      }
+     ]
+    },
+    "id": "30db144b-8f72-4987-aa90-5d7e9ba71bd3",
+    "createdAt": "2026-09-29T12:24:38.653Z",
+    "updatedAt": "2026-09-29T12:24:41.826Z",
+    "version": 2,
+    "revertedAt": "2026-09-29T12:24:41.826Z"
+   },
+   {
+    "accountId": "4821193307",
+    "type": "campaign.pause",
+    "targets": [
+     "c2"
+    ],
+    "summary": "Paused 'Generic \u2014 Running Shoes'",
+    "before": {
+     "statuses": {
+      "c2": "Enabled"
+     }
+    },
+    "after": {
+     "statuses": {
+      "c2": "Paused"
+     }
+    },
+    "id": "5b8850aa-cb1d-436a-b1b5-1d6eadf6f687",
+    "createdAt": "2026-09-29T12:24:37.596Z",
+    "updatedAt": "2026-09-29T12:24:41.444Z",
+    "version": 2,
+    "revertedAt": "2026-09-29T12:24:41.444Z"
+   }
+  ],
+  "mode": "demo"
+ },
+ "preview": {
+  "rawSample": [
+   {
+    "day": "2026-09-22",
+    "campaign": {
+     "name": "Spring launch"
+    },
+    "metrics": {
+     "spend": "176.80",
+     "impressions": 16148,
+     "clicks": 264,
+     "placed_order": 5
+    },
+    "actions": [
+     {
+      "action_type": "purchase",
+      "value": 5
+     },
+     {
+      "action_type": "purchase_value",
+      "value": "407.84"
+     }
+    ]
+   },
+   {
+    "day": "2026-09-22",
+    "campaign": {
+     "name": "Retargeting"
+    },
+    "metrics": {
+     "spend": "69.30",
+     "impressions": 6020,
+     "clicks": 100,
+     "placed_order": 2
+    },
+    "actions": [
+     {
+      "action_type": "purchase",
+      "value": 2
+     },
+     {
+      "action_type": "purchase_value",
+      "value": "172.87"
+     }
+    ]
+   },
+   {
+    "day": "2026-09-23",
+    "campaign": {
+     "name": "Spring launch"
+    },
+    "metrics": {
+     "spend": "172.04",
+     "impressions": 17077,
+     "clicks": 260,
+     "placed_order": 5
+    },
+    "actions": [
+     {
+      "action_type": "purchase",
+      "value": 5
+     },
+     {
+      "action_type": "purchase_value",
+      "value": "447.89"
+     }
+    ]
+   }
+  ],
+  "rows": [
+   {
+    "date": "2026-09-22",
+    "account_id": "4821193307",
+    "platform": "custom-klaviyo",
+    "platform_campaign": "Retargeting",
+    "currency": "USD",
+    "cost": 69.3,
+    "impressions": 6020,
+    "clicks": 100,
+    "conversions": 2,
+    "conv_value": 0
+   },
+   {
+    "date": "2026-09-22",
+    "account_id": "4821193307",
+    "platform": "custom-klaviyo",
+    "platform_campaign": "Spring launch",
+    "currency": "USD",
+    "cost": 176.8,
+    "impressions": 16148,
+    "clicks": 264,
+    "conversions": 5,
+    "conv_value": 0
+   },
+   {
+    "date": "2026-09-23",
+    "account_id": "4821193307",
+    "platform": "custom-klaviyo",
+    "platform_campaign": "Retargeting",
+    "currency": "USD",
+    "cost": 85.34,
+    "impressions": 8134,
+    "clicks": 145,
+    "conversions": 2,
+    "conv_value": 0
+   },
+   {
+    "date": "2026-09-23",
+    "account_id": "4821193307",
+    "platform": "custom-klaviyo",
+    "platform_campaign": "Spring launch",
+    "currency": "USD",
+    "cost": 172.04,
+    "impressions": 17077,
+    "clicks": 260,
+    "conversions": 5,
+    "conv_value": 0
+   },
+   {
+    "date": "2026-09-24",
+    "account_id": "4821193307",
+    "platform": "custom-klaviyo",
+    "platform_campaign": "Retargeting",
+    "currency": "USD",
+    "cost": 89.85,
+    "impressions": 8607,
+    "clicks": 135,
+    "conversions": 3,
+    "conv_value": 0
+   },
+   {
+    "date": "2026-09-24",
+    "account_id": "4821193307",
+    "platform": "custom-klaviyo",
+    "platform_campaign": "Spring launch",
+    "currency": "USD",
+    "cost": 201.85,
+    "impressions": 20754,
+    "clicks": 297,
+    "conversions": 5,
+    "conv_value": 0
+   },
+   {
+    "date": "2026-09-25",
+    "account_id": "4821193307",
+    "platform": "custom-klaviyo",
+    "platform_campaign": "Retargeting",
+    "currency": "USD",
+    "cost": 89.07,
+    "impressions": 7963,
+    "clicks": 142,
+    "conversions": 2,
+    "conv_value": 0
+   },
+   {
+    "date": "2026-09-25",
+    "account_id": "4821193307",
+    "platform": "custom-klaviyo",
+    "platform_campaign": "Spring launch",
+    "currency": "USD",
+    "cost": 175.69,
+    "impressions": 15742,
+    "clicks": 295,
+    "conversions": 4,
+    "conv_value": 0
+   },
+   {
+    "date": "2026-09-26",
+    "account_id": "4821193307",
+    "platform": "custom-klaviyo",
+    "platform_campaign": "Retargeting",
+    "currency": "USD",
+    "cost": 73.73,
+    "impressions": 7097,
+    "clicks": 109,
+    "conversions": 2,
+    "conv_value": 0
+   },
+   {
+    "date": "2026-09-26",
+    "account_id": "4821193307",
+    "platform": "custom-klaviyo",
+    "platform_campaign": "Spring launch",
+    "currency": "USD",
+    "cost": 206.96,
+    "impressions": 20934,
+    "clicks": 334,
+    "conversions": 5,
+    "conv_value": 0
+   },
+   {
+    "date": "2026-09-27",
+    "account_id": "4821193307",
+    "platform": "custom-klaviyo",
+    "platform_campaign": "Retargeting",
+    "currency": "USD",
+    "cost": 76.37,
+    "impressions": 6974,
+    "clicks": 128,
+    "conversions": 2,
+    "conv_value": 0
+   },
+   {
+    "date": "2026-09-27",
+    "account_id": "4821193307",
+    "platform": "custom-klaviyo",
+    "platform_campaign": "Spring launch",
+    "currency": "USD",
+    "cost": 185.22,
+    "impressions": 18380,
+    "clicks": 301,
+    "conversions": 5,
+    "conv_value": 0
+   },
+   {
+    "date": "2026-09-28",
+    "account_id": "4821193307",
+    "platform": "custom-klaviyo",
+    "platform_campaign": "Retargeting",
+    "currency": "USD",
+    "cost": 89.29,
+    "impressions": 8459,
+    "clicks": 141,
+    "conversions": 2,
+    "conv_value": 0
+   },
+   {
+    "date": "2026-09-28",
+    "account_id": "4821193307",
+    "platform": "custom-klaviyo",
+    "platform_campaign": "Spring launch",
+    "currency": "USD",
+    "cost": 190.71,
+    "impressions": 19163,
+    "clicks": 320,
+    "conversions": 5,
+    "conv_value": 0
+   }
+  ],
+  "warnings": [],
+  "tookMs": 27,
+  "stats": {
+   "items": 14,
+   "pages": 1,
+   "mappedRows": 14,
+   "range": {
+    "start": "2026-09-22",
+    "end": "2026-09-28"
+   }
+  },
+  "manifestWarnings": []
+ },
+ "validate": {
+  "ok": true,
+  "errors": [],
+  "warnings": [],
+  "issues": [],
+  "manifest": {
+   "id": "custom-klaviyo",
+   "name": "Klaviyo",
+   "version": "1.0.0",
+   "kind": "rest",
+   "category": "ad_platform",
+   "description": "Klaviyo-style mock",
+   "icon": {
+    "abbr": "KL"
+   },
+   "capabilities": [
+    "metrics.read"
+   ],
+   "live": true,
+   "rest": {
+    "baseUrl": "mock://platform",
+    "auth": {
+     "type": "api_key_header",
+     "header": "x-api-key"
+    },
+    "report": {
+     "method": "GET",
+     "path": "/reports?date_from={start}&date_to={end}&page_size=50",
+     "dateFormat": "YYYY-MM-DD",
+     "rowsPath": "data.rows",
+     "pagination": {
+      "type": "cursor",
+      "cursorPath": "paging.next",
+      "param": "cursor"
+     }
+    },
+    "mapping": {
+     "date": "day",
+     "spend": "metrics.spend",
+     "impressions": "metrics.impressions",
+     "clicks": "metrics.clicks",
+     "conversions": "actions[action_type=purchase].value",
+     "campaign": "campaign.name"
+    }
+   },
+   "refresh": "hourly"
+  }
+ },
+ "channelsCommerce": {
+  "range": {
+   "start": "2026-09-22",
+   "end": "2026-09-28",
+   "days": 7
+  },
+  "currency": "USD",
+  "dates": [
+   "2026-09-22",
+   "2026-09-23",
+   "2026-09-24",
+   "2026-09-25",
+   "2026-09-26",
+   "2026-09-27",
+   "2026-09-28"
+  ],
+  "platforms": [
+   {
+    "id": "google_ads",
+    "label": "Google Ads",
+    "mode": "demo",
+    "reason": "No Google Ads credentials found in .env. Every number below is generated demo data for a sample account.",
+    "kind": "ad_platform",
+    "cost": 29576.59,
+    "impressions": 5256118,
+    "clicks": 49426,
+    "conversions": 1561.01,
+    "conv_value": 148980,
+    "roas": 5.037091835130418,
+    "cpa": 18.94708554077168,
+    "cpc": 0.5984014486302757,
+    "ctr": 0.00940351795754966,
+    "share": 0.6169591545975849,
+    "trend": [
+     4376.49,
+     4387.15,
+     4239.75,
+     4404.89,
+     3917.09,
+     3935.84,
+     4315.38
+    ]
+   },
+   {
+    "id": "meta",
+    "label": "Meta Ads",
+    "mode": "demo",
+    "reason": "Demo connector in v1",
+    "kind": "ad_platform",
+    "cost": 18362.71,
+    "impressions": 1911163,
+    "clicks": 24891,
+    "conversions": 552.01,
+    "conv_value": 52075.71,
+    "roas": 2.835949051093221,
+    "cpa": 33.265176355500806,
+    "cpc": 0.737724880478888,
+    "ctr": 0.013024006848186156,
+    "share": 0.3830408454024151,
+    "trend": [
+     2741.14,
+     2642.28,
+     2645.34,
+     2825.28,
+     2485.24,
+     2525.84,
+     2497.59
+    ]
+   }
+  ],
+  "analytics": [
+   {
+    "id": "ga4",
+    "label": "Google Analytics 4",
+    "mode": "demo",
+    "reason": "Demo connector in v1",
+    "kind": "analytics",
+    "sessions": 117425,
+    "conversions": 2044.7,
+    "conv_value": 165381.34,
+    "trend": [
+     16559,
+     17085,
+     16656,
+     16609,
+     15385,
+     16370,
+     18761
+    ]
+   }
+  ],
+  "commerce": [
+   {
+    "id": "shopify",
+    "label": "Shopify",
+    "mode": "demo",
+    "reason": "Demo connector in v1",
+    "kind": "commerce",
+    "store_revenue": 240066.76,
+    "orders": 2475,
+    "trend": [
+     35484.51,
+     36713.46,
+     33289.66,
+     31421.26,
+     33038.38,
+     33236.07,
+     36883.42
+    ]
+   }
+  ],
+  "totals": {
+   "cost": 47939.3,
+   "impressions": 7167281,
+   "clicks": 74317,
+   "conversions": 2113.02,
+   "conv_value": 201055.71,
+   "roas": 4.1939642422813845,
+   "cpa": 22.687575129435597,
+   "store_revenue": 240066.76,
+   "orders": 2475,
+   "sessions": 117425,
+   "mer": 5.007723517030912,
+   "trend": [
+    7117.63,
+    7029.43,
+    6885.09,
+    7230.17,
+    6402.33,
+    6461.68,
+    6812.97
+   ]
+  },
+  "sources": [
+   {
+    "id": "google_ads",
+    "label": "Google Ads",
+    "mode": "demo",
+    "reason": "No Google Ads credentials found in .env. Every number below is generated demo data for a sample account."
+   },
+   {
+    "id": "meta",
+    "label": "Meta Ads",
+    "mode": "demo",
+    "reason": "Demo connector in v1"
+   },
+   {
+    "id": "ga4",
+    "label": "Google Analytics 4",
+    "mode": "demo",
+    "reason": "Demo connector in v1"
+   },
+   {
+    "id": "shopify",
+    "label": "Shopify",
+    "mode": "demo",
+    "reason": "Demo connector in v1"
+   }
+  ],
+  "warnings": [
+   "Conversions use each platform's own attribution window \u2014 blended totals can double-count journeys that touch several platforms."
+  ]
+ }
+}

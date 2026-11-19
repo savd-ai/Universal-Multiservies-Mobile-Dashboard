@@ -1,0 +1,46 @@
+[
+  {
+    "results": [
+      {
+        "segments": {
+          "date": "2026-09-20"
+        },
+        "campaign": {
+          "id": "111"
+        },
+        "metrics": {
+          "impressions": "1"
+        }
+      }
+    ],
+    "fieldMask": "segments.date,campaign.id,metrics.impressions",
+    "requestId": "fixture-req-stream"
+  },
+  {
+    "error": {
+      "code": 8,
+      "message": "Resource has been exhausted (e.g. check quota).",
+      "status": "RESOURCE_EXHAUSTED",
+      "details": [
+        {
+          "@type": "type.googleapis.com/google.ads.googleads.v25.errors.GoogleAdsFailure",
+          "errors": [
+            {
+              "errorCode": {
+                "quotaError": "RESOURCE_TEMPORARILY_EXHAUSTED"
+              },
+              "message": "Too many requests. Retry in 1 seconds.",
+              "details": {
+                "quotaErrorDetails": {
+                  "rateScope": "ACCOUNT",
+                  "retryDelay": "1s"
+                }
+              }
+            }
+          ],
+          "requestId": "fixture-req-stream"
+        }
+      ]
+    }
+  }
+]
